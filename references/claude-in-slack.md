@@ -6,7 +6,7 @@ Complete [OAuth](oauth.md) and [public MCP](public-mcp-ingress.md) setup first. 
 
 ## Prerequisites
 
-Use chart `0.37.0` and image `0.68.0` from the [installation guide](../install.md). Run commands in your deployment working directory with AWS CLI and `jq`. Use your protected secret directory with `umask 077`; complete console steps in Claude and Slack. Replace placeholders first. Agents must ask for unresolved choices and secret file paths, never secret contents.
+Use chart `0.37.0` and image `0.68.0` from the [installation guide](install.md). Run commands in your deployment working directory with AWS CLI and `jq`. Use your protected secret directory with `umask 077`; complete console steps in Claude and Slack. Replace placeholders first. Agents must ask for unresolved choices and secret file paths, never secret contents.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -18,11 +18,11 @@ Use chart `0.37.0` and image `0.68.0` from the [installation guide](../install.m
 
 | Requirement | Why |
 |---|---|
-| Claude **Team or Enterprise** plan | Claude Tag is unavailable on Free, Pro, and Max |
-| **Owner** in your Claude organization | Initial workspace pairing and launch require an Owner |
-| A **Slack workspace admin** | Installing the Claude app and running `@Claude connect` |
-| **Routines** enabled for the organization | Claude Tag requires it; also what recurring posts run on |
-| A **funded usage balance** (Team plans) | Channel work bills to the organization; nothing runs until it is funded |
+| Claude Team or Enterprise plan | Claude Tag is unavailable on Free, Pro, and Max |
+| Owner in your Claude organization | Initial workspace pairing and launch require an Owner |
+| A Slack workspace admin | Installing the Claude app and running `@Claude connect` |
+| Routines enabled for the organization | Claude Tag requires it, and recurring posts use it |
+| A funded usage balance (Team plans) | Channel work is billed to the organization and requires a funded balance |
 | A public HTTPS Tokonoma endpoint | Anthropic's sandbox reaches your server over the internet |
 
 ## 1. Set up Claude Tag
@@ -52,9 +52,9 @@ aws cognito-idp create-user-pool-client \
   --region REPLACE_WITH_AWS_REGION > "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client.json"
 ```
 
-Use the pool ID: names can repeat, and the wrong pool causes token rejection. Protect the output file containing `ClientId` and `ClientSecret`. The pool needs a Cognito domain and `toko-mcp/query` resource-server scope; see [OAuth](oauth.md).
+Use the pool ID because names can repeat. Using the wrong pool causes token rejection. Protect the output file containing `ClientId` and `ClientSecret`. The pool needs a Cognito domain and `toko-mcp/query` resource-server scope; see [OAuth](oauth.md).
 
-In `hybrid` mode, a verified provider client can be admitted on its first grant. For `preregistered_only`, append this client to `mcp.auth.clients` before testing, preserving existing clients:
+In `hybrid` mode, Tokonoma can admit a verified provider client on its first grant. For `preregistered_only`, append this client to `mcp.auth.clients` before testing, preserving existing clients:
 
 ```yaml
 mcp:
@@ -160,7 +160,7 @@ Give the plugin and credential the same scope so channels receive both. See Anth
 
 ## 5. Choose where the bundle applies
 
-Choose where the bundle applies: all of Slack, one workspace, or one channel. It starts disabled everywhere.
+The bundle starts disabled everywhere. Enable it for all of Slack, one workspace, or one channel.
 
 On the `tokonoma` bundle's page, under **Where it applies**, turn on the **Slack**
 row for organization-wide use. To pilot in one channel instead, click **Add
@@ -185,7 +185,7 @@ channel?`
 
 ## Recurring status updates
 
-Follow Anthropic’s [routines guide](https://claude.com/docs/claude-tag/users/proactivity) to schedule a channel update. State the timezone, cadence, record and whether the job may write:
+Follow Anthropic’s [routines guide](https://claude.com/docs/claude-tag/users/proactivity) to schedule a channel update. Specify the timezone, how often to post, which record to read, and whether the job may write:
 
 ```text
 @Claude every hour, re-read Tokonoma investigation REPLACE_WITH_MEMORY_ID and post a one-line
@@ -208,7 +208,7 @@ with no requester, set it to Claude.
 
 Start a new thread after changing the bundle. Instructions guide attribution; the MCP credential remains the authorization identity.
 
-For reporting-only routines, specify "post a status update; do not modify the record". They retain write access without someone reviewing each run.
+For reporting-only routines, specify "post a status update; do not modify the record". These routines retain write access even when nobody reviews each run.
 
 ## Troubleshooting
 

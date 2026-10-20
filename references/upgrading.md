@@ -2,7 +2,7 @@
 
 This guide targets chart **0.37.0** and application **0.68.0**. Chart and image versions are independent. Test the target versions with your configuration before changing a production release.
 
-Run the commands from the existing installation's working directory on an authorized workstation. This path applies to an existing release; use [installation](../install.md) for a new one.
+Run the commands from the existing installation's working directory on an authorized workstation. Use [installation](install.md) for a new release.
 
 | Input | Where to find it | How it is used |
 | --- | --- | --- |
@@ -11,11 +11,11 @@ Run the commands from the existing installation's working directory on an author
 | Values files and order | The saved installation configuration | Include every selected file after the base values file |
 | `REPLACE_WITH_SECRET_DIRECTORY` or existing Secret references | Your credential storage | Preserve the existing license and selected integrations |
 
-For a feature-only change, first verify that the installed chart and application match this guide. If they differ, establish compatible instructions for those versions or separately agree the intended version change before using the pinned commands. Adding Slack or another feature must not silently upgrade or downgrade the deployment.
+For a feature-only change, first verify that the installed chart and application match this guide. If they differ, use instructions verified for the installed versions or agree on the version change before using the pinned commands. Adding Slack or another feature must not silently upgrade or downgrade the deployment.
 
 ## Before upgrading
 
-1. Back up PostgreSQL and attachment storage with your normal recovery process, and verify that you can restore them.
+1. Back up PostgreSQL and all other persistent data with your normal recovery process, and verify that you can restore them.
 2. Record the current release revision and image, and review your saved values and externally managed Secrets. Helm values can contain credentials; do not paste them into tickets or public logs.
 3. Check the migration notes below, including webhook paths, Grafana adapter values, authentication, and retired meeting capture.
 4. Keep one complete nonsecret values file and protected credential inputs. Do not assume an old override is still valid in a new chart.
@@ -58,7 +58,7 @@ The adapter moved to the upstream `grafana-mcp` subchart. Old keys are not autom
 
 `grafanaMcp.auth.token` remains the direct caller-token input. Keep the Viewer credential separate from the internal caller credential. Current adapter Deployment, Service, and inline Viewer Secret names default to `toko-grafana-mcp-server`; the caller Secret defaults to `toko-grafana-mcp-auth`. Review any name, port, allowed-host, and external Secret overrides together.
 
-Explicitly preserve or rotate the intended credentials when transitioning; verify the new rendered Secret references before applying. Remove obsolete keys from your complete values file and use the intentional reset workflow above. After the upgrade, verify the adapter and runner, restart consumers as described in [credential rotation](alert-investigations.md#rotate-credentials), and check that an investigation can query Grafana. This migration has been checked by rendering; test it against your running configuration before rollout.
+Preserve or rotate the credentials during migration, and verify the new rendered Secret references before applying. Remove obsolete keys from your complete values file and use the reset workflow above. After the upgrade, verify the adapter and runner, restart consumers as described in [credential rotation](alert-investigations.md#rotate-credentials), and check that an investigation can query Grafana. This migration has been checked by rendering; test it against your running configuration before rollout.
 
 ## Webhook paths: 0.34.x to 0.35.0 or later
 
@@ -85,7 +85,6 @@ The unattended MCP shares authentication configuration. An authenticated runner 
 - Chart 0.30.0 changed the alert delay default from 300 to 60 seconds. Set the relevant source's `delaySeconds` explicitly if you want to retain the old delay.
 - Chart 0.28.0 centralized model selection in `llm.model`, with per-consumer overrides. Use model identifiers supported by your provider; memory analysis uses the Anthropic API independently of the runner provider.
 - Chart 0.8.0 pinned `nomic-embed-text:v1.5`. External or offline Ollama must provide that exact model and a compatible embedding version. A missing model can leave keyword search working while semantic search is unavailable.
-- Moving attachments from a local PVC to S3 or GCS does not migrate existing files. Retain the original volume and plan the data migration separately.
 
 For installations predating these changes, review the complete target values with your Tokonoma contact before applying an upgrade. Do not run old database repair commands simply because they appear in a historical guide.
 

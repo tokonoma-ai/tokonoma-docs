@@ -1,6 +1,8 @@
 # Tokonoma application 0.68.0. Create one app for your deployment/workspace.
 # Generate the app-level connections:write token separately in Slack.
-# Setup: ../docs/guides/slack-app.md
+# After installing the app, run /invite @Tokonoma in each chosen channel.
+# People can invite the app to public or private channels; it does not join automatically.
+# Setup: ../references/slack-app.md
 display_information:
   name: Tokonoma
   description: Your expertise for every agent.
@@ -20,7 +22,7 @@ oauth_config:
       - users:read
       - channels:read
       - groups:read
-      # Present in the release manifest; this release still needs invitations.
+      # Included in the release manifest; people still invite the app explicitly.
       - channels:join
       - chat:write
       - reactions:write

@@ -1,10 +1,10 @@
 # Guide: public MCP Ingress
 
-Keep the MCP private for initial setup. Before allowing shared or public access, prepare the identity provider and authentication values using [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Without authentication, anyone who reaches the endpoint can use its tools, including memory writes.
+Keep the MCP endpoint private during initial setup. Before allowing shared or public access, prepare the identity provider and authentication values using [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Without authentication, anyone who reaches the endpoint can use its tools, including memory writes.
 
-You need Helm 3.14+, a working ingress controller, DNS control, and a valid TLS certificate. Start with the [installation](../install.md) values in `tokonoma-values.yaml`; save the authentication settings as `tokonoma-oauth.yaml`. This guide deploys the authentication and ingress settings together.
+You need Helm 3.14+, a working ingress controller, DNS control, and a valid TLS certificate. Start with the [installation](install.md) values in `tokonoma-values.yaml`; save the authentication settings as `tokonoma-oauth.yaml`. This guide deploys the authentication and ingress settings together.
 
-Run shell commands from your deployment working directory on the computer with cluster access. Save values files there. Replace placeholders with the inputs below before running commands; agents must ask for unresolved choices and secret file paths, never secret contents.
+Run shell commands from your deployment working directory on the computer with cluster access. Save values files there. Replace placeholders with the inputs below before running commands. Agents must ask for unresolved choices and secret file paths, keeping secret contents out of chat.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -123,7 +123,7 @@ mcp:
       enabled: false
 ```
 
-The chart renders `className: gce` as the annotation required by the GKE controller. Point DNS at the Ingress IP after GKE allocates it. Follow Google’s [HTTPS Ingress documentation](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/secure-traffic-management#disabling_http) for certificate provisioning. Once the certificate and load balancer are active, add `kubernetes.io/ingress.allow-http: "false"` to `mcp.ingress.annotations` and upgrade again. Keep webhook senders disabled until HTTPS-only serving is verified.
+The chart renders `className: gce` as the annotation required by the GKE controller. Point DNS at the Ingress IP after GKE allocates it. Follow Google's [HTTPS Ingress documentation](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/secure-traffic-management#disabling_http) for certificate provisioning. Once the certificate and load balancer are active, add `kubernetes.io/ingress.allow-http: "false"` to `mcp.ingress.annotations` and upgrade again. Keep webhook senders disabled until you verify HTTPS-only access.
 
 ### Traefik
 
@@ -162,7 +162,7 @@ Wait for Helm to report `STATUS: deployed`. Keep all values files used by the re
 curl -fsS https://REPLACE_WITH_MCP_HOSTNAME/health
 ```
 
-The expected response is `ok`. Verify the MCP requires authentication:
+Expect `ok`. Verify that the MCP endpoint requires authentication:
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/mcp

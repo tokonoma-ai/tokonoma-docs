@@ -2,7 +2,7 @@
 
 Alertmanager sends firing alerts to `toko-runner`. After a delay and duplicate check, the runner investigates through a dedicated Tokonoma MCP instance, saves its findings, and posts a Slack summary.
 
-For Slack results, supply `credentials.slackBotToken` and `credentials.slackAppToken`, or `mcp.slack.tokenSecret`. Enable `runner.destinations.slackApp.enabled` and invite the app to the alert and investigations channels. Each alert gets an announcement with its result in a thread. Omit `runner.destinations.slack.webhookUrlSecretRef` to avoid duplicate delivery through the legacy webhook.
+To receive results in Slack, supply `credentials.slackBotToken` and `credentials.slackAppToken`, or `mcp.slack.tokenSecret`. Enable `runner.destinations.slackApp.enabled` and invite the app to the alert and investigations channels. Each alert gets an announcement, followed by its result in a thread. Omit `runner.destinations.slack.webhookUrlSecretRef` to avoid duplicate delivery through the legacy webhook.
 
 Leave `mcp.slack.autoRecallEnabled: false` unless you want immediate memory recall replies. Those replies require an Anthropic key through `credentials.anthropicApiKey` or `mcp.memoryLlm.apiKeySecret`, with `mcp.memoryLlm.enabled: true`. Explicit mentions and session updates work independently.
 
@@ -19,13 +19,13 @@ For Datadog-only alerts, create the [Datadog token Secret](datadog-alerts.md) fi
 | `toko-grafana-mcp-server` | Optional private OSS Grafana MCP subchart, enabled by `grafanaMcp.enabled`, for read-only telemetry queries against your existing Grafana |
 | `runner_runs` | A table the runner creates in your Postgres at startup, holding one row per attempt |
 
-The unattended instance separates alert traffic from interactive requests. It shares your PostgreSQL, holds no Slack credentials, and accepts no external traffic. The runner also uses PostgreSQL to retain duplicate checks across restarts and refuses to start if the database is unreachable.
+The unattended instance separates alert traffic from interactive requests. It shares your PostgreSQL, holds no Slack credentials, and accepts no external traffic. The runner stores duplicate checks in PostgreSQL so they survive restarts. It refuses to start if the database is unreachable.
 
 Bundled PostgreSQL needs no additional setup. For external PostgreSQL (`postgres.enabled=false` with `postgres.host`), the `postgres.auth.username` role needs schema `CREATE`, read/write access, and ownership or equivalent migration rights. The runner updates its tables and indexes at startup; missing permissions cause CrashLoopBackOff.
 
 ## Before you start
 
-Complete the [base installation](../install.md) and [Tokonoma Slack app setup](slack-app.md). Use Helm 3.14+, chart `0.37.0`, and application image `0.68.0`. Follow the [existing-version check](upgrading.md#before-upgrading) before applying these pinned examples to an existing release.
+Complete the [base installation](install.md) and [Tokonoma Slack app setup](slack-app.md). Use Helm 3.14+, chart `0.37.0`, and application image `0.68.0`. Follow the [existing-version check](upgrading.md#before-upgrading) before applying these pinned examples to an existing release.
 
 Run commands from the installation's working directory on its administration workstation, outside this checkout. Replace placeholders first; agents must ask for missing inputs.
 
@@ -52,23 +52,21 @@ openssl rand -hex 32 | tr -d '\n' > "REPLACE_WITH_SECRET_DIRECTORY/alertmanager-
 
 This writes without printing the token. Configure the same value on the sender.
 
-`--set-file` creates chart-owned Secrets; no prior `kubectl create secret` is needed. Per-consumer Secret references support external secret managers.
+`--set-file` creates chart-owned Secrets; no prior `kubectl create secret` is needed. To use an external secret manager, give each component a reference to its Secret.
 
-Helm generates the bundled PostgreSQL password and Grafana MCP caller token during installation and reuses them on upgrades. Their Secrets survive uninstall; remove them only when intentionally resetting that installation. Client-only `helm template` and Argo rendering cannot reliably look up these Secrets. Supply `postgres.auth.password` and `grafanaMcp.auth.token`, or [external Secret references](../reference/values.md#oss-grafana-mcp), for consistent rendering.
+Helm generates the bundled PostgreSQL password and Grafana MCP caller token during installation and reuses them on upgrades. Their Secrets survive uninstall; remove them only when intentionally resetting that installation. Client-only `helm template` and Argo rendering cannot reliably look up these Secrets. Supply `postgres.auth.password` and `grafanaMcp.auth.token`, or [external Secret references](values.md#oss-grafana-mcp), for consistent rendering.
 
 Image `0.68.0` includes Grafana MCP support; no separate Grafana MCP release or external MCP OAuth setup is needed. If `mcp.auth` is enabled, configure the runner's `runner.tokoMcp.oauthClientSecretRef` below.
 
-The second MCP pod cannot share the default local ReadWriteOnce attachment volume. Before enabling it, choose `s3`, `gcs`, or `none`, or supply `mcp.storage.local.existingClaim` backed by a ReadWriteMany StorageClass. Otherwise rendering fails.
-
 ## Prepare runner authentication when enabled
 
-Use a dedicated Cognito machine-to-machine app client and its ID and secret. Configure its domain, resource-server scope and client-credentials flow through [OAuth](oauth.md). Keep [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) alongside Cognito for individual human sign-in.
+Use a dedicated Cognito machine-to-machine app client and its ID and secret. Follow [OAuth](oauth.md) to configure its domain, resource-server scope and client-credentials flow. Keep [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) alongside Cognito for individual human sign-in.
 
 For the legacy Google Identity Platform/Firebase verifier, enable Email/Password and create a dedicated runner account. Its email is the runner's client ID and its password is the client secret. Google OAuth app credentials do not work.
 
 Declare the Cognito app client ID or Google account email in `mcp.auth.clients` with `origin: external`, grant `client_credentials`, scope `toko-mcp/query`, and `tokenEndpointAuthMethod: client_secret_post`. SAML-only login cannot issue a machine credential: keep the selected credential provider alongside SAML for the runner.
 
-Retain a working runner credential Secret if one exists. Otherwise, save the raw credentials as `runner-client-id.txt` and `runner-client-secret.txt` in the protected directory, then create the Secret in the existing namespace:
+Keep an existing runner credential Secret if it works. Otherwise, save the raw credentials as `runner-client-id.txt` and `runner-client-secret.txt` in the protected directory, then create the Secret in the existing namespace:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-runner-oauth \
@@ -91,9 +89,9 @@ runner:
 
 ### Install with OSS Grafana MCP
 
-This example queries an existing Grafana and keeps both MCP endpoints private. `grafanaMcp.enabled` installs the upstream `grafana-mcp` subchart and connects the runner automatically. The adapter requires Kubernetes 1.25+; leave it disabled to omit it.
+This example queries an existing Grafana and keeps both MCP endpoints private. `grafanaMcp.enabled` installs the upstream `grafana-mcp` subchart and connects the runner automatically. The adapter requires Kubernetes 1.25+. Leave it disabled if you do not need it.
 
-Save this as `runner-values.yaml` in the customer working directory. Merge the authentication block above when needed. On an existing installation, retain its attachment storage settings instead of copying `backend: none`. If it is public, also retain its ingress settings instead of adding `mcp.ingress.enabled: false`.
+Save this as `runner-values.yaml` in the customer working directory. Merge the authentication block above when needed. On an existing public installation, retain its ingress settings instead of adding `mcp.ingress.enabled: false`.
 
 ```yaml
 # runner-values.yaml
@@ -103,7 +101,7 @@ mcp:
   ingress:
     enabled: false
   storage:
-    backend: none          # or s3 / gcs, or a ReadWriteMany existingClaim
+    backend: none
   sibling:
     enabled: true
   memoryLlm:
@@ -137,7 +135,7 @@ helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT --reset-then-reus
   --set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"
 ```
 
-Expected result: Helm reports `tokonoma` as `deployed`. Keep all values and credentials on every upgrade. Configure the runner credential above when MCP authentication is enabled; do not disable authentication to make it connect.
+Expected result: Helm reports `tokonoma` as `deployed`. Keep all values and credentials on every upgrade. When MCP authentication is enabled, configure the runner credential above. Keep authentication enabled.
 
 Protected files keep tokens out of shell history, but Helm stores their values in release metadata. Restrict access to the files, Helm metadata, and Secrets.
 
@@ -155,7 +153,7 @@ Anthropic, Slack, and Alertmanager names follow the parent `fullnameOverride` or
 
 The adapter permits read-only data-source, Prometheus, Loki, Tempo, Pyroscope, and assertions tools. Dashboard/navigation, general API, annotation, and alert-management tools are excluded. Available data depends on your Grafana sources and Viewer permissions. The independent `grafana.enabled` self-monitoring UI is unnecessary for querying an existing Grafana.
 
-Rendering fails with the missing value's name if the runner lacks its sibling, a source token, a model credential, or an OAuth client when authentication is enabled.
+Rendering fails and names the missing value if the runner lacks its sibling, a source token, a model credential, or an OAuth client when authentication is enabled.
 
 ## Wire up Alertmanager
 
@@ -232,8 +230,7 @@ Expected result: `alertmanagerconfig.monitoring.coreos.com/toko-runner` is creat
 
 In-cluster Alertmanager uses the private URL without Ingress. External senders, including Grafana Cloud, need an approved HTTPS ingress or relay. Grafana Cloud cannot reach ClusterIP or Tailscale-only addresses.
 
-Save this as `runner-alertmanager-ingress-values.yaml` in the customer working directory and add it after the complete runner values above; it references an
-existing TLS Secret and keeps the Alertmanager token supplied in the install:
+Save this as `runner-alertmanager-ingress-values.yaml` in the customer working directory. Add it after the complete runner values above. It references an existing TLS Secret and keeps the Alertmanager token supplied during installation:
 
 ```yaml
 # runner-alertmanager-ingress-values.yaml
@@ -259,9 +256,7 @@ Configure the identity provider and runner OAuth client above before applying ei
 It does not enable the runner by itself. For Datadog-only exposure, use the
 explicit [Datadog overlay](datadog-alerts.md#2-configure-the-runner).
 
-For both receivers, save this as `runner-both-ingress-values.yaml` in the customer working directory and use it instead of the single-source ingress overlay. It keeps the chart-created
-Alertmanager token and adds the Datadog token Secret from the
-[Datadog guide](datadog-alerts.md):
+To expose both receivers, save this as `runner-both-ingress-values.yaml` in the customer working directory. Use it instead of the single-source ingress overlay. It keeps the chart-created Alertmanager token and adds the Datadog token Secret from the [Datadog guide](datadog-alerts.md):
 
 ```yaml
 # runner-both-ingress-values.yaml
@@ -286,7 +281,7 @@ runner:
         key: token
 ```
 
-`webhookPaths` defaults to `[]`, exposing no webhooks. Helm replaces this list rather than appending. Use absolute paths served by the runner with `Exact` matching. Routing requires the runner, runner ingress, and MCP Ingress to be enabled; it does not create receivers or change token authentication. Health and metrics stay private.
+`webhookPaths` defaults to `[]`, exposing no webhooks. Helm replaces the whole list. Use absolute paths served by the runner with `Exact` matching. Routing requires the runner, runner ingress, and MCP Ingress to be enabled; it does not create receivers or change token authentication. Health and metrics stay private.
 
 For a Grafana webhook contact point, use **POST** to
 `https://REPLACE_WITH_MCP_HOSTNAME/webhooks/alertmanager`, keep its default JSON payload,
@@ -307,23 +302,23 @@ HTTPS or establish reachability. If using a separate ingress/relay, leave
 
 ## Guardrails
 
-Alerts are filtered, delayed, and checked for duplicates before model calls. These default limits are not tuned to your alert volume.
+The runner filters alerts, delays them, and checks for duplicates before making model calls. Adjust the default limits for your alert volume.
 
 | Control | Default | What it bounds |
 |---|---|---|
 | `filters.severities` | `[critical, warning]` | Which alerts are eligible at all |
-| `delaySeconds` | `60` | A blip that resolves inside the window never spawns a run; one that lasts a few minutes is investigated. Raise it to skip those too, at the cost of later findings. With Alertmanager the run typically starts on a group's first delivery, before members that join at the next `group_interval` |
+| `delaySeconds` | `60` | An alert that resolves within the window is skipped; one that lasts a few minutes is investigated. A longer delay skips longer alerts too, but postpones findings. With Alertmanager the run typically starts on a group's first delivery, before members that join at the next `group_interval` |
 | `dedupWindowMinutes` | `60` | Cooldown after a run starts; `0` disables this check |
 | `priorArtWindowHours` | `24` | A repeat of an alert already investigated is skipped; `0` disables this check, including repeats of the same firing episode, with MCP 0.55.0 or later |
 | `maxConcurrentRuns` | `5` | Limits how many investigations can run at once. Alerts may hold one slot fewer than this (all of them at `1`), so a `@Tokonoma investigate` request still finds a slot during a wave |
 | `maxWaitSeconds` | `1800` | How long an alert whose delay is up waits for a slot, in arrival order. One still waiting after this is skipped as `cap_concurrent`; an alert that resolves while waiting is skipped as `resolved` |
-| `maxRunsPerDay` / `maxRunsPerDayCritical` | `200` / `200` | Sustained spend. **Two independent counters, so the daily total is their sum.** |
+| `maxRunsPerDay` / `maxRunsPerDayCritical` | `200` / `200` | Bounds sustained spend. The two counters are independent, so the daily total is their sum. |
 
 PostgreSQL retains accepted alerts across restarts. Delayed and waiting alerts resume; interrupted runs retry once, then become `retry_exhausted` after a second interruption. Alerts left unattended longer than `priorArtWindowHours` become `stale`.
 
 Until startup loads the queue, deliveries return `500` and increment `runner_deliveries_total{outcome="intake_error"}`. Alertmanager retries them. Queue reads retry indefinitely, starting every 5 seconds and doubling up to 1 minute.
 
-Tune limits using cost and duration on `runner.agent_run` spans and counters on `/metrics`.
+Tune limits using the cost and duration recorded in `runner.agent_run` spans and the counters at `/metrics`.
 
 ## Check it works
 
@@ -412,7 +407,7 @@ runner:
         key: appInstallationToken
 ```
 
-Use a narrowly scoped GitHub App installation token. The runner gains whatever access that credential grants.
+Limit the GitHub App installation token to the permissions the runner needs. The runner gains all access that credential grants.
 
 ## Turning it off
 
@@ -431,4 +426,4 @@ helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.
 
 Expect Helm status `deployed`. Confirm the runner and unattended pods are removed with `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods`. Keep these flags disabled in saved values. Existing investigation records remain.
 
-Return to [integrations](../integrations.md) or continue with [Datadog alerts](datadog-alerts.md).
+Return to [integrations](integrations.md) or continue with [Datadog alerts](datadog-alerts.md).

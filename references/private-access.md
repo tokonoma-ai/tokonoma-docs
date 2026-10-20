@@ -6,39 +6,37 @@ The default `toko-mcp` Service is `ClusterIP`; the chart creates no public Ingre
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| Cluster context and installed release | Your [installation](../install.md) record | Local port-forward access |
+| Cluster context and installed release | Your [installation](install.md) record | Local port-forward access |
 | Approved private route and intended users | Your platform and identity administrators | Before shared access |
 | Stable HTTPS hostname, DNS and certificate | Your platform team | Before authentication setup |
 | Login provider and its settings | [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md) | Before opening the team route |
 | Client or webhook sender location | The team operating that client or sender | Before choosing private or public reachability |
 
-Run linked cluster commands from your deployment working directory on the computer with cluster access. Test connections from a user's device or the actual sender. Agents must ask for unresolved access choices and secret file paths, never secret contents.
+Run the linked cluster commands from your deployment working directory on the computer with cluster access. Test connections from a user's device or the actual sender. Agents must ask for unresolved access choices and secret file paths, never secret contents.
 
 ## Local access
 
-Use the port-forward from [installation](../install.md). It binds to localhost by default and requires Kubernetes access. Keep it on localhost; do not add `--address 0.0.0.0` for shared access.
+Use the port-forward from [installation](install.md). It binds to localhost by default and requires Kubernetes access. Keep it on localhost; do not add `--address 0.0.0.0` for shared access.
 
 ## Team access
-
-Set up team access in this order:
 
 1. Agree on a private route with your platform team, such as an existing VPN or internal Ingress. Choose its stable HTTPS hostname without opening shared access yet.
 2. Configure [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Set `mcp.auth.enabled: true` explicitly. Use the same hostname for the auth base URL and identity-provider redirect configuration.
 3. Deploy the authentication settings with the private route. The hostname must be reachable by the MCP client and the user's browser.
 4. From a user's device, request `https://REPLACE_WITH_MCP_HOSTNAME/mcp` without credentials and expect `401`. Complete login through a [coding agent](coding-agents.md) and confirm it can list Tokonoma tools.
 
-The chart does not install Tailscale, a VPN, PrivateLink, or a NetworkPolicy. Your platform team owns that connectivity, DNS, certificates, and network policy. Private routing alone is not user authentication.
+The chart does not install Tailscale, a VPN, PrivateLink, or a NetworkPolicy. Your platform team manages that connectivity, DNS, certificates, and network policy. Private routing alone is not user authentication.
 
 `mcp.auth.enabled: false` is appropriate only when the reachable clients are trusted and network access is deliberately restricted. With authentication disabled, anyone who reaches the endpoint can use its exposed features.
 
-The [Ingress guide](public-mcp-ingress.md) explains chart routing. Pick an internal controller or internal load-balancer configuration for private access; the guide's public controller examples are not private defaults. Restrict access to `/mcp`, login and callback paths, and attachment routes consistently. The read-only web UI accepts direct localhost connections only in this release; use a local port-forward for it and do not put it behind this Ingress.
+The [Ingress guide](public-mcp-ingress.md) explains chart routing. Pick an internal controller or internal load-balancer configuration for private access; the guide's public controller examples are not private defaults. Restrict access to `/mcp`, login and callback paths, consistently. The read-only web UI accepts direct localhost connections only in this release; use a local port-forward for it and do not put it behind this Ingress.
 
 ## Slack and webhooks
 
-The native [Tokonoma Slack app](slack-app.md) uses outbound Socket Mode connections, so Slack event delivery does not need a public inbound URL. Links posted in Slack still need an address their readers can reach.
+The native [Tokonoma Slack app](slack-app.md) connects outbound through Socket Mode. Slack event delivery needs no public inbound URL. Links posted in Slack still need an address their readers can reach.
 
 Alertmanager running in your cluster can call the runner's private Service. External Grafana Cloud or Datadog senders need an approved inbound HTTPS route. Select only the required webhook paths, configure their bearer tokens, and test that unauthenticated requests are denied. The runner's bearer tokens are separate from MCP OAuth.
 
 Cloud-hosted MCP clients, including Claude in Slack, cannot use your laptop's `127.0.0.1` or a private cluster address unless that service has supported connectivity to it. Follow [Claude in Slack](claude-in-slack.md) for a reachable authenticated endpoint.
 
-Return to [installation](../install.md) for the local port-forward and release values.
+Return to [installation](install.md) for the local port-forward and release values.

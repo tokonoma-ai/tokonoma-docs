@@ -1,6 +1,6 @@
 # Credentials and license
 
-For chart 0.37.0 and application 0.68.0, prepare the license before [installation](../install.md#2-prepare-your-files). Add credentials for selected features only.
+For chart 0.37.0 and application 0.68.0, prepare the license before [installation](install.md#2-prepare-your-files). Add credentials only for features you use.
 
 ## What you need
 
@@ -12,7 +12,7 @@ For chart 0.37.0 and application 0.68.0, prepare the license before [installatio
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
 | Alertmanager bearer token | Generate a random token and configure the same value in Alertmanager | `credentials.alertmanagerToken` | Authenticating Alertmanager deliveries to an enabled runner |
 
-The MCP server and enabled runner share the Anthropic key unless given separate Secret references. Adding it enables memory analysis by default. Set `mcp.memoryLlm.enabled: false` to disable analysis and model-backed Slack features while retaining the runner's key. See [data flows](../data-flows.md).
+The MCP server and enabled runner share the Anthropic key unless you configure separate Secret references. Adding it enables memory analysis by default. Set `mcp.memoryLlm.enabled: false` to disable analysis and model-backed Slack features while retaining the runner's key. See [data flows](data-flows.md).
 
 A valid Tokonoma license is required for full-body recalls, but not search, saving, or skill discovery. An API key cannot replace it and does not enable the runner.
 
@@ -43,13 +43,13 @@ For optional features, create only the files that their guide requires:
 
 Apply `chmod 600` to each created file. Agents ask you to save issued credentials and supply their paths, never their contents in chat.
 
-The [base command](../install.md#3-install) needs only `license.txt`. Feature guides supply additional `--set-file` arguments. Save the complete values-file order and credential inputs for upgrades.
+The [base command](install.md#3-install) needs only `license.txt`. Feature guides supply additional `--set-file` arguments. Save the complete values-file order and credential inputs for upgrades.
 
 `--set-file` keeps tokens out of commands but stores them in Helm release records and Kubernetes Secrets. Restrict access to both. Never commit token files or log rendered Secrets.
 
 ## Use existing Kubernetes Secrets
 
-Existing Secrets must be in the release namespace. Replace example names and keys with those supplied by the secret owner. Merge selected sections into `tokonoma-values.yaml`, preserving other settings. References take precedence over direct inputs.
+Existing Secrets must be in the release namespace. Replace example names and keys with those supplied by the secret owner. Merge selected sections into `tokonoma-values.yaml`, preserving other settings. Secret references override direct inputs.
 
 ```yaml
 mcp:
@@ -81,13 +81,13 @@ runner:
 
 These references do not create Secrets. Omit unused features. `mcp.memoryLlm.apiKeySecret` does not configure the runner; supply both references when needed.
 
-Selected integration guides cover Datadog tokens and API keys, Grafana credentials, OAuth clients, and storage identities. These do not replace the license or Slack tokens.
+Integration guides cover Datadog tokens and API keys, Grafana credentials, OAuth clients, and storage identities. These do not replace the license or Slack tokens.
 
 ## Renew and rotate
 
-Use the verified cluster context. For direct `credentials.*` inputs, update the protected file and rerun the complete Helm upgrade. Chart 0.37.0 automatically restarts consumers of changed Anthropic, Slack, and Alertmanager values.
+Use the verified cluster context. For direct `credentials.*` inputs, update the protected file and rerun the complete Helm upgrade. Chart 0.37.0 automatically restarts deployments using changed Anthropic, Slack, and Alertmanager values.
 
-After changing `mcp.license`, restart MCP and its enabled unattended sibling. Externally managed Secret changes also require consumer restarts. With default component names:
+After changing `mcp.license`, restart MCP and its unattended deployment, if enabled. Restart deployments after changing their externally managed Secrets. With default component names:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart deployment/toko-mcp

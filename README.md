@@ -1,43 +1,69 @@
 # Install and use Tokonoma
 
-Tokonoma gives coding agents a shared place to save and retrieve investigation notes and procedures. Install it in your Kubernetes cluster, connect an agent, then add Slack, alert investigations, or team access as needed.
+Tokonoma investigates operational alerts using your observability tools and gives engineers a shared workspace for investigations in Slack and coding agents. It saves findings and procedures so the next investigation can use what your team has already learned.
 
-These customer guides cover Helm chart **0.37.0** and application **0.68.0**, available from public Amazon Elastic Container Registry (ECR). Application-source access is not required.
-
-## What you will install
-
-The base runs Tokonoma, PostgreSQL for saved records and state, and Ollama for local search embeddings. Your agent calls Tokonoma through the Model Context Protocol (MCP). Attachments use configured storage.
+You choose which alerts, tools, and Slack channels it can use. The investigation runner handles selected alerts automatically; engineers can also investigate through their own coding agents and shared Slack sessions.
 
 ```mermaid
 flowchart LR
-  Person[You] --> Agent[Your coding agent]
-  Agent -->|MCP tool calls| Toko
-  Agent -->|Agent context| Model[Your agent's model provider]
-  subgraph Cluster[Your Kubernetes cluster]
-    Toko[Tokonoma service]
-    Toko --> DB[PostgreSQL: records and state]
-    Toko --> Embed[Ollama: local search embeddings]
-    Toko --> Files[Configured attachment storage]
+  accTitle: Tokonoma in your environment
+  accDescr: Coding agents connect to Tokonoma, and selected alerts reach the optional Tokonoma runner. Both run in your Kubernetes cluster. Tokonoma connects to Slack and optional model features. The runner queries configured observability tools and its model provider. This is a capability overview, not a map of internal services.
+  subgraph Inputs["Your team and alerts"]
+    Agents["Coding agents"]
+    Alerts["Selected alerts"]
   end
+  subgraph Cluster["Your Kubernetes cluster"]
+    Tokonoma["Tokonoma<br/>Investigation tools and memory"]
+    Runner["Tokonoma runner<br/>Optional"]
+  end
+  subgraph Connections["Services you configure"]
+    Slack["Slack"]
+    Tools["Grafana / Datadog"]
+    Models["Model providers"]
+  end
+  Agents <-->|"Investigate"| Tokonoma
+  Alerts --> Runner
+  Tokonoma <-->|"Collaborate"| Slack
+  Runner <-->|"Query evidence"| Tools
+  Tokonoma -.->|"Optional analysis"| Models
+  Runner -.->|"Investigate"| Models
+
+  classDef service fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e,stroke-width:2px
+  classDef optional fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e,stroke-width:2px,stroke-dasharray:5 3
+  classDef external fill:#fff,stroke:#64748b,color:#0f172a
+  class Tokonoma service
+  class Runner optional
+  class Agents,Alerts,Slack,Tools,Models external
+  style Cluster fill:#eff6ff,stroke:#0369a1,color:#0c4a6e
+  style Inputs fill:#f8fafc,stroke:#cbd5e1,color:#334155
+  style Connections fill:#f8fafc,stroke:#cbd5e1,color:#334155
 ```
 
-Attachment storage can use an external bucket. Hosted agents can send retrieved content to their model provider; optional integrations add other connections. Review [data flows and access](docs/data-flows.md) before choosing features.
+Automatic investigations need the optional runner and its configured integrations. Detectors are upcoming and are not available in the release covered by these guides.
+
+These guides cover Helm chart **0.37.0** and application **0.68.0**, available from public Amazon Elastic Container Registry (ECR). You do not need access to the application source.
+
+## What you will install
+
+Start with the base installation, then add the capabilities you need. The base runs Tokonoma, PostgreSQL for saved records and state, and Ollama for local search embeddings (numeric representations of text). Your agent calls Tokonoma through the Model Context Protocol (MCP).
+
+The diagram shows the connections you choose to enable. Model providers can receive investigation context, and a hosted coding agent can also send retrieved records to its own provider. The [data-flow reference](references/data-flows.md) explains the callers, destinations, and network requirements.
 
 | Optional capability | What it adds | Start here |
 | --- | --- | --- |
-| Slack | Use `@Tokonoma` in invited channels and receive investigation results | [Slack setup](docs/guides/slack-app.md) |
-| Alert investigations | An investigation worker responds to selected alerts and queries the tools you configure | [Choose integrations](docs/integrations.md) |
-| Shared team access | A stable endpoint with network access and user authentication | [Private and team access](docs/guides/private-access.md) |
-| Model-assisted memory features | Server-side analysis and model-backed Slack questions, using a separately configured model credential | [Model configuration](docs/guides/memory-llm.md) |
-| Telemetry storage | Store and query telemetry in your own cloud infrastructure | [AWS](docs/platform/eks.md), [Google Cloud](docs/platform/gke.md) |
+| Slack | Use `@Tokonoma` in invited channels and receive investigation results | [Slack setup](references/slack-app.md) |
+| Alert investigations | An investigation worker responds to selected alerts and queries the tools you configure | [Choose integrations](references/integrations.md) |
+| Shared team access | A stable endpoint with network access and user authentication | [Private and team access](references/private-access.md) |
+| Memory analysis and Slack questions | Model-based processing with a separately configured credential | [Model configuration](references/memory-llm.md) |
+| Telemetry storage | Store and query telemetry in your own cloud infrastructure | [AWS](references/cloud-providers/aws.md), [Google Cloud](references/cloud-providers/google-cloud.md) |
 
-The base works on an existing AWS or Google Cloud cluster without optional telemetry.
+The base works on an existing AWS or Google Cloud cluster. Telemetry storage is optional.
 
 ## Before you start
 
-You need an existing Kubernetes cluster, workload and storage permissions, and a Tokonoma license. Your platform team supplies cluster access. Selected integrations need their own accounts and credentials. See the [prerequisite checks](docs/install.md#before-installing).
+You need an existing Kubernetes cluster, workload and storage permissions, and a Tokonoma license. Your platform team supplies cluster access. Selected integrations need their own accounts and credentials. See the [prerequisite checks](references/install.md#before-installing).
 
-The walkthrough uses bundled PostgreSQL and a temporary local connection. Choose an external database or shared endpoint before installing: both require preparation, and changing a database address does not move data.
+The walkthrough uses bundled PostgreSQL and a temporary local connection. If you want an external database or a shared endpoint, prepare it before installing. Changing a database address does not move data.
 
 ## Choose how to install
 
@@ -45,31 +71,22 @@ The walkthrough uses bundled PostgreSQL and a temporary local connection. Choose
 
 > Read SKILL.md and help me install Tokonoma. Identify the intended cluster and whether an installation already exists. Ask me for missing decisions and inputs before making changes. Use the shared installation guides and report the functional checks you complete.
 
-Keep `docs/` and `examples/` with `SKILL.md`. Opening the skill does not install anything.
+Keep `references/` and `examples/` with `SKILL.md`. The skill tells the agent how to use these files; opening it does not install anything.
 
-**By hand:** follow [Install Tokonoma](docs/install.md). Replace `REPLACE_WITH_...` inputs using each guide's table, then run the native commands. No installer scripts or shell exports are required.
-
-```mermaid
-flowchart LR
-  Choose[Choose target and features] --> Prepare[Check access and prepare inputs]
-  Prepare --> Install[Install Tokonoma]
-  Install --> Connect[Connect one coding agent]
-  Connect --> Verify[Save and retrieve a test record]
-  Verify --> Optional[Add and verify optional features]
-```
+**By hand:** follow [Install Tokonoma](references/install.md). Replace `REPLACE_WITH_...` inputs using each guide's table, then run the native commands. No installer scripts or shell exports are required.
 
 Run commands from an authorized workstation. You handle login, issued credentials, and administrator-only actions. An agent uses verified values and asks for missing inputs. Supply credentials through protected files or Kubernetes Secret references, never chat.
 
 ## Read the documentation
 
-Follow the walkthrough, then select features. Optional guides include prerequisites and checks.
+All documentation is in `references/`. Start with installation, or connect to an existing release. Then follow the links for the features you need. Each setup guide includes prerequisites and checks; humans and agents use the same files.
 
 | Your task | Documentation |
 | --- | --- |
-| Understand and prepare | [Data flows](docs/data-flows.md), [credentials and license](docs/guides/credentials.md), [input conventions](docs/reference/placeholder-examples.md) |
-| Install and connect | [Installation](docs/install.md), [coding agents](docs/guides/coding-agents.md), [external PostgreSQL](docs/guides/external-postgres.md) |
-| Add features or access | [Integrations](docs/integrations.md), [private access](docs/guides/private-access.md), [authentication](docs/guides/oauth.md), [public routing](docs/guides/public-mcp-ingress.md) |
-| Look up configuration | [Values](docs/reference/values.md), [endpoints](docs/reference/endpoints.md), [version pins](docs/guides/pin-image.md) |
-| Operate the installation | [Upgrade](docs/guides/upgrading.md), [troubleshoot](docs/guides/troubleshooting.md), [remove Tokonoma](docs/guides/uninstall.md) |
+| Understand and prepare | [Data flows](references/data-flows.md), [credentials and license](references/credentials.md), [input conventions](references/placeholder-examples.md) |
+| Install and connect | [Installation](references/install.md), [coding agents](references/coding-agents.md), [external PostgreSQL](references/external-postgres.md) |
+| Add features or access | [Integrations](references/integrations.md), [private access](references/private-access.md), [authentication](references/oauth.md), [public routing](references/public-mcp-ingress.md) |
+| Look up configuration | [Values](references/values.md), [endpoints](references/endpoints.md), [version pins](references/pin-image.md) |
+| Operate the installation | [Upgrade](references/upgrading.md), [troubleshoot](references/troubleshooting.md), [remove Tokonoma](references/uninstall.md) |
 
 Use your Tokonoma contact for a license or deployment help. Keep credentials, issued licenses, customer data, and unredacted diagnostics out of this repository and public issues.

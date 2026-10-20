@@ -1,38 +1,23 @@
 # Server-side LLM work on memory records
 
-Off by default. When you enable it, the Tokonoma server makes outbound calls to
-Anthropic carrying the content of memory records, to do two things:
+Memory processing is off by default. When enabled, the Tokonoma server sends memory content to Anthropic for these tasks:
 
-- **Adjudicate duplicate candidates.** The server continuously links records
-  that cover the same ground. Deciding whether two similar records actually
-  reach the *same conclusion* is the part no similarity measure can do, so a
-  model reads both and classifies the relationship. Records judged redundant
-  are collapsed to one in search results; records that disagree are shown
-  together with a conflict warning.
-- **Triage Slack messages** (only when the Slack app is enabled). The model
-  decides whether another app's post is an alert worth a recall, judges
-  whether the memories found are worth posting, and interprets free-text
-  `@Tokonoma` questions.
+- Review possible duplicates. The server continuously links records that cover the same ground. A similarity score cannot tell whether they reach the same conclusion, so a model reads both and classifies their relationship. Search results collapse redundant records into one result. Records that disagree appear together with a conflict warning.
+- Triage messages when the Slack app is enabled. The model decides whether another app's post is an alert that warrants memory recall, whether the retrieved memories are worth posting, and how to interpret free-text `@Tokonoma` questions.
 
-One switch governs these features because both send content outside your cluster.
+Both features send content outside your cluster and share one switch.
 
 ## What happens without it
 
-Deduplication still runs. The server links records that overlap, and search
-still collapses **re-saves whose authored content is identical** (same title,
-summary and body).
+Deduplication still runs. The server links overlapping records, and search collapses re-saves with identical authored content: the same title, summary and body.
 
-What it will not do is merge anything on similarity alone. Two records can
-share a symptom, a service set and most of their prose while naming different
-root causes. Without a model to read the conclusions,
-those pairs are linked but left alone.
-They accumulate as unresolved links and have no effect on what you see.
+Similarity alone does not merge records. Two records can describe the same symptoms and services in similar prose but name different root causes. Without a model to read their conclusions, those pairs remain linked and unresolved. The links accumulate without changing search results.
 
 Before changing an existing release, follow [version and configuration checks](upgrading.md). If its versions differ from this guide, resolve that difference before running the pinned command.
 
 ## Inputs and files
 
-Complete the [base installation](../install.md) first. Run commands on that administration workstation, from the customer working directory outside this documentation checkout. Replace placeholders before running commands; agents ask the operator for missing inputs.
+Complete the [base installation](install.md) first. Run commands on that administration workstation, from the customer working directory outside this documentation checkout. Replace placeholders before running commands; agents ask the operator for missing inputs.
 
 | Input | Meaning and source | Required when |
 |---|---|---|
@@ -99,8 +84,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deploy toko-mcp \
 
 Expected output: `anthropic`. This confirms the configured provider, not a successful model request. Check `@Tokonoma setup` if the [Slack app](slack-app.md) is installed.
 
-Duplicate review runs on the server's periodic reconciliation pass, so a backlog of
-already-linked pairs drains over the following passes rather than immediately.
+The server reviews duplicates periodically. A backlog of already-linked pairs is processed over the following passes, not immediately.
 
 ## Turn it off without removing the secret
 
@@ -114,8 +98,7 @@ mcp:
     enabled: false
 ```
 
-Repeat the complete Helm upgrade above with the changed overlay. This disables memory processing; it does not disable a separately enabled investigation runner. Records
-already collapsed stay collapsed; nothing new is judged.
+Repeat the complete Helm upgrade above with the changed overlay. This disables memory processing; it does not disable a separately enabled investigation runner. Records already collapsed stay collapsed; no new pairs are reviewed.
 
 ## Anthropic only
 
@@ -132,21 +115,16 @@ mcp:
     model: claude-haiku-4-5-20251001
 ```
 
-The work is short, high-volume and structured, so a smaller model is a
-reasonable override where cost matters more than judgement.
+These short, structured tasks run often. Consider a smaller model if lower cost matters more than the quality of its judgments.
 
 ## What it costs
 
 Usage depends on the selected model and the amount of content processed. Check your provider’s current pricing and usage dashboard before enabling it.
 
-For adjudication, one call per newly linked pair, once. Identical re-saves never reach it, and
-unrelated records are not linked in the first place, so volume tracks how often
-your team writes up the same thing twice rather than how many records you have.
+Duplicate review makes one call for each newly linked pair. Identical re-saves skip this step, and unrelated records are never linked. Usage therefore depends on how often your team writes about the same thing twice, rather than the total number of records.
 
 ## Data handling
 
-Enabling this sends record titles, summaries, bodies and reference URLs to
-Anthropic, and, with the Slack app on, the text of Slack messages it triages. If your deployment forbids outbound calls carrying customer content,
-leave it off. The behaviour described under "What happens without it" remains supported.
+Enabling this sends record titles, summaries, bodies and reference URLs to Anthropic. With the Slack app on, it also sends the text of messages it triages. Leave it off if your deployment forbids outbound calls carrying customer content. The behavior described under "What happens without it" remains supported.
 
-Return to [integrations](../integrations.md) or continue with the [Slack app](slack-app.md).
+Return to [integrations](integrations.md) or continue with the [Slack app](slack-app.md).

@@ -1,6 +1,6 @@
 # Configuration values
 
-Keep a small nonsecret values file in your customer working directory outside this repository. Supply credentials through protected files or existing Secret references. See [installation](../install.md) for file preparation.
+Keep a small values file without secrets in your customer working directory outside this repository. Supply credentials through protected files or existing Secret references. See [installation](install.md) for file preparation.
 
 Run the following command on a workstation with Helm installed. It needs no customer inputs and prints the complete defaults for chart `0.37.0`:
 
@@ -17,8 +17,7 @@ helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma --version 0.37.0
 | `mcp.ingress.enabled` | Default `false`. Configure hostname, TLS and access controls before enabling. |
 | `mcp.license` | License supplied with `--set-file`; creates a chart-owned Secret. |
 | `mcp.licenseSecret.name` / `.key` | Existing license Secret; takes precedence over inline license. |
-| `mcp.storage.backend` | `local` by default; also `s3`, `gcs`, or `none`. Multiple MCP pods need shared object storage, no attachments, or an existing RWX claim. |
-| `postgres.enabled` | Default `true`; disable only with [external PostgreSQL](../guides/external-postgres.md) configured. |
+| `postgres.enabled` | Default `true`; disable only with [external PostgreSQL](external-postgres.md) configured. |
 | `postgres.auth.password` | Normally generated and reused by cluster-connected Helm. Supply a stable secret for deterministic offline/GitOps rendering. |
 | `ollama.enabled` | Default `true`; provides local embeddings. The embedding model is `nomic-embed-text:v1.5`. |
 
@@ -31,7 +30,7 @@ helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma --version 0.37.0
 | `credentials.alertmanagerToken` | Runner Alertmanager receiver; sender must use the same bearer token. |
 | `grafanaMcp.grafana.apiKey` | Grafana Viewer service-account token for the optional adapter. |
 
-See [credentials](../guides/credentials.md) for Secret references, storage in Helm metadata, and rotation. The chart does not validate third-party token permissions during template rendering.
+See [credentials](credentials.md) for Secret references, storage in Helm metadata, and rotation. The chart does not validate third-party token permissions during template rendering.
 
 ## Slack and investigations
 
@@ -46,7 +45,7 @@ See [credentials](../guides/credentials.md) for Secret references, storage in He
 | `runner.destinations.slackApp.enabled` | Delivers investigations through the native Slack app. |
 | `runner.ingress.webhookPaths` | Default `[]`; explicit `[/webhooks/alertmanager]`, `[/webhooks/datadog]`, or both. Lists replace, rather than append. |
 
-Follow [alert investigations](../guides/alert-investigations.md) for a complete compatible values file. Detection features appearing in newer development builds are outside this released baseline.
+Follow [alert investigations](alert-investigations.md) for a complete compatible values file. Detection features appearing in newer development builds are outside this released baseline.
 
 ## OSS Grafana MCP
 
@@ -54,12 +53,12 @@ Follow [alert investigations](../guides/alert-investigations.md) for a complete 
 
 For externally managed Viewer credentials, leave `grafanaMcp.grafana.apiKey` empty and set `grafanaMcp.grafana.apiKeySecret.name` and `.key`. Inline Viewer credentials take precedence upstream. The internal adapter caller token is separate: `grafanaMcp.auth.token`, or `grafanaMcp.auth.createSecret: false` with `grafanaMcp.envValueFrom.MCP_GRAFANA_SERVER_TOKEN.secretKeyRef` for an externally managed Secret.
 
-Generated PostgreSQL and adapter caller credentials rely on cluster lookup. For offline/GitOps rendering, supply stable explicit credentials or external Secret references. Do not apply repeated offline renders with freshly generated passwords. See [rotation](../guides/alert-investigations.md#rotate-credentials).
+Generated PostgreSQL and adapter caller credentials rely on cluster lookup. For offline/GitOps rendering, supply stable explicit credentials or external Secret references. Do not apply repeated offline renders with freshly generated passwords. See [rotation](alert-investigations.md#rotate-credentials).
 
 ## Telemetry and storage
 
-EKS or GKE hosting alone does not require telemetry or object storage. Complete the platform guide's persistent-volume checks for a base installation. Set `telemetryPlatform: true` only when you choose Tokonoma's telemetry backend. Supply an organization slug in `customer`, a `region`, object storage buckets, and a workload identity. `objectStorage.serviceAccountCreate` defaults to `false`; the platform examples explicitly create the annotated account.
+Installing on EKS or GKE does not require telemetry or object storage. Complete the cloud-provider guide's persistent-volume checks for a base installation. Set `telemetryPlatform: true` only when you choose Tokonoma's telemetry backend. Supply an organization slug in `customer`, a `region`, a telemetry bucket, and a workload identity. `objectStorage.serviceAccountCreate` defaults to `false`; the cloud-provider examples explicitly create the annotated account.
 
-The shared `customer` value derives index names and, when not overridden, bucket names. Set `objectStorage.indexesBucket` and `objectStorage.attachmentsBucket` for explicit bucket names. Use `objectStorage.indexesScheme: gs` with GCS. The chart does not create buckets or cloud IAM roles.
+The chart uses the shared `customer` value to build index names and default bucket names. Set `objectStorage.indexesBucket` for an explicit bucket name. Use `objectStorage.indexesScheme: gs` with GCS. The chart does not create buckets or cloud IAM roles.
 
-`otelCollector.enabled`, `prometheus.enabled`, and `grafana.enabled` install optional self-monitoring components. These are disabled by default. See [EKS](../platform/eks.md), [GKE](../platform/gke.md), and [endpoints](endpoints.md).
+`otelCollector.enabled`, `prometheus.enabled`, and `grafana.enabled` install optional self-monitoring components. These are disabled by default. See [EKS](cloud-providers/aws.md), [GKE](cloud-providers/google-cloud.md), and [endpoints](endpoints.md).
