@@ -1,0 +1,8 @@
+.DS_Store
+site/
+.venv/
+*-local.yaml
+*.key
+*.pem
+.env*
+!*.example

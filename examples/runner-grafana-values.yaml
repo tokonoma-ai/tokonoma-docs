@@ -1,0 +1,25 @@
+# Chart 0.37.0. Replace the Grafana URL; supply credentials as protected files.
+mcp:
+  image:
+    tag: "0.68.0"
+  auth:
+    enabled: false
+  ingress:
+    enabled: false
+  storage:
+    backend: none
+  sibling:
+    enabled: true
+  memoryLlm:
+    enabled: true
+  slack:
+    autoRecallEnabled: false
+runner:
+  enabled: true
+  destinations:
+    slackApp:
+      enabled: true
+grafanaMcp:
+  enabled: true
+  grafana:
+    url: https://grafana.example.com
