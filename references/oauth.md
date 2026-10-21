@@ -2,7 +2,7 @@
 
 Configure OAuth before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Complete the [installation](../install.md). Use Helm 3.14+, a stable HTTPS hostname, and your deployment working directory with cluster access. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders; agents must ask for missing choices and secret paths, never contents.
+Complete the [installation](install.md). Use Helm 3.14+ and a stable HTTPS hostname. Run commands from your deployment directory on a computer with cluster access. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Stop if either command identifies a different cluster.
 
 For human SAML login, start with [Google Workspace](google-saml.md) or [Okta](okta-saml.md). Add credential authentication below only if needed. Both use `tokonoma-oauth.yaml`.
 
-`mcp.auth.enabled` controls OAuth routes and bearer protection. `mcp.auth.provider` selects the optional credential verifier; SAML works without it.
+`mcp.auth.enabled` controls OAuth routes and bearer protection. `mcp.auth.provider` selects the optional provider that checks credentials. SAML works without it.
 
 ## 1. Prepare the provider
 
@@ -31,7 +31,7 @@ For Cognito, create a user pool and record its ID and region. Add a Cognito-mana
 
 The browser form and machine grant both verify this app client. Enter its ID as **Client ID** and secret as **Client Secret**. Cognito pool-user usernames and passwords do not work; use SAML for individual human login.
 
-For legacy Google Identity Platform/Firebase, enable **Email/Password** sign-in and provision accounts. Tokonoma uses `signInWithPassword`: enter account email as **Client ID** and password as **Client Secret** in both browser and machine requests. Google OAuth app credentials do not work. Obtain that project’s API key. Create the namespace if absent:
+For legacy Google Identity Platform/Firebase, enable **Email/Password** sign-in and provision accounts. Tokonoma uses `signInWithPassword`: enter account email as **Client ID** and password as **Client Secret** in both browser and machine requests. Google OAuth app credentials do not work. Get that project's API key. Create the namespace if absent:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" create namespace tokonoma
@@ -66,13 +66,13 @@ mcp:
         key: apiKey
 ```
 
-Set `domainPrefix` to your pool’s Cognito-managed prefix in `REPLACE_WITH_COGNITO_DOMAIN_PREFIX.auth.REPLACE_WITH_AWS_REGION.amazoncognito.com`, replacing the chart default. Tokonoma uses it to verify machine credentials.
+Set `domainPrefix` to your pool's Cognito-managed prefix in `REPLACE_WITH_COGNITO_DOMAIN_PREFIX.auth.REPLACE_WITH_AWS_REGION.amazoncognito.com`, replacing the chart default. Tokonoma uses it to verify machine credentials.
 
 `mcp.auth.cognito.region` overrides the top-level `region`. If both are empty, the server uses `us-west-2`.
 
 `provider: google` selects legacy credentials, not Google Workspace SAML.
 
-Prepare `tokonoma-public.yaml` and `tokonoma-ingress.yaml` using the [public MCP guide](public-mcp-ingress.md), then deploy them with authentication below. For existing private HTTPS routing, omit both files. Set `domain` to the route’s HTTPS hostname.
+Prepare `tokonoma-public.yaml` and `tokonoma-ingress.yaml` using the [public MCP guide](public-mcp-ingress.md), then deploy them with authentication below. For existing private HTTPS routing, omit both files. Set `domain` to the route's HTTPS hostname.
 
 ## 3. Deploy and verify
 
@@ -92,13 +92,13 @@ Wait for Helm to report `STATUS: deployed`. Then check the OAuth metadata:
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/.well-known/oauth-protected-resource/mcp
 ```
 
-The expected response is `200`. Then check the protected MCP endpoint:
+Expect `200`. Then check the protected MCP endpoint:
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/mcp
 ```
 
-The expected response before login is `401`.
+Expect `401` before login.
 
 [Connect your agent](coding-agents.md#use-a-public-endpoint) to `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
 
@@ -146,9 +146,9 @@ mcp:
           checksum: REPLACE_WITH_SECRET_CHECKSUM
 ```
 
-`configured` secrets are mounted read-only, never stored in PostgreSQL. To rotate without downtime, add `nextSecretRef`, deploy with both secrets, update callers, then promote the new secret and remove the old one in a second deployment. Update each reference's `checksum` when Secret data changes to roll the pod.
+`configured` secrets are mounted read-only, never stored in PostgreSQL. To rotate without downtime, add `nextSecretRef`, deploy with both secrets, update callers, then promote the new secret and remove the old one in a second deployment. Update each reference's `checksum` when Secret data changes so the pod restarts.
 
-Omitted `scopes` defaults to `[toko-mcp/query]`; `scopes: []` is rejected. To deny access, set `enabled: false` or remove the client.
+If you omit `scopes`, it defaults to `[toko-mcp/query]`; `scopes: []` is rejected. To deny access, set `enabled: false` or remove the client.
 
 For `external` clients, set `id` to the Cognito app client ID or legacy Google Identity/Firebase account email. Use `client_credentials` without `secretRef`; `mcp.auth.provider` verifies every credential use. Match `tokenEndpointAuthMethod` to the caller: `client_secret_post` for form fields or `client_secret_basic` for HTTP Basic:
 
@@ -166,7 +166,7 @@ mcp:
 
 `mcp.auth.clientCredentialsRefreshMode: legacy` preserves refresh tokens for `client_credentials`. Prefer `disabled` for new managed deployments; switch existing automation only after confirming it can repeat the credential grant.
 
-With `disabled`, presented credential refresh tokens are consumed and rejected; rollback to `legacy` cannot revive them. Existing access tokens retain their expiry. Authorization-code refresh tokens still follow each client’s `refresh_token` grant. Older browser password sessions may need one new login because their tokens lack the originating grant.
+With `disabled`, the server consumes and rejects credential refresh tokens; rollback to `legacy` cannot revive them. Existing access tokens retain their expiry. Authorization-code refresh tokens still follow each client's `refresh_token` grant. Older browser password sessions may need one new login because their tokens lack the originating grant.
 
 This release supports `authorization_code`, `refresh_token`, and `client_credentials`. These settings do not enable JWT bearer or ID-JAG redemption.
 

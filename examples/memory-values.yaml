@@ -6,3 +6,5 @@ mcp:
     enabled: false
   ingress:
     enabled: false
+  storage:
+    backend: none

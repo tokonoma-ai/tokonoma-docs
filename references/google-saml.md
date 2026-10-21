@@ -1,22 +1,22 @@
 # Direct Google Workspace SAML login
 
-Complete the [installation](../install.md), then configure Google Workspace login below.
+Complete the [installation](install.md), then configure Google Workspace login.
 
 Google SAML supplies memory-sharing groups at login. Tokonoma does not query or synchronize Google Directory.
 
 ## Prerequisites
 
-Use Helm 3.14+, `jq`, chart `0.37.0`, and image `0.68.0`. Run commands from your deployment working directory with cluster access; use Google Admin Console for provider steps. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders; agents must ask for missing choices and secret paths, never contents.
+Use Helm 3.14+, `jq`, chart `0.37.0`, and image `0.68.0`. Run commands from your deployment directory on a computer with cluster access. Configure Google in Google Admin Console. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| `REPLACE_WITH_KUBE_CONTEXT`, `tokonoma-values.yaml`, license file and secret directory | Your [installation](../install.md) record; persistent PostgreSQL is required | Before cluster commands |
+| `REPLACE_WITH_KUBE_CONTEXT`, `tokonoma-values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
 | `REPLACE_WITH_MCP_HOSTNAME` and allowed email domains | Your DNS and identity administrators | Before creating the Google app |
 | Stable NameID attribute and assigned users | Google Workspace or Cloud Identity super administrator | Before the first login |
 | Google Entity ID, SSO URL and signing certificate | Google custom SAML app, steps 3 and 4 | Before saving authentication values |
 | Test users and selected groups | Identity administrator: one assigned user, plus two group members and an outsider for group checks | Before login verification |
 
-Choose the hostname and stable NameID before creating the app. Changing NameID creates a different Tokonoma identity and can orphan private memories. Hostname or service-provider (SP) entity ID changes require matching updates in Google and Tokonoma.
+Choose the hostname and stable NameID before creating the app. Changing NameID creates a new Tokonoma identity; private memories may stay tied to the old identity. Hostname or service-provider (SP) entity ID changes require matching updates in Google and Tokonoma.
 
 Use a stable HTTPS hostname reachable by users and Google. Replace namespace `tokonoma` if your installation uses another.
 
@@ -83,7 +83,7 @@ In Google Admin Console:
    | Primary email | `email` | Yes |
    | Display name, or another suitable display field | `display_name` | No |
 
-7. Under **Group membership**, select up to 75 groups users may share with and set the app attribute to `groups`. Google's emitted value becomes the group label and, prefixed with `google:`, its ID. Use the returned `available_groups` during verification.
+7. Under **Group membership**, select up to 75 groups users may share with and set the app attribute to `groups`. Google returns the group label. Its ID is the label prefixed with `google:`. Use the returned `available_groups` during verification.
 8. Finish the app. Under **User access**, enable the intended organizational units or access groups, including the test users.
 
 See Google's [app setup](https://knowledge.workspace.google.com/admin/apps/set-up-your-own-custom-saml-app?hl=en) and [group mapping](https://knowledge.workspace.google.com/admin/apps/about-group-membership-mapping) references for field details and nested membership.
@@ -96,7 +96,7 @@ Start login from the MCP client, not Google's app tile or **Test SAML login**. T
 
 ## 4. Collect the exact Google IdP values
 
-Keep these Google Identity Provider values:
+Record these Google Identity Provider values:
 
 - the exact **Entity ID**, typically
   `https://accounts.google.com/o/saml2?idpid=...`;
@@ -106,13 +106,13 @@ Keep these Google Identity Provider values:
   and `END CERTIFICATE` lines.
 
 Do not derive either URL from the other. Issuer, audience, destination,
-recipient, and attribute names are exact, case-sensitive comparisons.
+recipient, and attribute names must match exactly, including case.
 
 Save the certificate as `REPLACE_WITH_SECRET_DIRECTORY/google-signing.crt`.
 
 ## 5. Deploy the connection
 
-Prepare public-routing files using the [HTTPS Ingress guide](public-mcp-ingress.md); deploy them with authentication below. For an existing private HTTPS proxy, omit `tokonoma-public.yaml` and `tokonoma-ingress.yaml` from both commands. Keep the hostname, `domain`, and OAuth origin identical.
+Prepare public routing files with the [HTTPS Ingress guide](public-mcp-ingress.md) and deploy them with authentication below. For an existing private HTTPS proxy, omit `tokonoma-public.yaml` and `tokonoma-ingress.yaml` from both commands. Keep the hostname, `domain`, and OAuth origin identical.
 
 Create the namespace and certificate Secret, then record the JSON-file checksum:
 
@@ -135,7 +135,7 @@ sha256sum "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
 
 On macOS, use `shasum -a 256`. Hash the JSON file, not the certificate fingerprint or raw PEM. Put only the Secret name, key, and checksum in Helm values.
 
-Save as `tokonoma-oauth.yaml`, preserving any existing credential-provider settings:
+Save as `tokonoma-oauth.yaml`, preserving any existing credential-provider settings. Copy the printed checksum into `checksum`:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -211,9 +211,9 @@ helm upgrade --install tokonoma --reset-then-reuse-values \
   --wait --timeout 10m
 ```
 
-Expect Helm `STATUS: deployed` and namespace/Secret results `created`, `configured`, or `unchanged`. Copy the printed checksum into `checksum`.
+Expect Helm `STATUS: deployed` and namespace/Secret results `created`, `configured`, or `unchanged`.
 
-Rendering rejects incomplete SAML settings, non-HTTPS SSO, empty domain allowlists, missing Google group attributes, or missing certificate checksums. Checksum changes roll the Tokonoma pod.
+Rendering rejects incomplete SAML settings, non-HTTPS SSO, empty domain allowlists, missing Google group attributes, or missing certificate checksums. Changing the checksum restarts the Tokonoma pod.
 
 ## 6. Verify metadata and login
 
@@ -240,15 +240,15 @@ Verify identity and access with uniquely named temporary memories:
 1. Save a memory with the default sharing. Its result must contain
    `owner_group_id: "toko:everyone"`. Record the returned `owner_user_id` and
    `available_groups`.
-2. Confirm `owner_user_id` starts with `google:`. Reauthenticate the same user
+2. Confirm `owner_user_id` starts with `google:`. Sign in again as the same user
    and confirm the value is unchanged.
 3. Save a private memory with `share_with: "private"`; fetch and update it as
    the same user.
 4. Choose the exact selected Google group ID or label from `available_groups`.
    Save a memory with `share_with: "group"` and that value in `group`.
-5. Reauthenticate as a second member of that Google group and confirm the
-   group-shared memory is readable. Reauthenticate as the outsider and confirm
-   it is not returned or fetchable. Neither user should be able to read the
+5. Sign in as a second member of that Google group and confirm the
+   group-shared memory is readable. Sign in as the outsider and confirm
+   the memory is not returned or fetchable. Neither user should be able to read the
    first user's private memory.
 6. Archive all temporary records when testing is complete.
 
@@ -266,11 +266,11 @@ helm --kube-context "REPLACE_WITH_KUBE_CONTEXT" rollback tokonoma \
   --wait --timeout 10m
 ```
 
-Rollback restores workloads and values. It does not revoke access or refresh tokens, delete test memories, remove the certificate Secret, or change the Google app. Revoke affected clients where possible; existing access can last until the configured `sessionMaxSeconds` boundary.
+Rollback restores workloads and values. It does not revoke access or refresh tokens, delete test memories, remove the certificate Secret, or change the Google app. Revoke affected clients where possible; existing access can last until the configured `sessionMaxSeconds` expires.
 
 ## Troubleshooting
 
-Google's success means it issued a response, not that Tokonoma accepted it. For **Sign-in failed**, find the request ID on the page or in `X-Tokonoma-Request-ID`, then search Tokonoma logs:
+Google reports success when it issues a response, even if Tokonoma rejects that response. For **Sign-in failed**, find the request ID on the page or in `X-Tokonoma-Request-ID`, then search Tokonoma logs:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
@@ -278,7 +278,7 @@ kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
   | grep 'REPLACE_WITH_REQUEST_ID'
 ```
 
-Tokonoma logs a safe toolkit failure reason, not the assertion payload.
+Tokonoma logs the toolkit's safe failure reason without the assertion payload.
 
 | Symptom | What to compare |
 | --- | --- |

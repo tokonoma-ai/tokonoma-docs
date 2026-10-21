@@ -9,23 +9,23 @@ Follow the same [customer guides](README.md#read-the-documentation) humans use. 
 
 ## Establish the requested task
 
-Identify the task, authorized cluster context, release, namespace, features, and access model. Inspect existing state before installing; a configuration change is not a reinstall.
+Identify the requested task, authorized cluster context, release, namespace, features, and access model. Check the existing installation before making changes.
 
-Read the customer's saved values files in application order and check the installed release first. Inspect nonsecret integration settings and Secret references; do not print secret values. Shipped examples are defaults, not evidence of the customer's tools. Ask only about missing settings, conflicts, or requested additions. Confirm which integrations to enable and save those choices in the customer's values files.
+Read the customer's saved values files in application order and check the installed release first. Inspect nonsecret integration settings and Secret references; do not print secret values. Do not infer the customer's tools from the defaults in the supplied examples. Ask only about missing settings, conflicts, or requested additions. Confirm which integrations to enable and save those choices in the customer's values files.
 
-Batch unresolved inputs and decisions into one question where practical. Explain human-only actions, such as obtaining a license, signing in, or approving an app, and how to check completion.
+Group missing inputs and decisions into one question where practical. Explain human-only actions, such as obtaining a license, signing in, or approving an app, and how to check completion.
 
 ## Read only the relevant guides
 
 | Task | Read |
 | --- | --- |
-| New installation | [Install](docs/install.md), [credentials](docs/guides/credentials.md), [connect an agent](docs/guides/coding-agents.md) |
-| Platform or database preparation | Applicable [AWS](docs/platform/eks.md), [Google Cloud](docs/platform/gke.md), or [external PostgreSQL](docs/guides/external-postgres.md) guide |
-| Slack, investigations, or model features | [Integrations](docs/integrations.md), then the selected guide; [memory model](docs/guides/memory-llm.md) when needed |
-| Shared access or login | [Private access](docs/guides/private-access.md), [OAuth](docs/guides/oauth.md), chosen [Google](docs/guides/google-saml.md) or [Okta](docs/guides/okta-saml.md) provider; [public routing](docs/guides/public-mcp-ingress.md) only when selected |
-| Existing installation | [Configuration preservation](docs/guides/upgrading.md), then the feature, [troubleshooting](docs/guides/troubleshooting.md), or [uninstall](docs/guides/uninstall.md) guide |
+| New installation | [Install](references/install.md), [credentials](references/credentials.md), [connect an agent](references/coding-agents.md) |
+| Cloud provider or database preparation | Applicable [AWS](references/cloud-providers/aws.md), [Google Cloud](references/cloud-providers/google-cloud.md), or [external PostgreSQL](references/external-postgres.md) guide |
+| Slack, investigations, or model features | [Integrations](references/integrations.md), then the selected guide; [memory model](references/memory-llm.md) when needed |
+| Shared access or login | [Private access](references/private-access.md), [OAuth](references/oauth.md), chosen [Google](references/google-saml.md) or [Okta](references/okta-saml.md) provider; [public routing](references/public-mcp-ingress.md) only when selected |
+| Existing installation | [Configuration preservation](references/upgrading.md), then the feature, [troubleshooting](references/troubleshooting.md), or [uninstall](references/uninstall.md) guide |
 
-Check [data flows](docs/data-flows.md) before changing exposure or data destinations. Use [values](docs/reference/values.md), [endpoints](docs/reference/endpoints.md), and [input conventions](docs/reference/placeholder-examples.md) for lookups. Cloud hosting does not require optional telemetry.
+Check [data flows](references/data-flows.md) before changing exposure or data destinations. Use [values](references/values.md), [endpoints](references/endpoints.md), and [input conventions](references/placeholder-examples.md) for lookups. Cloud hosting does not require optional telemetry.
 
 ## Prepare and execute
 
@@ -35,7 +35,7 @@ Resolve documentation paths from this skill directory. Copy examples into the cu
 
 Ask for protected credential paths or Secret names and keys, never secret contents in chat. Do not print secrets. Leave provider template variables such as Datadog notification fields intact.
 
-Explain changes and proceed within the customer's authorization. Wait for decisions that resolve missing inputs, conflicting targets, destructive changes, or expanded access or data sharing.
+Explain the changes and proceed within the customer's authorization. Resolve missing inputs and conflicting targets before acting. Ask before destructive changes or broader access or data sharing.
 
 ## Verify and hand off
 

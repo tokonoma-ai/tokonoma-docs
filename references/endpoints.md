@@ -1,6 +1,6 @@
 # Endpoints
 
-All services are ClusterIP unless you enable Ingress for the MCP. Only enabled components create their corresponding services.
+Services use ClusterIP by default. You can enable Ingress for the MCP. Each service exists only when its component is enabled.
 
 Run `kubectl` commands below from an operator workstation with access to the intended cluster. Replace inputs before use; agents must ask for unresolved choices.
 
@@ -12,8 +12,8 @@ Run `kubectl` commands below from an operator workstation with access to the int
 
 | Service | Port | Use |
 |---|---|---|
-| `toko-mcp` | 8000 | MCP API at `/mcp`; readiness at `/health`. Also `/skills` (skill catalog), `/usage-stats` (licence usage), `/display/<file>` (rendered output links) and, when attachments are stored on the local volume or GCS, `/attachments/<id>`. With OAuth on: `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource/mcp`, `/authorize`, `/token`, `/register`, `/revoke`; with SAML, `/saml/metadata` and `/oauth/saml/*`. Liveness (`/livez`) and Prometheus metrics (`/metrics`: `toko_mcp_*` tool, backend and usage series) are served separately on container port 8001, which the Service does not expose, so neither is reachable through the Ingress. The pods carry `prometheus.io/*` scrape annotations for it (`mcp.podAnnotations`). |
-| `toko-mcp-unattended` | 8000 | The unattended instance toko-runner drives (when `mcp.sibling.enabled=true`). Same API; no Ingress, no Slack. |
+| `toko-mcp` | 8000 | MCP API at `/mcp`; readiness at `/health`. Also `/skills` (skill catalog), `/usage-stats` (licence usage), `/display/<file>` (rendered output links). With OAuth on: `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource/mcp`, `/authorize`, `/token`, `/register`, `/revoke`; with SAML, `/saml/metadata` and `/oauth/saml/*`. Liveness (`/livez`) and Prometheus metrics (`/metrics`: `toko_mcp_*` tool, backend and usage series) are served separately on container port 8001, which the Service does not expose, so neither is reachable through the Ingress. The pods carry `prometheus.io/*` scrape annotations for it (`mcp.podAnnotations`). |
+| `toko-mcp-unattended` | 8000 | The unattended instance used by toko-runner (when `mcp.sibling.enabled=true`). Same API; no Ingress, no Slack. |
 | `toko-postgres` | 5432 | Memory store (internal) |
 | `toko-ollama` | 11434 | Embeddings (internal) |
 | `toko-searcher` | 7280 | Telemetry search API (when `telemetryPlatform=true`) |
@@ -30,10 +30,10 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-mc
 ```
 
 Leave the port-forward running. Once it reports `Forwarding from`, point your MCP client at `http://127.0.0.1:8000/mcp`. Follow the
-[coding agent guide](../guides/coding-agents.md) for Claude Code, Cursor, and
+[coding agent guide](coding-agents.md) for Claude Code, Cursor, and
 Codex setup.
 
-The MCP endpoint has no application-level authentication by default. Keep it private for initial setup. Configure [OAuth](../guides/oauth.md) before allowing shared or [public access](../guides/public-mcp-ingress.md). ClusterIP by itself does not restrict which other cluster workloads can connect.
+The MCP endpoint has no application-level authentication by default. Keep it private for initial setup. Configure [OAuth](oauth.md) before allowing shared or [public access](public-mcp-ingress.md). ClusterIP by itself does not restrict which other cluster workloads can connect.
 
 ## Alert webhook access
 
@@ -42,9 +42,9 @@ An in-cluster sender uses
 uses the approved HTTPS MCP Ingress host plus its explicitly selected webhook
 path. Both receivers require `Authorization: Bearer REPLACE_WITH_SOURCE_TOKEN`; selecting
 an Ingress rule does not create a credential or bypass ingress-level auth.
-Grafana Cloud cannot be assumed to reach a private service or Tailscale-only
-hostname. See [Alertmanager/Grafana setup](../guides/alert-investigations.md#external-alertmanager-or-grafana-alerting)
-or [Datadog setup](../guides/datadog-alerts.md).
+Verify that Grafana Cloud can reach the endpoint; a private service or Tailscale-only
+hostname may be inaccessible. See [Alertmanager/Grafana setup](alert-investigations.md#external-alertmanager-or-grafana-alerting)
+or [Datadog setup](datadog-alerts.md).
 
 ## OTLP ingest
 
@@ -67,11 +67,11 @@ namespace. The Grafana Viewer token is held by the
 adapter only. Its data tools cover the configured data sources, Prometheus,
 Loki, Tempo, Pyroscope and assertions, with writes disabled.
 
-The service stays private and has no Kubernetes API permissions. Its native
+The service is private and has no Kubernetes API permissions. Its
 `grafanaMcp.fullnameOverride` names the Deployment and Service. If changing it,
-update the caller-token reference and allowed hosts together. For the
-complete one-install configuration, see
-[Alert-triggered investigations](../guides/alert-investigations.md#install-with-oss-grafana-mcp).
+update the caller-token reference and allowed hosts together. For a
+complete installation configuration, see
+[Alert-triggered investigations](alert-investigations.md#install-with-oss-grafana-mcp).
 
 ### Self-monitoring Grafana UI
 

@@ -2,7 +2,7 @@
 
 Chart and application versions are independent. This guide uses chart `0.37.0` and application `0.68.0`; the chart defaults to the mutable application tag `latest`.
 
-Run commands from an operator workstation with Helm 3.14+ and `kubectl`, in your customer working directory outside this repository. Follow [upgrade preparation](upgrading.md) before changing an existing release. For a first installation, set these pins in the [installation guide](../install.md) instead.
+Run commands from an operator workstation with Helm 3.14+ and `kubectl`, in your customer working directory outside this repository. Follow [upgrade preparation](upgrading.md) before changing an existing release. For a first installation, set these pins in the [installation guide](install.md) instead.
 
 | Input | Source and when required |
 |---|---|
@@ -30,6 +30,6 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deployment toko-mcp 
   -o jsonpath='{.spec.template.spec.containers[?(@.name=="mcp")].image}'
 ```
 
-Expect the image tag to end in `:0.68.0`. This checks configuration; complete the health, licensed memory-read, and enabled-integration checks in [upgrading](upgrading.md) to verify behavior.
+Expect the image tag to end in `:0.68.0`. This checks the configured version. To verify behavior, complete the health, licensed memory-read, and enabled-integration checks in [upgrading](upgrading.md).
 
 Public registries: [chart and images](https://gallery.ecr.aws/tokonoma), [application image](https://gallery.ecr.aws/tokonoma/toko-mcp). Test a newer chart and image together before changing these pins.

@@ -1,22 +1,22 @@
 # Direct Okta SAML login
 
-Complete the [installation](../install.md), then configure Okta login below.
+Complete the [installation](install.md), then configure Okta login.
 
 Okta users can use private memories and `toko:everyone`. Tokonoma does not import Okta groups; do not add a group statement.
 
 ## Prerequisites
 
-Use Helm 3.14+, `jq`, chart `0.37.0`, and image `0.68.0`. Run commands from your deployment working directory with cluster access; use Okta Admin Console for provider steps. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders; agents must ask for missing choices and secret paths, never contents.
+Use Helm 3.14+, `jq`, chart `0.37.0`, and image `0.68.0`. Run commands from your deployment directory on a computer with cluster access. Configure Okta in Okta Admin Console. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| `REPLACE_WITH_KUBE_CONTEXT`, `tokonoma-values.yaml`, license file and secret directory | Your [installation](../install.md) record; persistent PostgreSQL is required | Before cluster commands |
+| `REPLACE_WITH_KUBE_CONTEXT`, `tokonoma-values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
 | `REPLACE_WITH_MCP_HOSTNAME` and allowed email domains | Your DNS and identity administrators | Before creating the Okta app |
 | Okta SAML app and assigned test user | Okta administrator with app creation and assignment permissions | Before the first login |
 | Okta issuer, SSO URL and signing certificate | The app's **Sign On** setup instructions, step 3 | Before saving authentication values |
 | Current Helm revision | `helm history` below | Before changing an existing release |
 
-Choose the hostname before creating the app. Changing the Okta issuer or persistent NameID changes the user's Tokonoma identity and can orphan private memories.
+Choose the hostname before creating the app. Changing the Okta issuer or persistent NameID changes the user's Tokonoma identity; private memories may stay tied to the old identity.
 
 Use a stable HTTPS hostname reachable by users and Okta. Replace namespace `tokonoma` if your installation uses another.
 
@@ -118,9 +118,9 @@ Save the certificate as `REPLACE_WITH_SECRET_DIRECTORY/okta-signing.crt`.
 
 ## 4. Deploy the connection
 
-Prepare public-routing files using the [HTTPS Ingress guide](public-mcp-ingress.md); deploy them with authentication below. For an existing private HTTPS proxy, omit `tokonoma-public.yaml` and `tokonoma-ingress.yaml` from both commands. Keep the hostname, `domain`, and OAuth origin identical.
+Prepare public routing files with the [HTTPS Ingress guide](public-mcp-ingress.md) and deploy them with authentication below. For an existing private HTTPS proxy, omit `tokonoma-public.yaml` and `tokonoma-ingress.yaml` from both commands. Keep the hostname, `domain`, and OAuth origin identical.
 
-Create the namespace and certificate Secret, then record the JSON-file checksum. The namespace command also works if it already exists. If you lack namespace permissions, ask the platform team to provision it first:
+Create the namespace and certificate Secret, then record the JSON-file checksum. The namespace command also works if it already exists. If you lack namespace permissions, ask the platform team to create it first:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" create namespace tokonoma \
@@ -141,7 +141,7 @@ sha256sum "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
 
 On macOS, use `shasum -a 256`. Hash the JSON file, not the certificate fingerprint or raw PEM. Put only the Secret name, key, and checksum in Helm values.
 
-Save as `tokonoma-oauth.yaml`, preserving any existing credential-provider settings:
+Save as `tokonoma-oauth.yaml`, preserving any existing credential-provider settings. Copy the printed checksum into `checksum`:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -214,9 +214,9 @@ helm upgrade --install tokonoma --reset-then-reuse-values \
   --wait --timeout 10m
 ```
 
-Expect Helm `STATUS: deployed` and namespace/Secret results `created`, `configured`, or `unchanged`. Copy the printed checksum into `checksum`.
+Expect Helm `STATUS: deployed` and namespace/Secret results `created`, `configured`, or `unchanged`.
 
-Rendering rejects incomplete SAML settings, non-HTTPS SSO, empty domain allowlists, or missing certificate checksums. Checksum changes roll the Tokonoma pod.
+Rendering rejects incomplete SAML settings, non-HTTPS SSO, empty domain allowlists, or missing certificate checksums. Changing the checksum restarts the Tokonoma pod.
 
 ## 5. Verify metadata and login
 
@@ -269,7 +269,7 @@ Rollback restores workloads and values. It does not revoke access or refresh tok
 
 ## Troubleshooting
 
-Okta's **System Log** success means it issued a response, not that Tokonoma accepted it. For **Sign-in failed**, find the request ID on the page or in `X-Tokonoma-Request-ID`, then search Tokonoma logs:
+Okta's **System Log** reports success when it issues a response, even if Tokonoma rejects that response. For **Sign-in failed**, find the request ID on the page or in `X-Tokonoma-Request-ID`, then search Tokonoma logs:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
@@ -277,7 +277,7 @@ kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
   | grep 'REPLACE_WITH_REQUEST_ID'
 ```
 
-Tokonoma logs the safe toolkit failure reason, not the assertion payload.
+Tokonoma logs the toolkit's safe failure reason without the assertion payload.
 
 | Symptom | What to compare |
 | --- | --- |
@@ -294,7 +294,7 @@ Tokonoma logs the safe toolkit failure reason, not the assertion payload.
 
 ## Rotate the signing certificate
 
-Avoid a cutover gap:
+Keep both certificates trusted while you switch:
 
 1. Generate the new certificate in Okta but keep the old one active.
 2. Put both PEM certificates in the trusted JSON array.

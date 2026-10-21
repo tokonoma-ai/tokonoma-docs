@@ -35,7 +35,7 @@ projects.
 claude mcp add --transport http --scope user tokonoma http://127.0.0.1:8000/mcp
 ```
 
-Confirm that the entry was saved:
+Check the saved entry:
 
 ```sh
 claude mcp get tokonoma
@@ -49,7 +49,7 @@ Open Claude Code and run `/mcp` to confirm that `tokonoma` is connected.
 codex mcp add tokonoma --url http://127.0.0.1:8000/mcp
 ```
 
-Confirm that the entry was saved:
+Check the saved entry:
 
 ```sh
 codex mcp get tokonoma
@@ -79,7 +79,7 @@ are enabled.
 
 ## Verify memory access
 
-Before onboarding, complete the [save-and-full-body-read check](../install.md#5-connect-and-confirm-memory-access). Require the saved record's identifier and matching text.
+Before onboarding, complete the [save-and-full-body-read check](install.md#5-connect-and-confirm-memory-access). Confirm the saved record's identifier and that its retrieved text matches what you saved.
 
 ## 3. Onboard your coding agent
 
@@ -89,11 +89,11 @@ Start a new agent session and enter:
 Run Tokonoma onboard.
 ```
 
-Onboarding saves investigation context. It can also add a Tokonoma pointer to `AGENTS.md` or `CLAUDE.md` and install a session finalizer. Both are optional.
+Onboarding saves investigation context. It can also add a Tokonoma pointer to `AGENTS.md` or `CLAUDE.md` and install a session finalizer. The pointer and finalizer are optional.
 
 ### Optional session finalization
 
-The finalizer can resume an agent to save an investigation, maintain a used procedure, or render a memory receipt. Existing permissions still apply. Review proposed files and hooks before enabling it, then start a new session and follow the client's trust prompt. Unsupported clients are skipped.
+The finalizer can resume an agent to save an investigation, maintain a used procedure, or render a memory receipt. Existing permissions still apply. Review the proposed files and hooks before enabling it. Then start a new session and follow the client's trust prompt. Unsupported clients are skipped.
 
 ## Use a public endpoint
 
