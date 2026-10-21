@@ -1,6 +1,6 @@
 # Credentials and license
 
-For chart 0.37.0 and application 0.68.0, prepare the license before [installation](install.md#2-prepare-your-files). Add credentials only for features you use.
+For chart 0.37.0 and application 0.68.0, prepare the license and selected runner credentials before [installation](install.md#2-prepare-your-files). Add credentials for other features as needed.
 
 ## What you need
 
@@ -10,9 +10,9 @@ For chart 0.37.0 and application 0.68.0, prepare the license before [installatio
 | Anthropic API key | Your Anthropic account | `credentials.anthropicApiKey` | Server-side memory analysis, Slack questions and timelines, and the runner when using the Anthropic API |
 | Slack bot token (`xoxb-`) | Your Slack app's **Install App** page | `credentials.slackBotToken` | Reading invited channels and posting as `@Tokonoma` |
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
-| Alertmanager bearer token | Generate a random token and configure the same value in Alertmanager | `credentials.alertmanagerToken` | Authenticating Alertmanager deliveries to an enabled runner |
+| Alertmanager bearer token | Generate a random token and configure the same value in Alertmanager | `credentials.alertmanagerToken` | Authenticating Alertmanager deliveries to the runner |
 
-The MCP server and enabled runner share the Anthropic key unless you configure separate Secret references. Adding it enables memory analysis by default. Set `mcp.memoryLlm.enabled: false` to disable analysis and model-backed Slack features while retaining the runner's key. See [data flows](data-flows.md).
+The MCP server and runner share the Anthropic key unless you configure separate Secret references. Adding it enables memory analysis by default. Set `mcp.memoryLlm.enabled: false` to disable analysis and model-backed Slack features while retaining the runner's key. See [data flows](data-flows.md).
 
 A valid Tokonoma license is required for full-body recalls, but not search, saving, or skill discovery. An API key cannot replace it and does not enable the runner.
 
@@ -32,7 +32,7 @@ Save the issued license as `license.txt`, then restrict that file to your accoun
 chmod 600 "REPLACE_WITH_SECRET_DIRECTORY/license.txt"
 ```
 
-For optional features, create only the files that their guide requires:
+Create the files required by your runner configuration and other selected features:
 
 | File | Content and source | Needed when |
 | --- | --- | --- |
@@ -43,7 +43,7 @@ For optional features, create only the files that their guide requires:
 
 Apply `chmod 600` to each created file. Agents ask you to save issued credentials and supply their paths, never their contents in chat.
 
-The [base command](install.md#3-install) needs only `license.txt`. Feature guides supply additional `--set-file` arguments. Save the complete values-file order and credential inputs for upgrades.
+The first [base-services command](install.md#3-install) needs only `license.txt`. The required [runner setup](alert-investigations.md) supplies additional credential inputs to complete installation. Save the complete values-file order and credential inputs for upgrades.
 
 `--set-file` keeps tokens out of commands but stores them in Helm release records and Kubernetes Secrets. Restrict access to both. Never commit token files or log rendered Secrets.
 
@@ -66,7 +66,7 @@ mcp:
       botTokenKey: botToken
       appTokenKey: appToken
 
-# Include this section only when the runner is enabled.
+# Runner credentials for an Anthropic and Alertmanager installation.
 runner:
   engine:
     apiKeySecret:
@@ -79,7 +79,7 @@ runner:
         key: token
 ```
 
-These references do not create Secrets. Omit unused features. `mcp.memoryLlm.apiKeySecret` does not configure the runner; supply both references when needed.
+These references do not create Secrets. Use credentials for your selected provider and alert source. `mcp.memoryLlm.apiKeySecret` does not configure the runner; supply both references when sharing that key.
 
 Integration guides cover Datadog tokens and API keys, Grafana credentials, OAuth clients, and storage identities. These do not replace the license or Slack tokens.
 
@@ -87,13 +87,13 @@ Integration guides cover Datadog tokens and API keys, Grafana credentials, OAuth
 
 Use the verified cluster context. For direct `credentials.*` inputs, update the protected file and rerun the complete Helm upgrade. Chart 0.37.0 automatically restarts deployments using changed Anthropic, Slack, and Alertmanager values.
 
-After changing `mcp.license`, restart MCP and its unattended deployment, if enabled. Restart deployments after changing their externally managed Secrets. With default component names:
+After changing `mcp.license`, restart MCP and its unattended deployment. Restart deployments after changing their externally managed Secrets. With default component names:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart deployment/toko-mcp
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-mcp --timeout=5m
 ```
 
-When enabled, restart `deployment/toko-mcp-unattended` after license or shared model-key changes, and `deployment/toko-runner` after its credentials change. Use your actual deployment names.
+Restart `deployment/toko-mcp-unattended` after license or shared model-key changes, and `deployment/toko-runner` after its credentials change. Use your actual deployment names.
 
 Check license status in the local UI's **Setup** page, or `/usage-stats` through your existing connection. `/usage-stats` requires a token with `toko-mcp/query` when authentication is enabled. It reports usage and reasons such as `absent`, `invalid_signature`, or `expired`. Expiry grace and quota enforcement follow the issued license; refused recalls do not consume usage. Contact [support@tokonoma.ai](mailto:support@tokonoma.ai) to renew.

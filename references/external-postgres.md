@@ -30,7 +30,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 Confirm that the role, database, and extension were created. The server never creates the `vector` extension itself, so it must exist before the first start. Use your approved database administration workflow to protect the password in session history.
 
-The `tokonoma` role must own the database. At startup the MCP server creates tables in `public` and queue tables in `pgmq`; the alert runner and telemetry metastore create their own tables when enabled. On PostgreSQL 15 and later, only the database owner can create tables in `public` by default.
+The `tokonoma` role must own the database. At startup the MCP server creates tables in `public` and queue tables in `pgmq`; the runner also creates its own tables. The telemetry metastore creates tables when enabled. On PostgreSQL 15 and later, only the database owner can create tables in `public` by default.
 
 After a PostgreSQL or pgvector upgrade, the server also tries to update the extension and rebuild indexes. If the role lacks those rights, it logs the required commands and continues starting. Run those commands as an administrative user.
 

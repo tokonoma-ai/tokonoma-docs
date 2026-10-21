@@ -6,7 +6,7 @@ To receive results in Slack, supply `credentials.slackBotToken` and `credentials
 
 Leave `mcp.slack.autoRecallEnabled: false` unless you want immediate memory recall replies. Those replies require an Anthropic key through `credentials.anthropicApiKey` or `mcp.memoryLlm.apiKeySecret`, with `mcp.memoryLlm.enabled: true`. Explicit mentions and session updates work independently.
 
-`runner.enabled` defaults to `false`. Enabling it sends alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Summaries and links go to Slack. Review source permissions before enabling unattended work.
+The runner is required for a complete Tokonoma installation. Chart `0.37.0` defaults `runner.enabled` to `false`; this guide sets it to `true` with the required credentials and dedicated MCP instance. Investigations send alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Summaries and links go to Slack. Review source permissions before enabling unattended work.
 
 For Datadog-only alerts, create the [Datadog token Secret](datadog-alerts.md) first. Omit the Alertmanager token input and include the Datadog values file in the same upgrade. Both sources can run together. The chart requires at least one source token; a missing referenced Secret leaves the pod in `CreateContainerConfigError`.
 
@@ -25,7 +25,7 @@ Bundled PostgreSQL needs no additional setup. For external PostgreSQL (`postgres
 
 ## Before you start
 
-Complete the [base installation](install.md) and [Tokonoma Slack app setup](slack-app.md). Use Helm 3.14+, chart `0.37.0`, and application image `0.68.0`. Follow the [existing-version check](upgrading.md#before-upgrading) before applying these pinned examples to an existing release.
+Complete steps 1 through 5 of [installation](install.md), then [Tokonoma Slack app setup](slack-app.md). This guide completes the required runner step. Use Helm 3.14+, chart `0.37.0`, and application image `0.68.0`. Follow the [existing-version check](upgrading.md#before-upgrading) before applying these pinned examples to an existing release.
 
 Run commands from the installation's working directory on its administration workstation, outside this checkout. Replace placeholders first; agents must ask for missing inputs.
 
@@ -58,7 +58,7 @@ Helm generates the bundled PostgreSQL password and Grafana MCP caller token duri
 
 Image `0.68.0` includes Grafana MCP support; no separate Grafana MCP release or external MCP OAuth setup is needed. If `mcp.auth` is enabled, configure the runner's `runner.tokoMcp.oauthClientSecretRef` below.
 
-## Prepare runner authentication when enabled
+## Prepare runner credentials when MCP authentication is enabled
 
 Use a dedicated Cognito machine-to-machine app client and its ID and secret. Follow [OAuth](oauth.md) to configure its domain, resource-server scope and client-credentials flow. Keep [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) alongside Cognito for individual human sign-in.
 
@@ -121,7 +121,9 @@ grafanaMcp:
     url: REPLACE_WITH_GRAFANA_URL
 ```
 
-Replace the Grafana URL and file paths. Run this from the customer working directory, including every existing overlay and credential input:
+For a deployment without Grafana, omit the `grafanaMcp` block and the `--set-file grafanaMcp.grafana.apiKey` argument below. Configure your actual [investigation tools](#adding-your-own-mcp-servers), including their endpoints, credentials, and allowed tools, before verification. Alert webhooks alone do not provide query access.
+
+If using Grafana, replace its URL. Replace the file paths and run this from the customer working directory, including every existing overlay and credential input:
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
@@ -409,9 +411,9 @@ runner:
 
 Limit the GitHub App installation token to the permissions the runner needs. The runner gains all access that credential grants.
 
-## Turning it off
+## Stop the runner for maintenance
 
-Set these three flags to `false` in the saved installation values first. From the customer working directory, include every existing overlay and credential input when applying the change:
+This stops investigations and removes the runner, its dedicated MCP instance, and the Grafana adapter. Use it only for a planned service interruption. Pause only Tokonoma alert deliveries, preserving existing paging routes. Record the component settings, then set these three flags to `false` in the saved installation values. From the customer working directory, include every existing overlay and credential input when applying the change:
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \
@@ -424,6 +426,6 @@ helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.
   --wait --timeout 10m
 ```
 
-Expect Helm status `deployed`. Confirm the runner and unattended pods are removed with `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods`. Keep these flags disabled in saved values. Existing investigation records remain.
+Expect Helm status `deployed`. Confirm the runner and unattended pods are removed with `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods`. Existing investigation records remain. Restore the recorded settings and repeat the complete runner upgrade. Verify one controlled alert before resuming routine Tokonoma deliveries.
 
 Return to [integrations](integrations.md) or continue with [Datadog alerts](datadog-alerts.md).

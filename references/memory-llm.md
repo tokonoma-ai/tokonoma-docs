@@ -1,6 +1,6 @@
 # Server-side LLM work on memory records
 
-Memory processing is off by default. When enabled, the Tokonoma server sends memory content to Anthropic for these tasks:
+Memory processing requires an Anthropic key and `mcp.memoryLlm.enabled: true`. The runner example supplies both. When enabled, the Tokonoma server sends memory content to Anthropic for these tasks:
 
 - Review possible duplicates. The server continuously links records that cover the same ground. A similarity score cannot tell whether they reach the same conclusion, so a model reads both and classifies their relationship. Search results collapse redundant records into one result. Records that disagree appear together with a conflict warning.
 - Triage messages when the Slack app is enabled. The model decides whether another app's post is an alert that warrants memory recall, whether the retrieved memories are worth posting, and how to interpret free-text `@Tokonoma` questions.
@@ -53,7 +53,7 @@ helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT --reset-then-reus
   --wait --timeout 10m
 ```
 
-Helm should report release `tokonoma` as `deployed`. The chart creates a Secret from the file. Helm also stores supplied values in release metadata; restrict access to it and to the Secret. The key is shared with the investigation runner when that feature is enabled.
+Helm should report release `tokonoma` as `deployed`. The chart creates a Secret from the file. Helm also stores supplied values in release metadata; restrict access to it and to the Secret. The key is shared with the investigation runner unless you configure a separate runner key.
 
 For an existing externally managed Secret, merge this into `tokonoma-memory-llm.yaml` instead of supplying `credentials.anthropicApiKey`. Replace the Secret name and key with the existing reference:
 
@@ -98,7 +98,7 @@ mcp:
     enabled: false
 ```
 
-Repeat the complete Helm upgrade above with the changed overlay. This disables memory processing; it does not disable a separately enabled investigation runner. Records already collapsed stay collapsed; no new pairs are reviewed.
+Repeat the complete Helm upgrade above with the changed overlay. This disables memory processing; the required investigation runner remains enabled. Records already collapsed stay collapsed; no new pairs are reviewed.
 
 ## Anthropic only
 

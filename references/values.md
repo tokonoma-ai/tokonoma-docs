@@ -40,8 +40,8 @@ See [credentials](credentials.md) for Secret references, storage in Helm metadat
 | `mcp.slack.autoRecallEnabled` | Default `false`. Opt in only if you want immediate recall replies to incoming alerts. |
 | `mcp.memoryLlm.enabled` | Default `true`, but calls need an Anthropic credential. Enables duplicate adjudication and model-backed Slack features. |
 | `llm.model` | Shared model selection; use an identifier available to your provider/account. Consumer overrides are `mcp.memoryLlm.model` and `runner.engine.model`. |
-| `runner.enabled` | Default `false`; needs model credentials, at least one webhook source credential, and an unattended MCP instance. |
-| `mcp.sibling.enabled` | Enables the unattended MCP instance sharing PostgreSQL. |
+| `runner.enabled` | Set `true` for the required runner. The chart default is `false`; configure model credentials, at least one webhook source credential, and the unattended MCP instance before enabling it. |
+| `mcp.sibling.enabled` | Set `true` for the runner's dedicated MCP instance sharing PostgreSQL. |
 | `runner.destinations.slackApp.enabled` | Delivers investigations through the native Slack app. |
 | `runner.ingress.webhookPaths` | Default `[]`; explicit `[/webhooks/alertmanager]`, `[/webhooks/datadog]`, or both. Lists replace, rather than append. |
 

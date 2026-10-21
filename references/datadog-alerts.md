@@ -14,7 +14,7 @@ Datadog needs a public HTTPS webhook. The chart adds it to your existing MCP Ing
 
 ## Inputs and files
 
-Complete the [base installation](install.md) and [existing-version check](upgrading.md#before-upgrading). Run Kubernetes and Helm commands from the installation's working directory on its administration workstation, outside this checkout. Use your existing Datadog Terraform project. Replace placeholders first; agents must ask for missing inputs.
+Complete steps 1 through 5 of [installation](install.md) and the [existing-version check](upgrading.md#before-upgrading). Use this guide with the runner prerequisites to complete installation step 6. Run Kubernetes and Helm commands from the installation's working directory on its administration workstation, outside this checkout. Use your existing Datadog Terraform project. Replace placeholders first; agents must ask for missing inputs.
 
 | Input | Meaning and source | Required when |
 |---|---|---|

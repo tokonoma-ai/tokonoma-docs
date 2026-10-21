@@ -1,6 +1,6 @@
 # Choose integrations
 
-Start with your saved values files and installed release to see which integrations are configured. The [base installation](install.md) needs no telemetry provider, and the supplied examples contain defaults only. Choose the connections you need below. Agents inspect existing configuration and ask about missing settings, conflicts, or additions. Each guide supplies the inputs, commands, and checks.
+Start with your saved values files and installed release to see which integrations are configured. The runner is required; choose its model provider, alert sources, and investigation tools as part of [installation](install.md#6-configure-and-verify-the-runner). The supplied examples contain defaults only. Agents inspect existing configuration and ask about missing settings, conflicts, or additions. Each guide supplies the inputs, commands, and checks.
 
 | Integration | What it does | Setup |
 |---|---|---|

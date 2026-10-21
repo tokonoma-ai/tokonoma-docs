@@ -2,7 +2,7 @@
 
 `@Tokonoma` runs inside your MCP server. It uses Slack Socket Mode, so it can run in a private cluster without a public Slack callback URL or ingress. This is Tokonoma's own app. The separate `@Claude` integration uses Claude's connectors and has different network requirements.
 
-This guide targets chart 0.37.0 and application 0.68.0. Complete the [base installation](install.md) first.
+This guide targets chart 0.37.0 and application 0.68.0. Complete steps 1 through 5 of [installation](install.md) first, then use this guide to prepare Slack delivery for the runner.
 
 Before changing an existing release, follow [version and configuration checks](upgrading.md). If its versions differ from this guide, resolve that difference before running the pinned command.
 
@@ -51,7 +51,7 @@ helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.
 
 Helm should report release `tokonoma` as `deployed`. Keep every values overlay and credential input already used by your installation. For Slack features that call a model, also include `--set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt"`. If you use existing Secrets, keep those references in `tokonoma-values.yaml` instead of supplying direct token inputs.
 
-In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. If you enable the runner, create `#tokonoma-investigations` and invite the app there. This is the default channel for results; set `mcp.slack.investigationsChannel` only when you want a different channel name. The app must be a member of that channel.
+In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default channel for results; set `mcp.slack.investigationsChannel` only when you want a different channel name. The app must be a member of that channel.
 
 ## Verify the connection
 
@@ -61,7 +61,7 @@ On the administration workstation, read the MCP logs:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness when a runner is installed.
+Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness after runner setup. Complete [runner setup](alert-investigations.md) before declaring the installation ready.
 
 | Symptom | Check |
 | --- | --- |
@@ -93,7 +93,7 @@ mcp:
     autoRecallEnabled: true
 ```
 
-Automatic recall also requires the Slack features that call a model. This switch does not enable automatic investigations. The runner is a separate optional component; with it configured, `runner.destinations.slackApp.enabled: true` delivers investigation results through this app. Avoid also configuring a legacy Slack webhook destination unless you want both deliveries.
+Automatic recall also requires the Slack features that call a model. This switch does not configure the required runner. Set `runner.destinations.slackApp.enabled: true` in the [runner setup](alert-investigations.md) to deliver investigation results through this app. Avoid also configuring a legacy Slack webhook destination unless you want both deliveries.
 
 ## Channel access and shared records
 

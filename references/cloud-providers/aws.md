@@ -105,7 +105,7 @@ Check workloads, persistent storage, and index creation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc,jobs
 ```
 
-Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access. Complete the MCP health and memory checks in the [installation guide](../install.md#4-verify).
+Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access. Complete the [MCP health and memory checks](../install.md#4-verify), then the required [runner setup and verification](../install.md#6-configure-and-verify-the-runner).
 
 In a separate terminal, leave this running:
 

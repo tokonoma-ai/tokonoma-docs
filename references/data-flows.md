@@ -2,9 +2,9 @@
 
 This describes chart 0.37.0 with application 0.68.0. The integrations you enable and where your agent runs determine where data goes. External models and services receive the content sent to them, even when Tokonoma runs in your cluster.
 
-## Base installation
+## Installed services
 
-The default memory installation runs the MCP server, PostgreSQL with pgvector, and Ollama. Your agent calls the MCP server over HTTP. Saved records, search chunks, embeddings, and application state are stored in PostgreSQL. Ollama embeds record text and search queries within the deployment; search can fall back to keyword matching when embeddings are unavailable.
+Tokonoma runs the MCP service, its required investigation runner and dedicated MCP instance, PostgreSQL with pgvector, and Ollama. The runner sends investigation context to its configured model provider and queries the tools you configure. Your coding agent calls the MCP service over HTTP. Saved records, search chunks, embeddings, and application state are stored in PostgreSQL. Ollama embeds record text and search queries within the deployment; search can fall back to keyword matching when embeddings are unavailable.
 
 The server returns requested records and tool results to your agent. If that agent uses a hosted model, its provider receives the content the agent sends to it. This path exists independently of Tokonoma's own Anthropic API key.
 
@@ -28,9 +28,9 @@ sequenceDiagram
 
 License signature verification happens locally. The released license implementation does not call a licensing service; usage is recorded in the installation's database. This does not change the data flows of optional integrations.
 
-## Optional features
+## Model and integration connections
 
-Each connection below is used only when its feature is enabled and configured. The agent, MCP services, and runner have separate model configurations and credentials.
+The runner needs its model provider and configured investigation tools. Other connections depend on the features you enable. The coding agent, MCP services, and runner have separate model configurations and credentials.
 
 | Caller or feature | Destination | Data and purpose |
 | --- | --- | --- |
@@ -58,7 +58,7 @@ For direct Google Workspace or Okta SAML login, the user's browser visits the id
 
 ## Network destinations
 
-The base install pulls images from public ECR and Docker Hub and the embedding model from `registry.ollama.ai`. Optional self-monitoring components can also pull from `quay.io` and `registry.k8s.io`; Grafana downloads its configured data-source plugin from GitHub at startup.
+The installation pulls images from public ECR and Docker Hub and the embedding model from `registry.ollama.ai`. Optional self-monitoring components can also pull from `quay.io` and `registry.k8s.io`; Grafana downloads its configured data-source plugin from GitHub at startup.
 
 Allow only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, the Anthropic API or runner's configured provider, your Grafana or Datadog endpoints, your identity provider, and your configured object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
 
