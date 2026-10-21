@@ -7,7 +7,7 @@ You choose which alerts, tools, and Slack channels it can use. The investigation
 ```mermaid
 flowchart LR
   accTitle: Tokonoma in your environment
-  accDescr: Coding agents connect to Tokonoma, and selected alerts reach the required Tokonoma runner. Both run in your Kubernetes cluster. Tokonoma connects to Slack and optional model features. The runner queries configured observability tools and its model provider. This is a capability overview, not a map of internal services.
+  accDescr: Coding agents connect to Tokonoma, and selected alerts reach the required Tokonoma runner. Both run in your Kubernetes cluster. Tokonoma connects to Slack and optional model features. The runner calls its model provider and configured telemetry, alerting, and code integrations. Arrows show who opens each connection. This is a capability overview, not a map of internal services.
   subgraph Inputs["Your team and alerts"]
     Agents["Coding agents"]
     Alerts["Selected alerts"]
@@ -18,15 +18,15 @@ flowchart LR
   end
   subgraph Connections["Services you configure"]
     Slack["Slack"]
-    Tools["Grafana / Datadog"]
     Models["Model providers"]
+    Tools["Integrations<br/>(Telemetry, Alerting, Code)"]
   end
-  Agents <-->|"Investigate"| Tokonoma
+  Agents --> Tokonoma
   Alerts --> Runner
-  Tokonoma <-->|"Collaborate"| Slack
-  Runner <-->|"Query evidence"| Tools
+  Tokonoma -->|"Messages"| Slack
   Tokonoma -.->|"Optional analysis"| Models
   Runner -->|"Investigate"| Models
+  Runner -->|"Query"| Tools
 
   classDef service fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e,stroke-width:2px
   classDef external fill:#fff,stroke:#64748b,color:#0f172a
@@ -36,6 +36,8 @@ flowchart LR
   style Inputs fill:#f8fafc,stroke:#cbd5e1,color:#334155
   style Connections fill:#f8fafc,stroke:#cbd5e1,color:#334155
 ```
+
+Arrows show who opens each connection; responses and Slack events return over it. The dashed arrow is optional.
 
 The runner is a required part of Tokonoma. Configure its model provider, alert sources, and investigation tools during installation. Detectors are upcoming and are not available in the release covered by these guides.
 
