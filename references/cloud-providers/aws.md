@@ -2,15 +2,15 @@
 
 Prepare persistent storage for Amazon Elastic Kubernetes Service (EKS). Telemetry ingestion with S3 storage and self-monitoring are optional.
 
-Run commands on a workstation with `kubectl`, Helm 3.14+, AWS CLI and access to the intended cluster and AWS account. Save values in your [installation working directory](../install.md), outside this repository. Replace `REPLACE_WITH_*` inputs; agents must ask for unresolved choices.
+Use `kubectl`, Helm 3.14+, and AWS CLI on a workstation with access to the intended cluster and AWS account. Run commands from your [installation working directory](../install.md), following [input conventions](../install.md#inputs-and-placeholders).
 
 | Input | Source and when required |
 |---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts`; required for cluster commands. |
-| `REPLACE_WITH_CLUSTER`, `REPLACE_WITH_REGION` | EKS cluster name and AWS region from the cluster owner; required for the storage checks. |
+| `REPLACE_WITH_CLUSTER`, `REPLACE_WITH_REGION` | EKS cluster name and AWS region from the cluster owner; required for the storage checks. The cloud cluster name may differ from its kubeconfig context. |
 | `REPLACE_WITH_ADDON_VERSION` | EBS CSI add-on version selected by the cluster owner; required only when configuring that add-on. |
-| `REPLACE_WITH_CUSTOMER` | Optional full-stack organization slug: at most 42 lowercase letters, digits, or hyphens, starting with a letter. |
-| `REPLACE_WITH_IRSA_ROLE_ARN` | Role created for optional S3 access below; required only for that overlay. |
+| `REPLACE_WITH_CUSTOMER` | Telemetry organization slug: at most 42 lowercase letters, digits, or hyphens, starting with a letter. |
+| `REPLACE_WITH_IRSA_ROLE_ARN` | Role created for optional S3 access below; required only for that configuration. |
 
 ## Persistent volumes
 
@@ -59,43 +59,32 @@ In the Terraform that owns the customer environment, create:
 3. An object-storage IAM policy with bucket-level `ListBucket` and `GetBucketLocation`, plus object-level read, write, delete, and multipart-upload access to the bucket.
 4. An IRSA role trusted by `system:serviceaccount:tokonoma:tokonoma-sa`, with that policy attached.
 
-Apply Terraform and save the role ARN. The chart creates the annotated ServiceAccount. If a bucket name is taken, choose a unique name and set `objectStorage.indexesBucket` in the overlay.
+Apply Terraform and save the role ARN. The chart creates the annotated ServiceAccount. If a bucket name is taken, choose a unique name and set `objectStorage.indexesBucket` in `values.yaml`.
 
-### 2. Save the overlay
+### 2. Update the values
 
-Save as `tokonoma-full.yaml` in your customer working directory. Use the same region as the bucket:
+Merge these settings into `values.yaml`, preserving existing configuration. Use the same region as the bucket:
 
 ```yaml
+# Used in telemetry index names and the default bucket name.
 customer: REPLACE_WITH_CUSTOMER
-region: REPLACE_WITH_REGION
-telemetryPlatform: true
+region: REPLACE_WITH_REGION  # Use the bucket location.
+telemetryPlatform: true  # Optional telemetry backend; disabled by default.
 objectStorage:
-  serviceAccountName: tokonoma-sa
-  serviceAccountCreate: true
+  # Set indexesBucket here if you changed the bucket name in step 1.
+  serviceAccountName: tokonoma-sa  # Must match the cloud identity binding.
+  serviceAccountCreate: true  # Create the annotated Kubernetes account; default is false.
   serviceAccountAnnotations:
     eks.amazonaws.com/role-arn: REPLACE_WITH_IRSA_ROLE_ARN
-mcp:
-  image:
-    tag: "0.68.0"
+# Optional self-monitoring components; all are disabled by default.
 otelCollector: { enabled: true }
 prometheus:    { enabled: true }
 grafana:       { enabled: true }
 ```
 
-The customer slug determines index and default bucket names. Telemetry uses `tokonoma-sa` for S3 access.
+For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file. Keep MCP private during verification; configure [OAuth](../oauth.md) before shared or public access.
 
-For a first [installation](../install.md#3-install), include this overlay after `tokonoma-values.yaml`. Keep MCP private during verification; configure [OAuth](../oauth.md) before shared or public access.
-
-For an existing installation, follow [upgrade preparation](../upgrading.md), then apply the overlay with existing values and Secret references preserved:
-
-```sh
-helm upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context REPLACE_WITH_KUBE_CONTEXT --version 0.37.0 -n tokonoma \
-  --reset-then-reuse-values -f tokonoma-values.yaml -f tokonoma-full.yaml \
-  --wait --timeout 15m
-```
-
-Include other changed overlays. Expect `STATUS: deployed`.
+For an existing release, [apply the configuration change](../upgrading.md#before-changing-configuration), preserving existing settings and Secret references.
 
 ### 3. Verify the optional services
 
@@ -105,27 +94,10 @@ Check workloads, persistent storage, and index creation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc,jobs
 ```
 
-Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access. Complete the MCP health and memory checks in the [installation guide](../install.md#4-verify).
+Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access. Complete the [installation health checks](../install.md#4-verify). [Monitoring and integration checks](../install.md#check-monitoring-and-integrations) are optional follow-ups.
 
-In a separate terminal, leave this running:
+For dashboards, [open the self-monitoring Grafana UI](../endpoints.md#self-monitoring-grafana-ui).
 
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-grafana 3000:80
-```
-
-Once it reports `Forwarding from`, check from another terminal:
-
-```sh
-curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/login
-```
-
-Expect `200`. If port 3000 is busy, change the mapping’s left side and URL. Open <http://127.0.0.1:3000> as `admin`; retrieve the password privately:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get secret toko-grafana \
-  -o jsonpath='{.data.admin-password}' | base64 -d
-```
-
-Ship OpenTelemetry Protocol (OTLP) data from inside the cluster to `toko-indexer:7281` with headers `qw-otel-logs-index: REPLACE_WITH_CUSTOMER-logs` and `qw-otel-traces-index: REPLACE_WITH_CUSTOMER-traces`. See [endpoints](../endpoints.md). Choose CPU, memory, storage, and retention settings for your workload. Verify capacity with a representative ingestion test.
+Send OpenTelemetry Protocol (OTLP) data using the [ingest endpoint and headers](../endpoints.md#otlp-ingest). Choose CPU, memory, storage, and retention settings for your workload. Verify capacity with a representative ingestion test.
 
 For the `alb` IngressClass and ACM certificate flow, see [public MCP](../public-mcp-ingress.md).

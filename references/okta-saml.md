@@ -1,33 +1,25 @@
 # Direct Okta SAML login
 
-Complete the [installation](install.md), then configure Okta login.
+Prepare your `values.yaml` with the [installation guide](install.md#2-prepare-your-files), then configure Okta login before shared access.
 
 Okta users can use private memories and `toko:everyone`. Tokonoma does not import Okta groups; do not add a group statement.
 
 ## Prerequisites
 
-Use Helm 3.14+, `jq`, chart `0.37.0`, and image `0.68.0`. Run commands from your deployment directory on a computer with cluster access. Configure Okta in Okta Admin Console. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
+Use Helm 3.14+ and `jq` from your working directory on a workstation with cluster access. Follow [input conventions](install.md#inputs-and-placeholders) and keep credentials in the [protected directory](credentials.md#supply-tokens-from-files).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| `REPLACE_WITH_KUBE_CONTEXT`, `tokonoma-values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
+| `REPLACE_WITH_KUBE_CONTEXT`, `values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
 | `REPLACE_WITH_MCP_HOSTNAME` and allowed email domains | Your DNS and identity administrators | Before creating the Okta app |
 | Okta SAML app and assigned test user | Okta administrator with app creation and assignment permissions | Before the first login |
 | Okta issuer, SSO URL and signing certificate | The app's **Sign On** setup instructions, step 3 | Before saving authentication values |
-| Current Helm revision | `helm history` below | Before changing an existing release |
 
 Choose the hostname before creating the app. Changing the Okta issuer or persistent NameID changes the user's Tokonoma identity; private memories may stay tied to the old identity.
 
 Use a stable HTTPS hostname reachable by users and Okta. Replace namespace `tokonoma` if your installation uses another.
 
-Verify the target cluster before changing it:
-
-```sh
-kubectl config get-contexts "REPLACE_WITH_KUBE_CONTEXT"
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" cluster-info
-```
-
-Stop if either command identifies a different cluster.
+Confirm the target cluster with the [installation checks](install.md#1-check-prerequisites).
 
 ## 1. Record the service-provider values
 
@@ -118,43 +110,21 @@ Save the certificate as `REPLACE_WITH_SECRET_DIRECTORY/okta-signing.crt`.
 
 ## 4. Deploy the connection
 
-Prepare public routing files with the [HTTPS Ingress guide](public-mcp-ingress.md) and deploy them with authentication below. For an existing private HTTPS proxy, omit `tokonoma-public.yaml` and `tokonoma-ingress.yaml` from both commands. Keep the hostname, `domain`, and OAuth origin identical.
+For public access, merge the [HTTPS Ingress settings](public-mcp-ingress.md) into `values.yaml`. Existing private HTTPS routing needs no public Ingress settings. Keep the hostname, `domain`, and OAuth origin identical.
 
-Create the namespace and certificate Secret, then record the JSON-file checksum. The namespace command also works if it already exists. If you lack namespace permissions, ask the platform team to create it first:
+Follow [SAML certificate preparation](oauth.md#prepare-saml-signing-certificates) using `okta-signing.crt` and Secret `toko-mcp-okta-saml`. Keep the resulting JSON-file checksum for the values below.
 
-```sh
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" create namespace tokonoma \
-  --dry-run=client -o yaml \
-  | kubectl --context "REPLACE_WITH_KUBE_CONTEXT" apply -f -
+Configure or preserve a Cognito or legacy Google [credential provider](oauth.md#1-prepare-the-provider) alongside SAML and prepare the [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). The required runner needs machine access.
 
-jq -Rs '[.]' "REPLACE_WITH_SECRET_DIRECTORY/okta-signing.crt" \
-  > "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
-
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
-  create secret generic toko-mcp-okta-saml \
-  --from-file=idp-signing-certificates.json="REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json" \
-  --dry-run=client -o yaml \
-  | kubectl --context "REPLACE_WITH_KUBE_CONTEXT" apply -f -
-
-sha256sum "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
-```
-
-On macOS, use `shasum -a 256`. Hash the JSON file, not the certificate fingerprint or raw PEM. Put only the Secret name, key, and checksum in Helm values.
-
-Save as `tokonoma-oauth.yaml`, preserving any existing credential-provider settings. Copy the printed checksum into `checksum`:
+Merge these SAML settings into `values.yaml`, preserving the credential provider, runner configuration, and other `mcp` settings. Copy the printed checksum into `checksum`:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
 
 mcp:
-  image:
-    tag: "0.68.0"
   auth:
     enabled: true
-    # SAML can be the only login path. Keep an existing cognito/google
-    # provider here only when the deployment intentionally offers both.
-    provider: none
-
+    # Keep the configured credential provider for the runner.
     saml:
       enabled: true
       provider: okta
@@ -182,63 +152,17 @@ mcp:
 
 Do not set `groupAttribute` for Okta. If using `mcp.auth.baseUrl` instead of `domain`, build ACS and metadata URLs from that HTTPS origin.
 
-Record the current revision before changing an existing release:
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials, then verify metadata and login below.
 
-```sh
-helm --kube-context "REPLACE_WITH_KUBE_CONTEXT" history tokonoma \
-  --namespace tokonoma
-```
-
-Render, then deploy with every existing values file and the new overlays. The rendered file contains Secrets; keep it protected and uncommitted:
-
-```sh
-helm template tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version 0.37.0 \
-  --namespace tokonoma \
-  --values tokonoma-values.yaml \
-  --values tokonoma-public.yaml --values tokonoma-ingress.yaml \
-  --values tokonoma-oauth.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" > "REPLACE_WITH_SECRET_DIRECTORY/rendered.yaml"
-
-helm upgrade --install tokonoma --reset-then-reuse-values \
-  oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version 0.37.0 \
-  --namespace tokonoma \
-  --create-namespace \
-  --values tokonoma-values.yaml \
-  --values tokonoma-public.yaml --values tokonoma-ingress.yaml \
-  --values tokonoma-oauth.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --wait --timeout 10m
-```
-
-Expect Helm `STATUS: deployed` and namespace/Secret results `created`, `configured`, or `unchanged`.
-
-Rendering rejects incomplete SAML settings, non-HTTPS SSO, empty domain allowlists, or missing certificate checksums. Changing the checksum restarts the Tokonoma pod.
+For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). Record the prior revision for rollback.
 
 ## 5. Verify metadata and login
 
-Wait for `deployment "toko-mcp" successfully rolled out`, then fetch the HTTPS metadata:
-
-```sh
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
-  rollout status deployment/toko-mcp
-curl -fsS https://REPLACE_WITH_MCP_HOSTNAME/saml/metadata
-```
-
-The metadata must contain:
-
-- `entityID="https://REPLACE_WITH_MCP_HOSTNAME/saml/metadata"`;
-- `AuthnRequestsSigned="false"`;
-- `WantAssertionsSigned="true"`;
-- persistent NameID format; and
-- ACS location `https://REPLACE_WITH_MCP_HOSTNAME/oauth/saml/acs`.
+Run the shared [SAML metadata check](oauth.md#verify-saml-metadata), then test login below.
 
 Connect an MCP client to `https://REPLACE_WITH_MCP_HOSTNAME/mcp/`, select **Continue with Okta**, and finish login. The Okta app tile lacks the required OAuth transaction and cannot start login.
 
-Verify identity and access with uniquely named temporary memories:
+For an optional identity and sharing check, use uniquely named temporary memories:
 
 1. Save a memory without `share_with`. Its result must contain
    `owner_group_id: "toko:everyone"`, and `available_groups` must contain only
@@ -256,28 +180,11 @@ Successful login verifies the email assertion. Display names never grant access;
 
 ## Roll back the connection
 
-Disconnect or revoke test clients, archive test memories, and restore the recorded revision:
-
-```sh
-helm --kube-context "REPLACE_WITH_KUBE_CONTEXT" rollback tokonoma \
-  REPLACE_WITH_PREVIOUS_REVISION \
-  --namespace tokonoma \
-  --wait --timeout 10m
-```
-
-Rollback restores workloads and values. It does not revoke access or refresh tokens, delete test memories, remove the certificate Secret, or change the Okta app. Without confirmed token revocation, wait until `sessionMaxSeconds` expires before returning to a runtime without Okta identity support.
+Unassign or deactivate the Okta users to stop new logins, then follow [SAML rollback](oauth.md#roll-back-saml-configuration). Without confirmed token revocation, wait until `sessionMaxSeconds` expires before returning to a runtime without Okta identity support.
 
 ## Troubleshooting
 
-Okta's **System Log** reports success when it issues a response, even if Tokonoma rejects that response. For **Sign-in failed**, find the request ID on the page or in `X-Tokonoma-Request-ID`, then search Tokonoma logs:
-
-```sh
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
-  logs deployment/toko-mcp --since=15m \
-  | grep 'REPLACE_WITH_REQUEST_ID'
-```
-
-Tokonoma logs the toolkit's safe failure reason without the assertion payload.
+Okta's **System Log** reports success when it issues a response, even if Tokonoma rejects that response. For **Sign-in failed**, [find the request in Tokonoma logs](oauth.md#diagnose-saml-login), then compare the provider settings below.
 
 | Symptom | What to compare |
 | --- | --- |
@@ -294,21 +201,15 @@ Tokonoma logs the toolkit's safe failure reason without the assertion payload.
 
 ## Rotate the signing certificate
 
-Keep both certificates trusted while you switch:
-
 1. Generate the new certificate in Okta but keep the old one active.
-2. Put both PEM certificates in the trusted JSON array.
-3. Apply the Secret change, update the Helm checksum, and wait for rollout.
-4. Activate the new certificate in Okta.
-5. Test a fresh MCP-initiated login.
-6. Remove the old certificate, update the checksum, and deploy again.
+2. Follow [SAML certificate rotation](oauth.md#rotate-saml-signing-certificates) with `okta-signing-old.crt`, `okta-signing-new.crt`, and Secret `toko-mcp-okta-saml` to deploy trust for both certificates.
+3. Activate the new certificate in Okta and test a fresh MCP-initiated login.
+4. Complete the shared procedure to remove the old certificate from Tokonoma.
 
 See Okta's [certificate management guide](https://help.okta.com/oie/en-us/content/topics/apps/manage-signing-certificates.htm).
 
 ## Current lifecycle limits
 
-Direct Okta SAML has no single logout (SLO), automated account provisioning (SCIM), provider-initiated login, account linking, multiple direct SAML providers, or immediate token revocation. Unassigning or deactivating a user blocks new logins but can leave existing access valid until the session maximum.
-
-The default maximum is 2,592,000 seconds (30 days) from login; a shorter Okta `SessionNotOnOrAfter` takes precedence. Access tokens last at most 24 hours, and refresh-token rotation cannot extend the original session.
+The shared [SAML session limits](oauth.md#saml-session-limits) apply.
 
 Return to [private team access](private-access.md#team-access) or [connect a coding agent](coding-agents.md).

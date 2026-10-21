@@ -1,0 +1,155 @@
+# Copy once to your working directory as values.yaml for a new installation.
+# Existing installation: edit your saved file; do not replace it with this example.
+# Required core and agentic monitoring are active. Uncomment only integrations you use.
+# Supply license, Anthropic and alert-source credentials through protected files
+# or existing Secret references. See references/install.md and references/credentials.md.
+# Replace placeholders with verified values; agents ask for missing inputs.
+# PostgreSQL, local search embeddings and application images use chart defaults.
+mcp:
+  # Supply your issued license with --set-file mcp.license, or use this existing Secret:
+  # licenseSecret:
+  #   name: REPLACE_WITH_LICENSE_SECRET_NAME
+  #   key: REPLACE_WITH_LICENSE_SECRET_KEY
+  auth:
+    # Private local access only. Configure authentication before shared access.
+    # With false, any caller that can reach MCP can use it.
+    enabled: false
+  ingress:
+    # Use a local port-forward first. Public access needs TLS and authentication.
+    enabled: false
+  storage:
+    # Attachment storage is disabled.
+    backend: none
+  sibling:
+    # Required: the runner's dedicated MCP instance, sharing your database.
+    enabled: true
+  memoryLlm:
+    # Required Anthropic analysis, even when the runner uses another provider.
+    enabled: true
+    # Alternative to credentials.anthropicApiKey: an existing Anthropic key Secret.
+    # apiKeySecret:
+    #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
+    #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
+
+  # Slack: follow references/slack-app.md and supply both Slack token files.
+  # Uncomment this section and runner.destinations.slackApp below for Slack results.
+  # slack:
+  #   autoRecallEnabled: false # Immediate recall replies are separate from investigations.
+  #   investigationsChannel: tokonoma-investigations # Invite the app to this channel.
+  #   # Existing Secret alternative to the two token files:
+  #   # tokenSecret:
+  #   #   name: REPLACE_WITH_SLACK_SECRET_NAME
+  #   #   botTokenKey: REPLACE_WITH_SLACK_BOT_TOKEN_KEY
+  #   #   appTokenKey: REPLACE_WITH_SLACK_APP_TOKEN_KEY
+
+runner:
+  # Required: needs the sibling, model credentials and at least one alert-source token.
+  enabled: true
+  detection:
+    # Monitoring uses the runner's model and can start investigations automatically.
+    # Setup and checks: references/agentic-monitoring.md.
+    enabled: true
+    scope:
+      # Use the monitored cluster's exact name in your telemetry, not a guessed kube context.
+      cluster: REPLACE_WITH_MONITORED_CLUSTER
+      # Exact namespace names. Use [] only to intentionally watch all, including system ones.
+      namespaces: [REPLACE_WITH_MONITORED_NAMESPACE]
+  # Monitoring needs telemetry query access, such as Grafana or a telemetry MCP connection.
+  # Alert webhooks and code-only connections do not supply that access.
+
+  # Anthropic is the walkthrough provider; credentials.anthropicApiKey serves both callers.
+  # For an existing Secret, configure this AND mcp.memoryLlm.apiKeySecret above:
+  # engine:
+  #   apiKeySecret:
+  #     name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
+  #     key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
+
+  # Alert sources: the walkthrough supplies credentials.alertmanagerToken from a file.
+  # Uncomment sources and only selected entries. Datadog needs no Alertmanager Secret.
+  # sources:
+  #   alertmanager:
+  #     tokenSecretRef:
+  #       name: REPLACE_WITH_ALERTMANAGER_SECRET_NAME
+  #       key: REPLACE_WITH_ALERTMANAGER_SECRET_KEY
+  #   datadog: # Create this Secret using references/datadog-alerts.md.
+  #     tokenSecretRef:
+  #       name: toko-runner-datadog-webhook
+  #       key: token
+
+  # External alert webhooks also need MCP ingress, TLS and authentication configured.
+  # Use /webhooks/alertmanager for Alertmanager, or list both paths for both sources.
+  # ingress:
+  #   enabled: true
+  #   webhookPaths: [/webhooks/datadog]
+
+  # Slack results: needs both Slack tokens and channel membership configured above.
+  # Do not also enable the legacy webhook destination unless you want two deliveries.
+  # destinations:
+  #   slackApp:
+  #     enabled: true
+
+  # Required when mcp.auth.enabled is true; see references/alert-investigations.md.
+  # tokoMcp:
+  #   oauthClientSecretRef:
+  #     name: REPLACE_WITH_RUNNER_OAUTH_SECRET_NAME
+  #     clientIdKey: REPLACE_WITH_RUNNER_CLIENT_ID_KEY
+  #     key: REPLACE_WITH_RUNNER_CLIENT_SECRET_KEY
+
+  # Uncomment mcpServers and only the connections you use. Keep one combined list.
+  # Remote HTTP MCP: Datadog, Axiom or another compatible telemetry/code provider.
+  # Get the endpoint and exact read-only tool names from the provider; no mcp__ prefix.
+  # Use a unique lowercase name; reserve toko and the bundled adapter's grafana name.
+  # Provider examples and credential setup: references/integrations.md#mcp-connections.
+  # mcpServers:
+  #   - name: telemetry
+  #     kind: telemetry
+  #     url: REPLACE_WITH_TELEMETRY_MCP_URL
+  #     expectedTools: [REPLACE_WITH_TELEMETRY_TOOL_NAME]
+  #     authSecretRef:
+  #       # Raw bearer token, without the "Bearer " prefix.
+  #       name: REPLACE_WITH_TELEMETRY_SECRET_NAME
+  #       key: REPLACE_WITH_TELEMETRY_SECRET_KEY
+  #     # Named-header alternative, shown for Datadog API/application keys.
+  #     # Remove authSecretRef above before uncommenting headers; do not use both.
+  #     # headers:
+  #     #   - header: DD_API_KEY
+  #     #     secretRef:
+  #     #       name: REPLACE_WITH_DATADOG_API_KEY_SECRET_NAME
+  #     #       key: REPLACE_WITH_DATADOG_API_KEY_SECRET_KEY
+  #     #   - header: DD_APPLICATION_KEY
+  #     #     secretRef:
+  #     #       name: REPLACE_WITH_DATADOG_APP_KEY_SECRET_NAME
+  #     #       key: REPLACE_WITH_DATADOG_APP_KEY_SECRET_KEY
+  #   - name: source-control
+  #     kind: source-control
+  #     url: REPLACE_WITH_SOURCE_CONTROL_MCP_URL
+  #     expectedTools: [REPLACE_WITH_ALLOWED_TOOL_NAME]
+  #     authSecretRef:
+  #       name: REPLACE_WITH_SOURCE_CONTROL_SECRET_NAME
+  #       key: REPLACE_WITH_SOURCE_CONTROL_SECRET_KEY
+
+# Grafana: optional query adapter, separate from Tokonoma's self-monitoring UI.
+# Uncomment this section if you use Grafana; obtain its base URL from its administrator.
+# grafanaMcp:
+#   enabled: true
+#   grafana:
+#     url: REPLACE_WITH_GRAFANA_URL
+#     # Supply a Viewer token through --set-file grafanaMcp.grafana.apiKey.
+#     # Existing Secret alternative: uncomment the next four lines together.
+#     # Empty apiKey clears any old inline token that would take precedence.
+#     # apiKey: ""
+#     # apiKeySecret:
+#     #   name: REPLACE_WITH_GRAFANA_SECRET_NAME
+#     #   key: REPLACE_WITH_GRAFANA_SECRET_KEY
+#   # Separate runner-to-adapter caller token; Helm creates it by default.
+#   # Existing Secret alternative; leave commented for normal Helm installation:
+#   # auth:
+#   #   createSecret: false
+#   # envValueFrom:
+#   #   MCP_GRAFANA_SERVER_TOKEN:
+#   #     secretKeyRef:
+#   #       name: REPLACE_WITH_GRAFANA_CALLER_SECRET_NAME
+#   #       key: REPLACE_WITH_GRAFANA_CALLER_SECRET_KEY
+
+# Referenced Secrets must exist in the release namespace before installation.
+# Secret owners supply their names and keys. Never put token values in this file.

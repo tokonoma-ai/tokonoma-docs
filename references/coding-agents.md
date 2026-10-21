@@ -1,4 +1,4 @@
-# Guide: connect a coding agent
+# Connect a coding agent
 
 After installation and health checks, connect your client to Tokonoma's Streamable HTTP MCP endpoint at `/mcp`. Run commands on the client workstation.
 
@@ -10,19 +10,7 @@ After installation and health checks, connect your client to Tokonoma's Streamab
 
 ## 1. Make the endpoint reachable
 
-For a cluster-local install, keep the port-forward from the installation guide running. If it is not already running, open terminal A and leave this command active:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-mcp 8000:8000
-```
-
-In a second terminal, verify the endpoint:
-
-```sh
-curl -fsS http://127.0.0.1:8000/health
-```
-
-The expected response is `ok`.
+For a local connection, complete the [installation port-forward and health check](install.md#4-verify). Keep the port-forward running while your coding agent is connected.
 
 ## 2. Add Tokonoma to your coding agent
 
@@ -79,7 +67,7 @@ are enabled.
 
 ## Verify memory access
 
-Before onboarding, complete the [save-and-full-body-read check](install.md#5-connect-and-confirm-memory-access). Confirm the saved record's identifier and that its retrieved text matches what you saved.
+The optional [memory access check](install.md#connect-and-confirm-memory-access) saves a record and reads it back. Confirm its identifier and matching text.
 
 ## 3. Onboard your coding agent
 
@@ -93,7 +81,7 @@ Onboarding saves investigation context. It can also add a Tokonoma pointer to `A
 
 ### Optional session finalization
 
-The finalizer can resume an agent to save an investigation, maintain a used procedure, or render a memory receipt. Existing permissions still apply. Review the proposed files and hooks before enabling it. Then start a new session and follow the client's trust prompt. Unsupported clients are skipped.
+The finalizer can resume an agent to save an investigation, maintain a used procedure, or render a memory receipt within existing permissions. Review its proposed files and hooks before enabling it, then start a new session and follow the client's trust prompt. Unsupported clients are skipped.
 
 ## Use a public endpoint
 

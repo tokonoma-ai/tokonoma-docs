@@ -1,16 +1,16 @@
 # Direct Google Workspace SAML login
 
-Complete the [installation](install.md), then configure Google Workspace login.
+Prepare your `values.yaml` with the [installation guide](install.md#2-prepare-your-files), then configure Google Workspace login before shared access.
 
 Google SAML supplies memory-sharing groups at login. Tokonoma does not query or synchronize Google Directory.
 
 ## Prerequisites
 
-Use Helm 3.14+, `jq`, chart `0.37.0`, and image `0.68.0`. Run commands from your deployment directory on a computer with cluster access. Configure Google in Google Admin Console. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
+Use Helm 3.14+ and `jq` from your working directory on a workstation with cluster access. Follow [input conventions](install.md#inputs-and-placeholders) and keep credentials in the [protected directory](credentials.md#supply-tokens-from-files).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| `REPLACE_WITH_KUBE_CONTEXT`, `tokonoma-values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
+| `REPLACE_WITH_KUBE_CONTEXT`, `values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
 | `REPLACE_WITH_MCP_HOSTNAME` and allowed email domains | Your DNS and identity administrators | Before creating the Google app |
 | Stable NameID attribute and assigned users | Google Workspace or Cloud Identity super administrator | Before the first login |
 | Google Entity ID, SSO URL and signing certificate | Google custom SAML app, steps 3 and 4 | Before saving authentication values |
@@ -20,14 +20,7 @@ Choose the hostname and stable NameID before creating the app. Changing NameID c
 
 Use a stable HTTPS hostname reachable by users and Google. Replace namespace `tokonoma` if your installation uses another.
 
-Verify the target cluster before changing it:
-
-```sh
-kubectl config get-contexts "REPLACE_WITH_KUBE_CONTEXT"
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" cluster-info
-```
-
-Stop if either command identifies a different cluster.
+Confirm the target cluster with the [installation checks](install.md#1-check-prerequisites).
 
 ## 1. Record the service-provider values
 
@@ -112,45 +105,21 @@ Save the certificate as `REPLACE_WITH_SECRET_DIRECTORY/google-signing.crt`.
 
 ## 5. Deploy the connection
 
-Prepare public routing files with the [HTTPS Ingress guide](public-mcp-ingress.md) and deploy them with authentication below. For an existing private HTTPS proxy, omit `tokonoma-public.yaml` and `tokonoma-ingress.yaml` from both commands. Keep the hostname, `domain`, and OAuth origin identical.
+For public access, merge the [HTTPS Ingress settings](public-mcp-ingress.md) into `values.yaml`. Existing private HTTPS routing needs no public Ingress settings. Keep the hostname, `domain`, and OAuth origin identical.
 
-Create the namespace and certificate Secret, then record the JSON-file checksum:
+Follow [SAML certificate preparation](oauth.md#prepare-saml-signing-certificates) using `google-signing.crt` and Secret `toko-mcp-google-saml`. Keep the resulting JSON-file checksum for the values below.
 
-```sh
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" create namespace tokonoma \
-  --dry-run=client -o yaml \
-  | kubectl --context "REPLACE_WITH_KUBE_CONTEXT" apply -f -
+Configure or preserve a Cognito or legacy Google [credential provider](oauth.md#1-prepare-the-provider) alongside SAML and prepare the [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). The required runner needs machine access.
 
-jq -Rs '[.]' "REPLACE_WITH_SECRET_DIRECTORY/google-signing.crt" \
-  > "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
-
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
-  create secret generic toko-mcp-google-saml \
-  --from-file=idp-signing-certificates.json="REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json" \
-  --dry-run=client -o yaml \
-  | kubectl --context "REPLACE_WITH_KUBE_CONTEXT" apply -f -
-
-sha256sum "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
-```
-
-On macOS, use `shasum -a 256`. Hash the JSON file, not the certificate fingerprint or raw PEM. Put only the Secret name, key, and checksum in Helm values.
-
-Save as `tokonoma-oauth.yaml`, preserving any existing credential-provider settings. Copy the printed checksum into `checksum`:
+Merge these SAML settings into `values.yaml`, preserving the credential provider, runner configuration, and other `mcp` settings. Copy the printed checksum into `checksum`:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
 
 mcp:
-  image:
-    tag: "0.68.0"
-
   auth:
     enabled: true
-    # Use none when SAML is the only login method. Keep an existing cognito or
-    # google credential provider only when the deployment intentionally offers
-    # both methods.
-    provider: none
-
+    # Keep the configured credential provider for the runner.
     saml:
       enabled: true
       provider: google
@@ -179,63 +148,17 @@ mcp:
 
 If using `mcp.auth.baseUrl` instead of `domain`, build ACS and metadata URLs from that HTTPS origin.
 
-Record the current revision before changing an existing release:
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials, then verify metadata and login below.
 
-```sh
-helm --kube-context "REPLACE_WITH_KUBE_CONTEXT" history tokonoma \
-  --namespace tokonoma
-```
-
-Render, then deploy with every existing values file and the new overlays. The rendered file contains Secrets; keep it protected and uncommitted:
-
-```sh
-helm template tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version 0.37.0 \
-  --namespace tokonoma \
-  --values tokonoma-values.yaml \
-  --values tokonoma-public.yaml --values tokonoma-ingress.yaml \
-  --values tokonoma-oauth.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" > "REPLACE_WITH_SECRET_DIRECTORY/rendered.yaml"
-
-helm upgrade --install tokonoma --reset-then-reuse-values \
-  oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version 0.37.0 \
-  --namespace tokonoma \
-  --create-namespace \
-  --values tokonoma-values.yaml \
-  --values tokonoma-public.yaml --values tokonoma-ingress.yaml \
-  --values tokonoma-oauth.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --wait --timeout 10m
-```
-
-Expect Helm `STATUS: deployed` and namespace/Secret results `created`, `configured`, or `unchanged`.
-
-Rendering rejects incomplete SAML settings, non-HTTPS SSO, empty domain allowlists, missing Google group attributes, or missing certificate checksums. Changing the checksum restarts the Tokonoma pod.
+For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). Record the prior revision for rollback.
 
 ## 6. Verify metadata and login
 
-Wait for `deployment "toko-mcp" successfully rolled out`, then fetch the HTTPS metadata:
-
-```sh
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
-  rollout status deployment/toko-mcp
-curl -fsS https://REPLACE_WITH_MCP_HOSTNAME/saml/metadata
-```
-
-The metadata must contain:
-
-- `entityID="https://REPLACE_WITH_MCP_HOSTNAME/saml/metadata"`;
-- `AuthnRequestsSigned="false"`;
-- `WantAssertionsSigned="true"`;
-- the persistent NameID format; and
-- ACS location `https://REPLACE_WITH_MCP_HOSTNAME/oauth/saml/acs`.
+Run the shared [SAML metadata check](oauth.md#verify-saml-metadata), then test login below.
 
 Connect an MCP client to `https://REPLACE_WITH_MCP_HOSTNAME/mcp/`, select **Continue with Google Workspace**, and finish login.
 
-Verify identity and access with uniquely named temporary memories:
+For an optional identity and sharing check, use uniquely named temporary memories:
 
 1. Save a memory with the default sharing. Its result must contain
    `owner_group_id: "toko:everyone"`. Record the returned `owner_user_id` and
@@ -256,29 +179,11 @@ Successful login verifies the email assertion. Display names never grant access.
 
 ## Roll back the connection
 
-To stop new Google logins, turn off Google app access for the assigned users.
-For a Helm-owned deployment, restore the revision recorded before the change:
-
-```sh
-helm --kube-context "REPLACE_WITH_KUBE_CONTEXT" rollback tokonoma \
-  REPLACE_WITH_PREVIOUS_REVISION \
-  --namespace tokonoma \
-  --wait --timeout 10m
-```
-
-Rollback restores workloads and values. It does not revoke access or refresh tokens, delete test memories, remove the certificate Secret, or change the Google app. Revoke affected clients where possible; existing access can last until the configured `sessionMaxSeconds` expires.
+Turn off Google app access for the assigned users to stop new logins, then follow [SAML rollback](oauth.md#roll-back-saml-configuration). Existing sessions can remain valid until `sessionMaxSeconds` expires.
 
 ## Troubleshooting
 
-Google reports success when it issues a response, even if Tokonoma rejects that response. For **Sign-in failed**, find the request ID on the page or in `X-Tokonoma-Request-ID`, then search Tokonoma logs:
-
-```sh
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
-  logs deployment/toko-mcp --since=15m \
-  | grep 'REPLACE_WITH_REQUEST_ID'
-```
-
-Tokonoma logs the toolkit's safe failure reason without the assertion payload.
+Google reports success when it issues a response, even if Tokonoma rejects that response. For **Sign-in failed**, [find the request in Tokonoma logs](oauth.md#diagnose-saml-login), then compare the provider settings below.
 
 | Symptom | What to compare |
 | --- | --- |
@@ -303,34 +208,15 @@ After group membership or mapping changes, log in again before checking `availab
 
 Google supports two SAML certificates. Trust both in Tokonoma before switching:
 
-1. In Google Admin Console, open **Security > Authentication > SSO with SAML
-   applications** and add a second certificate.
-2. Download the new certificate while leaving the old app certificate assigned.
-3. Build a JSON array containing both complete PEM values:
+1. In Google Admin Console, open **Security > Authentication > SSO with SAML applications** and add a second certificate. Leave the old app certificate assigned.
+2. Download the new certificate. Follow [SAML certificate rotation](oauth.md#rotate-saml-signing-certificates) with `google-signing-old.crt`, `google-signing-new.crt`, and Secret `toko-mcp-google-saml` to deploy trust for both certificates.
+3. Assign the new certificate to the Tokonoma app. Allow for Google's propagation window, then test a fresh MCP-initiated login.
+4. Complete the shared procedure to remove the old certificate from Tokonoma. Delete it from Google only after every app using it has migrated.
 
-   ```sh
-   jq -n \
-     --rawfile old "REPLACE_WITH_SECRET_DIRECTORY/google-signing-old.crt" \
-     --rawfile new "REPLACE_WITH_SECRET_DIRECTORY/google-signing-new.crt" \
-     '[$old, $new]' > "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
-   ```
-
-4. Update the Kubernetes Secret, update the
-   checksum, deploy, and wait for the Tokonoma rollout.
-5. Assign the new certificate to the Tokonoma app in Google Admin Console.
-   Allow for Google's documented propagation window, then perform a fresh
-   MCP-initiated login.
-6. Remove the old certificate from Tokonoma's trusted list, update the checksum,
-   and deploy again. Delete the old Google certificate only after every app
-   using it has migrated.
-
-See Google's [Maintain SAML certificates](https://knowledge.workspace.google.com/admin/apps/maintain-saml-certificates)
-guide for certificate assignment and expiry details.
+See Google's [Maintain SAML certificates](https://knowledge.workspace.google.com/admin/apps/maintain-saml-certificates) guide for assignment and expiry details. Changes can take up to 24 hours.
 
 ## Current lifecycle limits
 
-Direct Google SAML has no single logout (SLO), automated account provisioning (SCIM), provider-initiated login, account linking, multiple direct SAML providers, immediate token revocation, or silent group updates. Disabling an app or user stops new logins but leaves existing sessions valid.
-
-The default session maximum is 2,592,000 seconds (30 days) from login; Google's shorter limit takes precedence. Access tokens last at most 24 hours, and refresh-token rotation cannot extend the original session.
+The shared [SAML session limits](oauth.md#saml-session-limits) apply. Group membership changes appear only after a fresh login.
 
 Return to [private team access](private-access.md#team-access) or [connect a coding agent](coding-agents.md).

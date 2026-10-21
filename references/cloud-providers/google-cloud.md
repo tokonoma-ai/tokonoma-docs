@@ -2,14 +2,14 @@
 
 Verify persistent storage for Google Kubernetes Engine (GKE). Telemetry ingestion with Google Cloud Storage (GCS) and self-monitoring are optional.
 
-Run commands on a workstation with `kubectl`, Helm 3.14+, gcloud and access to the intended cluster and Google Cloud project. Save values in your [installation working directory](../install.md), outside this repository. Replace `REPLACE_WITH_*` inputs; agents must ask for unresolved choices.
+Use `kubectl`, Helm 3.14+, and gcloud on a workstation with access to the intended cluster and Google Cloud project. Run commands from your [installation working directory](../install.md), following [input conventions](../install.md#inputs-and-placeholders).
 
 | Input | Source and when required |
 |---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts`; required for cluster commands. |
 | `REPLACE_WITH_PROJECT` | Google Cloud project ID from the cluster owner; required only for the optional GCS recipe. |
 | `REPLACE_WITH_REGION` | Bucket location selected with the cloud administrator; required only for the optional GCS recipe. |
-| `REPLACE_WITH_CUSTOMER` | Optional full-stack organization slug: at most 42 lowercase letters, digits, or hyphens, starting with a letter. |
+| `REPLACE_WITH_CUSTOMER` | Telemetry organization slug: at most 42 lowercase letters, digits, or hyphens, starting with a letter. |
 
 ## Persistent volumes
 
@@ -39,7 +39,7 @@ Continue when the command completes successfully.
 
 ### 1. Prepare the bucket and access
 
-Create a telemetry bucket and a Google Cloud service account. If a name is taken, use a unique name throughout the commands and overlay.
+Create a telemetry bucket and a Google Cloud service account. If a name is taken, use a unique name throughout the commands and `values.yaml`.
 
 ```sh
 gcloud storage buckets create gs://REPLACE_WITH_CUSTOMER-tokonoma-indexes \
@@ -70,43 +70,32 @@ gcloud iam service-accounts add-iam-policy-binding tokonoma-sa@REPLACE_WITH_PROJ
 
 Check that each command succeeds. The bucket policy must show the account under `roles/storage.objectAdmin`; the service-account command reports `Updated IAM policy`. If the account is not found, wait and retry. The chart creates the annotated `tokonoma-sa` Kubernetes ServiceAccount.
 
-### 2. Save the overlay
+### 2. Update the values
 
-Save as `tokonoma-full.yaml` in your customer working directory. Use the same bucket name and location as above:
+Merge these settings into `values.yaml`, preserving existing configuration. Use the same bucket name and location as above:
 
 ```yaml
+# Used in telemetry index names and the default bucket name.
 customer: REPLACE_WITH_CUSTOMER
-region: REPLACE_WITH_REGION
-telemetryPlatform: true
+region: REPLACE_WITH_REGION  # Use the bucket location.
+telemetryPlatform: true  # Optional telemetry backend; disabled by default.
 objectStorage:
+  # Native GCS uses Workload Identity; omit endpoint, flavor and credentialsSecret.
   indexesScheme: gs
   indexesBucket: REPLACE_WITH_CUSTOMER-tokonoma-indexes
-  serviceAccountName: tokonoma-sa
-  serviceAccountCreate: true
+  serviceAccountName: tokonoma-sa  # Must match the cloud identity binding.
+  serviceAccountCreate: true  # Create the annotated Kubernetes account; default is false.
   serviceAccountAnnotations:
     iam.gke.io/gcp-service-account: tokonoma-sa@REPLACE_WITH_PROJECT.iam.gserviceaccount.com
-mcp:
-  image:
-    tag: "0.68.0"
+# Optional self-monitoring components; all are disabled by default.
 otelCollector: { enabled: true }
 prometheus:    { enabled: true }
 grafana:       { enabled: true }
 ```
 
-The customer slug determines telemetry index names. Do not set `objectStorage.endpoint`, `flavor`, or `credentialsSecret` for native GCS.
+For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file. Keep MCP private for verification and configure [OAuth](../oauth.md) before shared or public access.
 
-For a first [installation](../install.md#3-install), include this overlay after `tokonoma-values.yaml`. Keep MCP private for verification and configure [OAuth](../oauth.md) before shared or public access.
-
-For an existing installation, follow [upgrade preparation](../upgrading.md), then apply the overlay with existing values and Secret references preserved:
-
-```sh
-helm upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context REPLACE_WITH_KUBE_CONTEXT --version 0.37.0 -n tokonoma \
-  --reset-then-reuse-values -f tokonoma-values.yaml -f tokonoma-full.yaml \
-  --wait --timeout 15m
-```
-
-Include other changed overlays. Expect `STATUS: deployed`.
+For an existing release, [apply the configuration change](../upgrading.md#before-changing-configuration), preserving existing settings and Secret references.
 
 ### 3. Verify the optional services
 
@@ -116,27 +105,10 @@ Check workloads, persistent storage, and index creation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc,jobs
 ```
 
-Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check Workload Identity and bucket access. Complete the [MCP health and memory checks](../install.md#4-verify).
+Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check Workload Identity and bucket access. Complete the [installation health checks](../install.md#4-verify). [Monitoring and integration checks](../install.md#check-monitoring-and-integrations) are optional follow-ups.
 
-In a separate terminal, leave this running:
+For dashboards, [open the self-monitoring Grafana UI](../endpoints.md#self-monitoring-grafana-ui).
 
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-grafana 3000:80
-```
-
-Once it reports `Forwarding from`, check from another terminal:
-
-```sh
-curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/login
-```
-
-Expect `200`. If port 3000 is busy, change the mapping’s left side and URL. Open <http://127.0.0.1:3000> as `admin`; retrieve the password privately:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get secret toko-grafana \
-  -o jsonpath='{.data.admin-password}' | base64 -d
-```
-
-Ship OpenTelemetry Protocol (OTLP) data from inside the cluster to `toko-indexer:7281` with headers `qw-otel-logs-index: REPLACE_WITH_CUSTOMER-logs` and `qw-otel-traces-index: REPLACE_WITH_CUSTOMER-traces`. See [endpoints](../endpoints.md).
+Send OpenTelemetry Protocol (OTLP) data using the [ingest endpoint and headers](../endpoints.md#otlp-ingest).
 
 For the `gce` IngressClass and ManagedCertificate flow, see [public MCP](../public-mcp-ingress.md).

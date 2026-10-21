@@ -1,4 +1,4 @@
-# Guide: connect @Claude in Slack
+# Connect @Claude in Slack
 
 Claude Tag brings `@Claude` to Slack as your organization's shared identity. With Tokonoma, channel members can ask about investigations and telemetry or schedule status updates from memory records.
 
@@ -6,7 +6,7 @@ Complete [OAuth](oauth.md) and [public MCP](public-mcp-ingress.md) setup first. 
 
 ## Prerequisites
 
-Use chart `0.37.0` and image `0.68.0` from the [installation guide](install.md). Run commands in your deployment working directory with AWS CLI and `jq`. Use your protected secret directory with `umask 077`; complete console steps in Claude and Slack. Replace placeholders first. Agents must ask for unresolved choices and secret file paths, never secret contents.
+Run commands from your [installation working directory](install.md) with AWS CLI and `jq`. Use the protected secret directory with `umask 077` and follow [input conventions](install.md#inputs-and-placeholders). Console steps run in Claude and Slack.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -52,9 +52,9 @@ aws cognito-idp create-user-pool-client \
   --region REPLACE_WITH_AWS_REGION > "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client.json"
 ```
 
-Use the pool ID because names can repeat. Using the wrong pool causes token rejection. Protect the output file containing `ClientId` and `ClientSecret`. The pool needs a Cognito domain and `toko-mcp/query` resource-server scope; see [OAuth](oauth.md).
+Use the correct pool ID; names can repeat and credentials from another pool are rejected. Protect the output containing `ClientId` and `ClientSecret`. The pool needs a Cognito domain and `toko-mcp/query` scope; see [OAuth](oauth.md).
 
-In `hybrid` mode, Tokonoma can admit a verified provider client on its first grant. For `preregistered_only`, append this client to `mcp.auth.clients` before testing, preserving existing clients:
+In `hybrid` mode, Tokonoma can admit a verified provider client on its first grant. For `preregistered_only`, append this client to `mcp.auth.clients` in `values.yaml` before testing, preserving existing clients:
 
 ```yaml
 mcp:
@@ -69,7 +69,7 @@ mcp:
         tokenEndpointAuthMethod: client_secret_post
 ```
 
-Apply the [OAuth deployment command](oauth.md#3-deploy-and-verify). Extract credentials into protected files and verify them before console entry:
+Apply the [configuration change](upgrading.md#before-changing-configuration). Extract credentials into protected files and verify them before console entry:
 
 ```sh
 jq -rj '.UserPoolClient.ClientId' "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client.json" \
@@ -87,7 +87,7 @@ curl -sS https://REPLACE_WITH_MCP_HOSTNAME/token \
   | jq '{has_access_token: (.access_token | type == "string" and length > 0), token_type, expires_in, error}'
 ```
 
-Expect `has_access_token: true` and no error; the filter hides the token. This uses URL-encoded form fields (`client_secret_post`). Image `0.68.0` also supports HTTP Basic (`client_secret_basic`); the connector and registered client must use matching methods. SAML-only deployments need a Cognito or Google credential provider for machine access.
+Expect `has_access_token: true` and no error; the filter hides the token. This uses URL-encoded form fields (`client_secret_post`). Tokonoma also supports HTTP Basic (`client_secret_basic`); the connector and registered client must use matching methods. SAML-only deployments need a Cognito or Google credential provider for machine access.
 
 `toko-mcp/query` covers every MCP tool, including `memory_save` and `memory_update_status`. It is the only scope and permits writes.
 
@@ -97,8 +97,7 @@ A bundle groups connectors, plugins, and allowed domains. At
 [`claude.ai/admin-settings/claude-tag`](https://claude.ai/admin-settings/claude-tag),
 open **Claude's access** > **Bundles**, click **Add**, name it `tokonoma`, and click **Create**. If labels changed, see Anthropic’s [bundle and connector guide](https://claude.com/docs/claude-tag/admins/add-connections).
 
-On the bundle's page, under **What's in it**, click **Add**, choose
-**Connector**, select **Custom connector**, and enter:
+On the bundle's page, choose **What's in it > Add > Connector > Custom connector** and enter:
 
 | Field | Value |
 |---|---|
@@ -156,7 +155,7 @@ the URL.
 Zip the directory and upload it at
 [`claude.ai/admin-settings/plugins`](https://claude.ai/admin-settings/plugins) using **Add plugins**. Change **User access** from `Not available` to available. On the `tokonoma` bundle, select **What's in it** > **Add** > **Plugin** and choose it. Uploading alone does not activate it.
 
-Give the plugin and credential the same scope so channels receive both. See Anthropic’s [custom MCP guide](https://claude.com/docs/claude-tag/admins/connections/custom#add-a-custom-mcp-server).
+Apply the plugin and credential to the same channels. See Anthropic’s [custom MCP guide](https://claude.com/docs/claude-tag/admins/connections/custom#add-a-custom-mcp-server).
 
 ## 5. Choose where the bundle applies
 
@@ -180,8 +179,7 @@ Invite Claude and send a new top-level Slack message. Existing threads do not pi
 
 Returned records confirm the plugin, credential, and channel access work together.
 
-To see what a channel can reach, ask `@Claude what can you access from this
-channel?`
+Ask `@Claude what can you access from this channel?` to check its access.
 
 ## Recurring status updates
 
@@ -208,7 +206,7 @@ with no requester, set it to Claude.
 
 Start a new thread after changing the bundle. Instructions guide attribution; the MCP credential remains the authorization identity.
 
-For reporting-only routines, specify "post a status update; do not modify the record". These routines retain write access even when nobody reviews each run.
+Reporting-only routines still have write access. Include "post a status update; do not modify the record" in their instructions.
 
 ## Troubleshooting
 
