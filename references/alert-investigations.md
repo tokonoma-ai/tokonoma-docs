@@ -6,7 +6,7 @@ To receive results in Slack, supply `credentials.slackBotToken` and `credentials
 
 Leave `mcp.slack.autoRecallEnabled: false` unless you want immediate memory recall replies. Those replies require an Anthropic key through `credentials.anthropicApiKey` or `mcp.memoryLlm.apiKeySecret`, with `mcp.memoryLlm.enabled: true`. Explicit mentions and session updates work independently.
 
-The runner is required for a complete Tokonoma installation. Chart `0.37.0` defaults `runner.enabled` to `false`; this guide sets it to `true` with the required credentials and dedicated MCP instance. Investigations send alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Summaries and links go to Slack. Review source permissions before enabling unattended work.
+The runner is required for a complete Tokonoma installation. The chart defaults `runner.enabled` to `false`; this guide sets it to `true` with the required credentials and dedicated MCP instance. Investigations send alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Summaries and links go to Slack. Review source permissions before enabling unattended work.
 
 For Datadog-only alerts, create the [Datadog token Secret](datadog-alerts.md) first. Omit the Alertmanager token input and include the Datadog values file in the same upgrade. Both sources can run together. The chart requires at least one source token; a missing referenced Secret leaves the pod in `CreateContainerConfigError`.
 
@@ -25,9 +25,11 @@ Bundled PostgreSQL needs no additional setup. For external PostgreSQL (`postgres
 
 ## Before you start
 
-Complete steps 1 through 5 of [installation](install.md), then [Tokonoma Slack app setup](slack-app.md). This guide completes the required runner step. Use Helm 3.14+, chart `0.37.0`, and application image `0.68.0`. Follow the [existing-version check](upgrading.md#before-upgrading) before applying these pinned examples to an existing release.
+Complete steps 1 through 5 of [installation](install.md), then [Tokonoma Slack app setup](slack-app.md). This guide completes the required runner step. Use Helm 3.14+ and preserve the existing configuration when adding the runner.
 
 Run commands from the installation's working directory on its administration workstation, outside this checkout. Replace placeholders first; agents must ask for missing inputs.
+
+Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
 
 | Input | Meaning and source | Required when |
 |---|---|---|
@@ -56,7 +58,7 @@ This writes without printing the token. Configure the same value on the sender.
 
 Helm generates the bundled PostgreSQL password and Grafana MCP caller token during installation and reuses them on upgrades. Their Secrets survive uninstall; remove them only when intentionally resetting that installation. Client-only `helm template` and Argo rendering cannot reliably look up these Secrets. Supply `postgres.auth.password` and `grafanaMcp.auth.token`, or [external Secret references](values.md#oss-grafana-mcp), for consistent rendering.
 
-Image `0.68.0` includes Grafana MCP support; no separate Grafana MCP release or external MCP OAuth setup is needed. If `mcp.auth` is enabled, configure the runner's `runner.tokoMcp.oauthClientSecretRef` below.
+The chart includes Grafana MCP support; no separate Grafana MCP release or external MCP OAuth setup is needed. If `mcp.auth` is enabled, configure the runner's `runner.tokoMcp.oauthClientSecretRef` below.
 
 ## Prepare runner credentials when MCP authentication is enabled
 
@@ -96,8 +98,6 @@ Save this as `runner-values.yaml` in the customer working directory. Merge the a
 ```yaml
 # runner-values.yaml
 mcp:
-  image:
-    tag: "0.68.0"
   ingress:
     enabled: false
   storage:
@@ -127,7 +127,7 @@ If using Grafana, replace its URL. Replace the file paths and run this from the 
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version 0.37.0 -n tokonoma --wait --timeout 10m \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --wait --timeout 10m \
   --values tokonoma-values.yaml --values runner-values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
   --set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt" \
@@ -417,9 +417,8 @@ This stops investigations and removes the runner, its dedicated MCP instance, an
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version 0.37.0 -n tokonoma --reset-then-reuse-values \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --reset-then-reuse-values \
   --values tokonoma-values.yaml --values runner-values.yaml \
-  --set-string mcp.image.tag=0.68.0 \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
   --set runner.enabled=false --set mcp.sibling.enabled=false \
   --set grafanaMcp.enabled=false \

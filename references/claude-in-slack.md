@@ -6,7 +6,7 @@ Complete [OAuth](oauth.md) and [public MCP](public-mcp-ingress.md) setup first. 
 
 ## Prerequisites
 
-Use chart `0.37.0` and image `0.68.0` from the [installation guide](install.md). Run commands in your deployment working directory with AWS CLI and `jq`. Use your protected secret directory with `umask 077`; complete console steps in Claude and Slack. Replace placeholders first. Agents must ask for unresolved choices and secret file paths, never secret contents.
+Use the deployment prepared with the [installation guide](install.md). Run commands in your deployment working directory with AWS CLI and `jq`. Use your protected secret directory with `umask 077`; complete console steps in Claude and Slack. Replace placeholders first. Agents must ask for unresolved choices and secret file paths, never secret contents.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -87,7 +87,7 @@ curl -sS https://REPLACE_WITH_MCP_HOSTNAME/token \
   | jq '{has_access_token: (.access_token | type == "string" and length > 0), token_type, expires_in, error}'
 ```
 
-Expect `has_access_token: true` and no error; the filter hides the token. This uses URL-encoded form fields (`client_secret_post`). Image `0.68.0` also supports HTTP Basic (`client_secret_basic`); the connector and registered client must use matching methods. SAML-only deployments need a Cognito or Google credential provider for machine access.
+Expect `has_access_token: true` and no error; the filter hides the token. This uses URL-encoded form fields (`client_secret_post`). Tokonoma also supports HTTP Basic (`client_secret_basic`); the connector and registered client must use matching methods. SAML-only deployments need a Cognito or Google credential provider for machine access.
 
 `toko-mcp/query` covers every MCP tool, including `memory_save` and `memory_update_status`. It is the only scope and permits writes.
 

@@ -2,9 +2,9 @@
 
 `@Tokonoma` runs inside your MCP server. It uses Slack Socket Mode, so it can run in a private cluster without a public Slack callback URL or ingress. This is Tokonoma's own app. The separate `@Claude` integration uses Claude's connectors and has different network requirements.
 
-This guide targets chart 0.37.0 and application 0.68.0. Complete steps 1 through 5 of [installation](install.md) first, then use this guide to prepare Slack delivery for the runner.
+Complete steps 1 through 5 of [installation](install.md) first, then use this guide to prepare Slack delivery for the runner.
 
-Before changing an existing release, follow [version and configuration checks](upgrading.md). If its versions differ from this guide, resolve that difference before running the pinned command.
+Before changing an existing release, follow [version and configuration checks](upgrading.md#before-changing-configuration). Replace `REPLACE_WITH_INSTALLED_CHART_VERSION` with its installed chart version and preserve existing image overrides.
 
 ## Inputs and files
 
@@ -18,7 +18,7 @@ Run shell commands on the administration workstation used for the [base installa
 | `slack-bot-token.txt` | Bot User OAuth Token from Slack, saved in the protected directory | This integration |
 | `license.txt` | Tokonoma-issued license, saved during base installation | Helm upgrade |
 
-Keep `tokonoma-values.yaml` and every existing overlay in the customer working directory. This guide creates no additional values file. Keep all existing credential inputs when upgrading. Optional features that call a model also use `anthropic-api-key.txt`; see [memory processing](memory-llm.md).
+Keep `tokonoma-values.yaml` and every existing overlay in the customer working directory. This guide creates no additional values file. Keep all existing credential inputs when upgrading. Model-backed Slack features also use `anthropic-api-key.txt`; see [memory processing](memory-llm.md).
 
 ## Create the app
 
@@ -39,17 +39,16 @@ Use the protected directory from [credentials](credentials.md). Token files must
 chmod 600 "REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" "REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt"
 
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version 0.37.0 \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION \
   --namespace tokonoma \
   --reset-then-reuse-values -f tokonoma-values.yaml \
-  --set-string mcp.image.tag=0.68.0 \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
   --set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" \
   --set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt" \
   --wait --timeout 10m
 ```
 
-Helm should report release `tokonoma` as `deployed`. Keep every values overlay and credential input already used by your installation. For Slack features that call a model, also include `--set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt"`. If you use existing Secrets, keep those references in `tokonoma-values.yaml` instead of supplying direct token inputs.
+Helm should report release `tokonoma` as `deployed`. Keep every values overlay and credential input already used by your installation. Retain the required analysis credential through `--set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt"` or its existing Secret reference. If you use existing Secrets, keep those references in `tokonoma-values.yaml` instead of supplying direct token inputs.
 
 In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default channel for results; set `mcp.slack.investigationsChannel` only when you want a different channel name. The app must be a member of that channel.
 
@@ -99,6 +98,6 @@ Automatic recall also requires the Slack features that call a model. This switch
 
 The app receives channel messages where it is invited. It can read channel history for sessions and post shared records into those channels. Its memory identity can access organization-wide records, not an individual user's private records or records shared only with named identity-provider groups. New records are shared with everyone by default; choose private sharing when needed. See [data flows](data-flows.md).
 
-The release manifest requests channel and user read scopes, `chat:write`, `reactions:write`, and `channels:join`. Application 0.68.0 does not automatically join channels; invite it explicitly. It does not request `chat:write.public`, direct-message history, or `files:write`.
+The release manifest requests channel and user read scopes, `chat:write`, `reactions:write`, and `channels:join`. Tokonoma does not automatically join channels; invite it explicitly. It does not request `chat:write.public`, direct-message history, or `files:write`.
 
 Continue with [alert investigations](alert-investigations.md), or return to [integrations](integrations.md).

@@ -20,18 +20,18 @@ docker logout public.ecr.aws
 
 Use the Docker command only if that client is installed and its stored credential is involved. If no login exists, continue looking for the cause. If you must retain the login, have its owner refresh it through the normal registry workflow instead.
 
-Retry the pinned public download from the customer working directory:
+Retry the public download from the customer working directory:
 
 ```sh
-helm pull oci://public.ecr.aws/tokonoma/charts/tokonoma --version 0.37.0
+helm pull oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
-Expect `tokonoma-0.37.0.tgz` and manifest digest `sha256:e719008a626bb929e16f974104de4f99199df1ed9f49cabcbae37e4ebc114fc2`. If the same error remains, preserve it and contact Tokonoma before changing more credentials. Do not disable TLS verification.
+Helm prints the downloaded chart version and digest. Record them and use the archive it saved in this directory. If the same error remains, preserve it and contact Tokonoma before changing more credentials. Do not disable TLS verification.
 
-The downloaded archive can replace the OCI URL in subsequent commands. For example:
+The downloaded archive can replace the OCI URL in subsequent commands. Replace `REPLACE_WITH_DOWNLOADED_CHART_FILE` with its actual path:
 
 ```sh
-helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma ./tokonoma-0.37.0.tgz \
+helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma "REPLACE_WITH_DOWNLOADED_CHART_FILE" \
   --namespace tokonoma --create-namespace \
   --values tokonoma-values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \

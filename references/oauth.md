@@ -4,6 +4,8 @@ Configure OAuth before shared or public access. Without authentication, anyone w
 
 Complete the [installation](install.md). Use Helm 3.14+ and a stable HTTPS hostname. Run commands from your deployment directory on a computer with cluster access. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
 
+Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+
 | Input | Where to get it | When needed |
 | --- | --- | --- |
 | `REPLACE_WITH_KUBE_CONTEXT`, `tokonoma-values.yaml`, license file and secret directory | Your installation record and platform team | Before cluster commands |
@@ -52,8 +54,6 @@ Save as `tokonoma-oauth.yaml`, or merge into that file if SAML is already config
 domain: REPLACE_WITH_MCP_HOSTNAME
 region: REPLACE_WITH_AWS_REGION
 mcp:
-  image:
-    tag: "0.68.0"
   auth:
     enabled: true
     provider: cognito
@@ -79,7 +79,7 @@ Prepare `tokonoma-public.yaml` and `tokonoma-ingress.yaml` using the [public MCP
 ```sh
 helm upgrade --install tokonoma --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version 0.37.0 -n tokonoma --create-namespace \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --create-namespace \
   -f tokonoma-values.yaml -f tokonoma-public.yaml -f tokonoma-ingress.yaml \
   -f tokonoma-oauth.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \

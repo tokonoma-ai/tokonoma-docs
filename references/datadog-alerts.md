@@ -6,7 +6,7 @@ Datadog needs a public HTTPS webhook. The chart adds it to your existing MCP Ing
 
 ## Before you start
 
-- Use Helm 3.14+, chart `0.37.0`, and image `0.68.0`. Keep the complete install values, including HTTPS ingress and authentication, in `tokonoma-values.yaml`.
+- Use Helm 3.14+. Keep the complete install values, including HTTPS ingress and authentication, in `tokonoma-values.yaml`.
 - Complete the [runner prerequisites](alert-investigations.md): `mcp.sibling.enabled`, a model provider key, a Slack destination, and OAuth credentials when `mcp.auth` is enabled. Datadog-only installations need no Alertmanager token, but at least one source token is required.
 - MCP Ingress must serve HTTPS only. Follow [Public MCP Ingress](public-mcp-ingress.md). The bearer token travels in a header; the chart cannot enforce HTTPS terminated through provider annotations. GKE's GCE controller initially serves HTTP too. Once its certificate and load balancer are active, add `kubernetes.io/ingress.allow-http: "false"` to `mcp.ingress.annotations`, upgrade, and verify HTTPS-only access before enabling deliveries.
 - Use Datadog Terraform provider 3.83.0 or later for notification-rule `filter.scope` support. Add the three resources below to your existing project. Outside US1, set your site's API in `provider "datadog"`, for example `api_url = "https://api.us3.datadoghq.com/"`.
@@ -14,7 +14,9 @@ Datadog needs a public HTTPS webhook. The chart adds it to your existing MCP Ing
 
 ## Inputs and files
 
-Complete steps 1 through 5 of [installation](install.md) and the [existing-version check](upgrading.md#before-upgrading). Use this guide with the runner prerequisites to complete installation step 6. Run Kubernetes and Helm commands from the installation's working directory on its administration workstation, outside this checkout. Use your existing Datadog Terraform project. Replace placeholders first; agents must ask for missing inputs.
+Complete steps 1 through 5 of [installation](install.md). Use this guide with the runner prerequisites to complete installation step 6. Run Kubernetes and Helm commands from the installation's working directory on its administration workstation, outside this checkout. Use your existing Datadog Terraform project. Replace placeholders first; agents must ask for missing inputs.
+
+Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
 
 | Input | Meaning and source | Required when |
 |---|---|---|
@@ -68,8 +70,6 @@ Save this as `runner-datadog-values.yaml` in the customer working directory. If 
 ```yaml
 # runner-datadog-values.yaml
 mcp:
-  image:
-    tag: "0.68.0"
   ingress:
     enabled: true
   auth:
@@ -89,7 +89,7 @@ For an existing runner, add this overlay after its complete values. Preserve the
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version 0.37.0 -n tokonoma \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
   --reset-then-reuse-values --values tokonoma-values.yaml \
   --values runner-values.yaml --values runner-datadog-values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \

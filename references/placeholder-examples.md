@@ -20,7 +20,7 @@ Feature guides list required identifiers and provider settings. Copy them from t
 
 Keep quotes around paths, especially those containing spaces. Substitute your actual release and namespace for `tokonoma` consistently.
 
-The base versions are chart **0.37.0** and application **0.68.0**. Keep these exact version pins unless you have verified instructions for the other versions you intend to install. See [version pins](pin-image.md).
+New installations use the latest released chart and its application image defaults. For configuration changes, replace `REPLACE_WITH_INSTALLED_CHART_VERSION` with the existing chart version using [configuration checks](upgrading.md#before-changing-configuration).
 
 ## Configuration and provider syntax
 

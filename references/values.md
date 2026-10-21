@@ -2,17 +2,17 @@
 
 Keep a small values file without secrets in your customer working directory outside this repository. Supply credentials through protected files or existing Secret references. See [installation](install.md) for file preparation.
 
-Run the following command on a workstation with Helm installed. It needs no customer inputs and prints the complete defaults for chart `0.37.0`:
+Run the following command on a workstation with Helm installed. It needs no customer inputs and prints the complete defaults for the latest released chart:
 
 ```sh
-helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma --version 0.37.0
+helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
 ## Core installation
 
 | Value | Purpose |
 |---|---|
-| `mcp.image.tag` | Set `"0.68.0"` for this guide; chart default is the mutable `latest` tag. |
+| `mcp.image.tag` | Omit to use the chart default, currently `latest`. Keep existing overrides during configuration changes; see [version selection](upgrading.md#before-changing-configuration). |
 | `mcp.auth.enabled` | Explicitly `false` for the private installation; `true` with a configured login provider for shared access. |
 | `mcp.ingress.enabled` | Default `false`. Configure hostname, TLS and access controls before enabling. |
 | `mcp.license` | License supplied with `--set-file`; creates a chart-owned Secret. |
@@ -45,7 +45,7 @@ See [credentials](credentials.md) for Secret references, storage in Helm metadat
 | `runner.destinations.slackApp.enabled` | Delivers investigations through the native Slack app. |
 | `runner.ingress.webhookPaths` | Default `[]`; explicit `[/webhooks/alertmanager]`, `[/webhooks/datadog]`, or both. Lists replace, rather than append. |
 
-Follow [alert investigations](alert-investigations.md) for a complete compatible values file. Detection features appearing in newer development builds are outside this released baseline.
+Follow [alert investigations](alert-investigations.md) for a complete compatible values file. Detection features in unreleased development builds are outside these guides.
 
 ## OSS Grafana MCP
 

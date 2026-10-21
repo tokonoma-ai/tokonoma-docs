@@ -7,7 +7,7 @@ You choose which alerts, tools, and Slack channels it can use. The investigation
 ```mermaid
 flowchart LR
   accTitle: Tokonoma in your environment
-  accDescr: Coding agents connect to Tokonoma, and selected alerts reach the required Tokonoma runner. Both run in your Kubernetes cluster. Tokonoma connects to Slack and optional model features. The runner calls its model provider and configured telemetry, alerting, and code integrations. Arrows show who opens each connection. This is a capability overview, not a map of internal services.
+  accDescr: Coding agents connect to Tokonoma, and selected alerts reach the required Tokonoma runner. Both run in your Kubernetes cluster. Tokonoma connects to Slack and its model provider for required analysis. The runner calls its model provider and configured telemetry, alerting, and code integrations. Arrows show who opens each connection. This is a capability overview, not a map of internal services.
   subgraph Inputs["Your team and alerts"]
     Agents["Coding agents"]
     Alerts["Selected alerts"]
@@ -24,7 +24,7 @@ flowchart LR
   Agents --> Tokonoma
   Alerts --> Runner
   Tokonoma -->|"Messages"| Slack
-  Tokonoma -.->|"Optional analysis"| Models
+  Tokonoma -->|"Analysis"| Models
   Runner -->|"Investigate"| Models
   Runner -->|"Query"| Tools
 
@@ -37,11 +37,11 @@ flowchart LR
   style Connections fill:#f8fafc,stroke:#cbd5e1,color:#334155
 ```
 
-Arrows show who opens each connection; responses and Slack events return over it. The dashed arrow is optional.
+Arrows show who opens each connection; responses and Slack events return over it.
 
-The runner is a required part of Tokonoma. Configure its model provider, alert sources, and investigation tools during installation. Detectors are upcoming and are not available in the release covered by these guides.
+The runner and [memory analysis](references/memory-llm.md) are required parts of Tokonoma. Configure analysis credentials, the runner's model provider, alert sources, and investigation tools during installation. Detectors are upcoming.
 
-These guides cover Helm chart **0.37.0** and application **0.68.0**, available from public Amazon Elastic Container Registry (ECR). You do not need access to the application source.
+Install the published Helm chart from public Amazon Elastic Container Registry (ECR). The examples use its application image defaults without requiring a specific release version. You do not need access to the application source.
 
 ## What you will install
 
@@ -49,20 +49,19 @@ The installation includes the Tokonoma MCP service, the runner and its dedicated
 
 The [installation guide](references/install.md) prepares the base services, then configures the required runner using your [selected integrations](references/integrations.md).
 
-The diagram shows the connections you choose to enable. Model providers can receive investigation context, and a hosted coding agent can also send retrieved records to its own provider. The [data-flow reference](references/data-flows.md) explains the callers, destinations, and network requirements.
+The diagram shows required model connections and the integrations you configure. Model providers can receive investigation context, and a hosted coding agent can also send retrieved records to its own provider. The [data-flow reference](references/data-flows.md) explains the callers, destinations, and network requirements.
 
 | Optional capability | What it adds | Start here |
 | --- | --- | --- |
 | Slack | Use `@Tokonoma` in invited channels and receive investigation results | [Slack setup](references/slack-app.md) |
 | Shared team access | A stable endpoint with network access and user authentication | [Private and team access](references/private-access.md) |
-| Memory analysis and Slack questions | Model-based processing with a separately configured credential | [Model configuration](references/memory-llm.md) |
 | Telemetry storage | Store and query telemetry in your own cloud infrastructure | [AWS](references/cloud-providers/aws.md), [Google Cloud](references/cloud-providers/google-cloud.md) |
 
 Tokonoma runs on an existing AWS or Google Cloud cluster. Telemetry storage is optional.
 
 ## Before you start
 
-You need an existing Kubernetes cluster, workload and storage permissions, and a Tokonoma license. Your platform team supplies cluster access. The runner needs model credentials and access to your selected alert sources and investigation tools. See the [prerequisite checks](references/install.md#before-installing).
+You need an existing Kubernetes cluster, workload and storage permissions, and a Tokonoma license. Your platform team supplies cluster access. Memory analysis needs an Anthropic credential. The runner needs its model credentials and access to your selected alert sources and investigation tools. See the [prerequisite checks](references/install.md#before-installing).
 
 The walkthrough uses bundled PostgreSQL, a temporary local connection, and Slack for runner results. You need permission to install the Slack app and obtain its tokens. If you want an external database or a shared endpoint, prepare it before installing. Changing a database address does not move data.
 
@@ -87,7 +86,7 @@ All documentation is in `references/`. Start with installation, or connect to an
 | Understand and prepare | [Data flows](references/data-flows.md), [credentials and license](references/credentials.md), [input conventions](references/placeholder-examples.md) |
 | Install and connect | [Installation](references/install.md), [coding agents](references/coding-agents.md), [external PostgreSQL](references/external-postgres.md) |
 | Add features or access | [Integrations](references/integrations.md), [private access](references/private-access.md), [authentication](references/oauth.md), [public routing](references/public-mcp-ingress.md) |
-| Look up configuration | [Values](references/values.md), [endpoints](references/endpoints.md), [version pins](references/pin-image.md) |
+| Look up configuration | [Values](references/values.md), [endpoints](references/endpoints.md), [version choices](references/upgrading.md#before-changing-configuration) |
 | Operate the installation | [Upgrade](references/upgrading.md), [troubleshoot](references/troubleshooting.md), [remove Tokonoma](references/uninstall.md) |
 
 Use your Tokonoma contact for a license or deployment help. Keep credentials, issued licenses, customer data, and unredacted diagnostics out of this repository and public issues.

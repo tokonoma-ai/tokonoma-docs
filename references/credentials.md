@@ -1,6 +1,6 @@
 # Credentials and license
 
-For chart 0.37.0 and application 0.68.0, prepare the license and selected runner credentials before [installation](install.md#2-prepare-your-files). Add credentials for other features as needed.
+Prepare the license, Anthropic analysis credential, and selected runner credentials before [installation](install.md#2-prepare-your-files). Add credentials for other features as needed.
 
 ## What you need
 
@@ -12,7 +12,7 @@ For chart 0.37.0 and application 0.68.0, prepare the license and selected runner
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
 | Alertmanager bearer token | Generate a random token and configure the same value in Alertmanager | `credentials.alertmanagerToken` | Authenticating Alertmanager deliveries to the runner |
 
-The MCP server and runner share the Anthropic key unless you configure separate Secret references. Adding it enables memory analysis by default. Set `mcp.memoryLlm.enabled: false` to disable analysis and model-backed Slack features while retaining the runner's key. See [data flows](data-flows.md).
+The MCP server and runner share the Anthropic key unless you configure separate Secret references. Adding it enables memory analysis by default. Keep analysis enabled for normal operation. See [analysis maintenance](memory-llm.md#temporarily-stop-analysis) to stop it temporarily while retaining the runner's key. See [data flows](data-flows.md).
 
 A valid Tokonoma license is required for full-body recalls, but not search, saving, or skill discovery. An API key cannot replace it and does not enable the runner.
 
@@ -36,7 +36,7 @@ Create the files required by your runner configuration and other selected featur
 
 | File | Content and source | Needed when |
 | --- | --- | --- |
-| `anthropic-api-key.txt` | Issued API key from your Anthropic account | Using the features in the credential table above |
+| `anthropic-api-key.txt` | Issued API key from your Anthropic account | Required analysis, unless you use an existing Secret |
 | `slack-bot-token.txt`, `slack-app-token.txt` | Tokens from your Slack app | Following [Slack setup](slack-app.md) |
 | `alertmanager-token.txt` | Token shared with your alert sender | Following [Alertmanager setup](alert-investigations.md) |
 | `grafana-viewer-token.txt` | Your existing Grafana service-account credential | Enabling the Grafana query adapter |
@@ -85,7 +85,7 @@ Integration guides cover Datadog tokens and API keys, Grafana credentials, OAuth
 
 ## Renew and rotate
 
-Use the verified cluster context. For direct `credentials.*` inputs, update the protected file and rerun the complete Helm upgrade. Chart 0.37.0 automatically restarts deployments using changed Anthropic, Slack, and Alertmanager values.
+Use the verified cluster context. For direct `credentials.*` inputs, update the protected file and rerun the complete Helm upgrade. The chart automatically restarts deployments using changed Anthropic, Slack, and Alertmanager values.
 
 After changing `mcp.license`, restart MCP and its unattended deployment. Restart deployments after changing their externally managed Secrets. With default component names:
 

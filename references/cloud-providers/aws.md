@@ -4,6 +4,8 @@ Prepare persistent storage for Amazon Elastic Kubernetes Service (EKS). Telemetr
 
 Run commands on a workstation with `kubectl`, Helm 3.14+, AWS CLI and access to the intended cluster and AWS account. Save values in your [installation working directory](../install.md), outside this repository. Replace `REPLACE_WITH_*` inputs; agents must ask for unresolved choices.
 
+Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](../upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+
 | Input | Source and when required |
 |---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts`; required for cluster commands. |
@@ -74,9 +76,6 @@ objectStorage:
   serviceAccountCreate: true
   serviceAccountAnnotations:
     eks.amazonaws.com/role-arn: REPLACE_WITH_IRSA_ROLE_ARN
-mcp:
-  image:
-    tag: "0.68.0"
 otelCollector: { enabled: true }
 prometheus:    { enabled: true }
 grafana:       { enabled: true }
@@ -90,7 +89,7 @@ For an existing installation, follow [upgrade preparation](../upgrading.md), the
 
 ```sh
 helm upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context REPLACE_WITH_KUBE_CONTEXT --version 0.37.0 -n tokonoma \
+  --kube-context REPLACE_WITH_KUBE_CONTEXT --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
   --reset-then-reuse-values -f tokonoma-values.yaml -f tokonoma-full.yaml \
   --wait --timeout 15m
 ```

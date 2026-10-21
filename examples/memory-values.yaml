@@ -1,8 +1,6 @@
-# Chart 0.37.0. Supply your issued license separately with --set-file.
+# Supply your issued license separately with --set-file.
 # Base services only. Complete installation with the required runner setup.
 mcp:
-  image:
-    tag: "0.68.0"
   auth:
     enabled: false
   ingress:

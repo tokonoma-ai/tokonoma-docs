@@ -1,6 +1,6 @@
 # Data flows and network access
 
-This describes chart 0.37.0 with application 0.68.0. The integrations you enable and where your agent runs determine where data goes. External models and services receive the content sent to them, even when Tokonoma runs in your cluster.
+The integrations you enable and where your agent runs determine where data goes. External models and services receive the content sent to them, even when Tokonoma runs in your cluster.
 
 ## Installed services
 
@@ -30,7 +30,7 @@ License signature verification happens locally. The released license implementat
 
 ## Model and integration connections
 
-The runner needs its model provider and configured investigation tools. Other connections depend on the features you enable. The coding agent, MCP services, and runner have separate model configurations and credentials.
+Memory analysis requires the Anthropic API. The runner needs its model provider and configured investigation tools. Other connections depend on the features you enable. The coding agent, MCP services, and runner have separate model configurations and credentials.
 
 | Caller or feature | Destination | Data and purpose |
 | --- | --- | --- |
@@ -44,7 +44,7 @@ The runner needs its model provider and configured investigation tools. Other co
 | Operational telemetry | Configured Prometheus scrape targets or OpenTelemetry (OTLP) endpoint | Process metrics and traces; an external endpoint receives operational data |
 | Authentication | The identity provider you configure | Login and identity information; Tokonoma holds OAuth tokens and related state |
 
-The MCP server uses the Anthropic API for memory analysis in this release. The runner has its own model-provider configuration; changing it does not change the MCP server's Anthropic calls. To disable those MCP calls, set `mcp.memoryLlm.enabled: false`.
+The MCP server uses the Anthropic API for required memory analysis. The runner has its own model-provider configuration; changing it does not change the MCP server's Anthropic calls. See [analysis configuration](memory-llm.md) for setup and temporary maintenance controls.
 
 The released webhook sources are Alertmanager and Datadog. CloudWatch is not a released Tokonoma adapter. An additional MCP endpoint is usable only when you configure that endpoint, its authentication, and the specific tools the runner may call; it does not imply a built-in integration.
 
@@ -60,7 +60,7 @@ For direct Google Workspace or Okta SAML login, the user's browser visits the id
 
 The installation pulls images from public ECR and Docker Hub and the embedding model from `registry.ollama.ai`. Optional self-monitoring components can also pull from `quay.io` and `registry.k8s.io`; Grafana downloads its configured data-source plugin from GitHub at startup.
 
-Allow only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, the Anthropic API or runner's configured provider, your Grafana or Datadog endpoints, your identity provider, and your configured object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
+Allow the Anthropic API for analysis and the runner's configured model provider. Add only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, your Grafana or Datadog endpoints, your identity provider, and your configured object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
 
 Image and model downloads need network access during startup unless you have supplied compatible mirrors and preloaded assets. A fully disconnected installation is not validated by this guide.
 

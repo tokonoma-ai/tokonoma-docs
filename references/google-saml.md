@@ -6,7 +6,9 @@ Google SAML supplies memory-sharing groups at login. Tokonoma does not query or 
 
 ## Prerequisites
 
-Use Helm 3.14+, `jq`, chart `0.37.0`, and image `0.68.0`. Run commands from your deployment directory on a computer with cluster access. Configure Google in Google Admin Console. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
+Use Helm 3.14+ and `jq`. Run commands from your deployment directory on a computer with cluster access. Configure Google in Google Admin Console. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
+
+Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -141,9 +143,6 @@ Save as `tokonoma-oauth.yaml`, preserving any existing credential-provider setti
 domain: REPLACE_WITH_MCP_HOSTNAME
 
 mcp:
-  image:
-    tag: "0.68.0"
-
   auth:
     enabled: true
     # Use none when SAML is the only login method. Keep an existing cognito or
@@ -191,7 +190,7 @@ Render, then deploy with every existing values file and the new overlays. The re
 ```sh
 helm template tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version 0.37.0 \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION \
   --namespace tokonoma \
   --values tokonoma-values.yaml \
   --values tokonoma-public.yaml --values tokonoma-ingress.yaml \
@@ -201,7 +200,7 @@ helm template tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
 helm upgrade --install tokonoma --reset-then-reuse-values \
   oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version 0.37.0 \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION \
   --namespace tokonoma \
   --create-namespace \
   --values tokonoma-values.yaml \

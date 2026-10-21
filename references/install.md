@@ -1,6 +1,6 @@
 # Install Tokonoma
 
-Install chart **0.37.0** and application **0.68.0** in an existing Kubernetes cluster. Tokonoma requires its MCP service and investigation runner. Steps 1 through 5 prepare the base services, including PostgreSQL and Ollama. Step 6 configures and verifies the required runner.
+Install the published Helm chart in an existing Kubernetes cluster. Tokonoma requires its MCP service, memory analysis, and investigation runner. Steps 1 through 5 prepare the base services, including PostgreSQL and Ollama. Step 6 configures analysis and verifies the required runner.
 
 This walkthrough uses Slack for investigation results. Before starting, arrange permission to install the Slack app and obtain the tokens listed in [Slack setup](slack-app.md#inputs-and-files).
 
@@ -13,7 +13,7 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | Target and existing deployment | Ask the cluster owner for the intended context; inspect the release below | New release: follow this guide. Existing release: [connect your agent](coding-agents.md), or use [upgrading](upgrading.md) for an intended deployment change. |
 | Database | Choose bundled PostgreSQL or have your database owner prepare [external PostgreSQL](external-postgres.md) | Prepare it before installing. Changing the address does not migrate data. |
 | Access | Choose a local connection for one operator, [private team access](private-access.md), or [public authenticated access](public-mcp-ingress.md) | The base example uses a local connection. Set up authentication and routing before exposing a shared endpoint. |
-| Runner | Choose your alert sources, model provider, and investigation tools using [integrations](integrations.md); inspect [data flows](data-flows.md) | Gather credentials before starting. Complete runner setup in step 6. |
+| Analysis and runner | Prepare an Anthropic credential for analysis. Choose the runner's alert sources, model provider, and investigation tools using [integrations](integrations.md); inspect [data flows](data-flows.md) | Gather credentials before starting. Complete analysis and runner setup in step 6. |
 | Additional features | Choose Slack features, authentication, or cloud telemetry as needed | Follow any preparation required by the selected guide. |
 
 Use one release per namespace: component names are fixed. Examples use release and namespace `tokonoma`; substitute assigned names consistently. Do not reuse an unrelated deployment's namespace.
@@ -43,7 +43,7 @@ Check [AWS storage preparation](cloud-providers/aws.md#persistent-volumes) or [G
 Inspect the package defaults for resource requests and configuration:
 
 ```sh
-helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma --version 0.37.0
+helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
 If the registry reports an expired token, follow [registry troubleshooting](troubleshooting.md#public-ecr-reports-an-expired-token), then return here.
@@ -64,7 +64,7 @@ Copy the base example once, before it contains your changes. It prepares the ser
 cp "REPLACE_WITH_DOCS_DIRECTORY/examples/memory-values.yaml" tokonoma-values.yaml
 ```
 
-Review the YAML. It pins application 0.68.0 and uses `mcp.storage.backend: none`. Public routing and authentication are disabled for local access. Any caller who can reach it can use it. Restrict network access and port-forward permissions; configure authentication for shared access.
+Review the YAML. It uses the chart's application image default and `mcp.storage.backend: none`. Public routing and authentication are disabled for local access. Any caller who can reach it can use it. Restrict network access and port-forward permissions; configure authentication for shared access.
 
 If you chose an external database, complete its [preparation](external-postgres.md) and save `tokonoma-external-postgres.yaml` before installing. If you chose the optional cloud telemetry stack, prepare `tokonoma-full.yaml` using the platform guide. Authentication and routing guides specify their own files.
 
@@ -72,12 +72,11 @@ Keep a list of every values file in order, starting with `tokonoma-values.yaml`,
 
 ## 3. Install
 
-First install the base services with a local license file. Continue through step 6 to complete the installation:
+First install the base services with a local license file. Without `--version`, Helm selects the latest stable chart; the chart currently defaults to the application image tag `latest`. Continue through step 6 to complete the installation:
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma \
   oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version 0.37.0 \
   --namespace tokonoma --create-namespace \
   --values tokonoma-values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
@@ -123,13 +122,14 @@ Optionally run `Run Tokonoma onboard.` to prepare investigation context. Review 
 
 ## 6. Configure and verify the runner
 
-The runner is required. Chart `0.37.0` defaults `runner.enabled` to `false`; the runner guide enables it together with its credentials and dedicated MCP instance.
+The runner and memory analysis are required. Chart defaults leave `runner.enabled: false`; the runner guide enables it together with its credentials and dedicated MCP instance.
 
-1. Set up the [Tokonoma Slack app](slack-app.md) for the result delivery used by these guides.
-2. Follow [runner setup](alert-investigations.md) with your selected model provider and investigation tools. Use the Grafana example only if you use Grafana. For Datadog alerts, follow the [Datadog guide](datadog-alerts.md) alongside the runner prerequisites; webhook setup and query access are separate.
-3. Complete the runner guide's [verification](alert-investigations.md#check-it-works): send one approved test alert and confirm the completed investigation, saved record, and result in Slack. Preserve existing paging routes.
+1. Configure [memory analysis](memory-llm.md), including its Anthropic credential, and check the configured provider. This is required even when the runner uses another model provider.
+2. Set up the [Tokonoma Slack app](slack-app.md) for the result delivery used by these guides.
+3. Follow [runner setup](alert-investigations.md) with your selected model provider and investigation tools. Use the Grafana example only if you use Grafana. For Datadog alerts, follow the [Datadog guide](datadog-alerts.md) alongside the runner prerequisites; webhook setup and query access are separate.
+4. Complete the runner guide's [verification](alert-investigations.md#check-it-works): send one approved test alert and confirm the completed investigation, saved record, and result in Slack. Preserve existing paging routes.
 
-Record the target, versions, values-file order, credential locations without secret values, integrations, and check results. Installation is complete when both the memory check and runner investigation check pass.
+Record the target, versions, values-file order, credential locations without secret values, integrations, and check results. Installation is complete when analysis is configured and both the memory check and runner investigation check pass.
 
 ## Next steps
 

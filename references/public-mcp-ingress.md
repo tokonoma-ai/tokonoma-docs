@@ -6,6 +6,8 @@ You need Helm 3.14+, a working ingress controller, DNS control, and a valid TLS 
 
 Run shell commands from your deployment working directory on the computer with cluster access. Save values files there. Replace placeholders with the inputs below before running commands. Agents must ask for unresolved choices and secret file paths, keeping secret contents out of chat.
 
+Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+
 | Input | Where to get it | When needed |
 | --- | --- | --- |
 | `REPLACE_WITH_KUBE_CONTEXT`, installation values and license file | Your installation record and protected secret directory | Before cluster commands |
@@ -26,8 +28,6 @@ Both commands must identify the intended cluster. Save this as `tokonoma-public.
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
 mcp:
-  image:
-    tag: "0.68.0"
   auth:
     enabled: true
 ```
@@ -146,7 +146,7 @@ Point DNS at the Traefik load balancer. The named cert-manager `ClusterIssuer` m
 ```sh
 helm upgrade --install tokonoma --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version 0.37.0 -n tokonoma --create-namespace \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --create-namespace \
   -f tokonoma-values.yaml -f tokonoma-public.yaml -f tokonoma-ingress.yaml \
   -f tokonoma-oauth.yaml \
   --set mcp.auth.enabled=true \

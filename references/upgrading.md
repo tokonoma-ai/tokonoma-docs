@@ -1,6 +1,6 @@
 # Upgrade Tokonoma
 
-This guide targets chart **0.37.0** and application **0.68.0**. Chart and image versions are independent. Test the target versions with your configuration before changing a production release.
+Install and upgrade commands use the latest released chart and its application image defaults. Chart and application versions are independent. Test the upgrade with your configuration before changing a production release.
 
 Run the commands from the existing installation's working directory on an authorized workstation. Use [installation](install.md) for a new release.
 
@@ -11,7 +11,17 @@ Run the commands from the existing installation's working directory on an author
 | Values files and order | The saved installation configuration | Include every selected file after the base values file |
 | `REPLACE_WITH_SECRET_DIRECTORY` or existing Secret references | Your credential storage | Preserve the existing license and selected integrations |
 
-For a feature-only change, first verify that the installed chart and application match this guide. If they differ, use instructions verified for the installed versions or agree on the version change before using the pinned commands. Adding Slack or another feature must not silently upgrade or downgrade the deployment.
+## Before changing configuration
+
+Configuration guides use `--version REPLACE_WITH_INSTALLED_CHART_VERSION` to keep your existing chart while changing settings. Read the latest deployed revision below and replace the placeholder with its chart version, without the `tokonoma-` prefix. Keep existing application image overrides and use settings supported by that chart. If a feature requires a newer release, plan an upgrade first.
+
+```sh
+helm --kube-context REPLACE_WITH_KUBE_CONTEXT history tokonoma -n tokonoma
+```
+
+The chart's application image default is `latest`, with image pull policy `Always`. A restarted pod can therefore pull a newer application build even when the chart version stays the same. Configuration changes that restart workloads can have this effect too. The unattended MCP and runner inherit the primary MCP image unless overridden.
+
+Fixed versions are optional. If your rollout process needs reproducible builds, choose and test a chart version with `--version` and set `mcp.image.tag` to the intended application release in your saved values. Check separate unattended MCP or runner image overrides too. These guides do not require particular versions.
 
 ## Before upgrading
 
@@ -28,11 +38,19 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deployment toko-mcp 
 
 ## Apply the upgrade
 
-Update `mcp.image.tag` to `"0.68.0"` in `tokonoma-values.yaml`, then:
+Review the latest chart defaults:
+
+```sh
+helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
+```
+
+Keep deliberate image overrides unless changing them is part of the upgrade. To return an existing pinned deployment to the rolling application default, remove the saved override and pass `--set-string mcp.image.tag=latest` on this upgrade. Removing the file entry alone does not clear a value preserved by `--reset-then-reuse-values`.
+
+Apply the upgrade:
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version 0.37.0 -n tokonoma \
+  -n tokonoma \
   --reset-then-reuse-values --values tokonoma-values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
   --wait --timeout 15m
@@ -40,7 +58,19 @@ helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.
 
 Expect Helm to report status `deployed`. Include every selected `--values` file in its original order, every changed credential input, and existing Secret references. If the license uses an existing Secret reference, omit the direct license-file argument. Helm 3.14+ is required for `--reset-then-reuse-values`: it starts from new chart defaults, reapplies the previous supplied values, and then applies this command's overrides. Plain `--reuse-values` can retain old chart defaults. When intentionally removing obsolete keys, use a complete replacement values file and all required credential inputs with `--reset-values` after reviewing the effect.
 
-Check pod readiness, the `/health` response, a licensed memory read, and the optional integrations you enabled. Restart the MCP deployments after a license change; see [credentials](credentials.md). A successful Helm wait does not verify Slack permissions, model-provider access, or external alert delivery.
+An unchanged image reference does not trigger a Helm rollout. If the requested upgrade includes pulling the newest application behind `latest`, restart its Deployments after Helm finishes:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart \
+  deployment/toko-mcp deployment/toko-mcp-unattended deployment/toko-runner
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-mcp --timeout=10m
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-mcp-unattended --timeout=10m
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-runner --timeout=10m
+```
+
+Use the Deployment names in your release. Restart only workloads whose rolling images you intend to update. During runner rollout, investigations pause.
+
+Check pod readiness, the `/health` response, a licensed memory read, and the integrations you enabled. Restart the MCP deployments after a license change; see [credentials](credentials.md). A successful Helm wait does not verify Slack permissions, model-provider access, or external alert delivery.
 
 Helm rollback restores chart resources and values, not database state, deleted objects, or revoked credentials. Review application and database compatibility before rolling back; use your backups when a state migration cannot be reversed.
 
@@ -96,9 +126,8 @@ Notify participants before upgrading. Keep the old `meetingCapture.enabled` and 
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version 0.37.0 -n tokonoma \
+  -n tokonoma \
   --reset-then-reuse-values --values tokonoma-values.yaml \
-  --set-string mcp.image.tag=0.68.0 \
   --set meetingCaptureCleanup.mode=enabled \
   --set-string meetingCaptureCleanup.namespace=REPLACE_WITH_OLD_NAMESPACE \
   --wait --timeout 15m
