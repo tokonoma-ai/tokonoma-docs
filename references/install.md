@@ -1,8 +1,8 @@
 # Install Tokonoma
 
-Install the published Helm chart in an existing Kubernetes cluster. Tokonoma requires its MCP service, memory analysis, and investigation runner. Steps 1 through 5 prepare the base services, including PostgreSQL and Ollama. Step 6 configures analysis and verifies the required runner.
+Install the published Helm chart in an existing Kubernetes cluster. Tokonoma requires its MCP service, memory analysis, and investigation runner. Prepare one `values.yaml`, then install these services together with PostgreSQL and Ollama.
 
-This walkthrough uses Slack for investigation results. Before starting, arrange permission to install the Slack app and obtain the tokens listed in [Slack setup](slack-app.md#inputs-and-files).
+The command below uses Anthropic, Alertmanager, and Slack. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
 Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Replace `REPLACE_WITH_...` inputs first. Agents use verified values and ask for missing inputs.
 
@@ -12,8 +12,8 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | --- | --- | --- |
 | Target and existing deployment | Ask the cluster owner for the intended context; inspect the release below | New release: follow this guide. Existing release: [connect your agent](coding-agents.md), or use [upgrading](upgrading.md) for an intended deployment change. |
 | Database | Choose bundled PostgreSQL or have your database owner prepare [external PostgreSQL](external-postgres.md) | Prepare it before installing. Changing the address does not migrate data. |
-| Access | Choose a local connection for one operator, [private team access](private-access.md), or [public authenticated access](public-mcp-ingress.md) | The base example uses a local connection. Set up authentication and routing before exposing a shared endpoint. |
-| Analysis and runner | Prepare an Anthropic credential for analysis. Choose the runner's alert sources, model provider, and investigation tools using [integrations](integrations.md); inspect [data flows](data-flows.md) | Gather credentials before starting. Complete analysis and runner setup in step 6. |
+| Access | Choose a local connection for one operator, [private team access](private-access.md), or [public authenticated access](public-mcp-ingress.md) | The example starts with a local connection. Set up authentication and routing before exposing a shared endpoint. |
+| Analysis and runner | Prepare an Anthropic credential for analysis. Choose the runner's alert sources, model provider, and investigation tools using [integrations](integrations.md); inspect [data flows](data-flows.md) | Prepare credentials and configuration before running Helm. |
 | Additional features | Choose Slack features, authentication, or cloud telemetry as needed | Follow any preparation required by the selected guide. |
 
 Use one release per namespace: component names are fixed. Examples use release and namespace `tokonoma`; substitute assigned names consistently. Do not reuse an unrelated deployment's namespace.
@@ -55,35 +55,42 @@ Work from an existing directory outside this checkout. Save nonsecret values the
 | Input | Meaning and source | Used by |
 | --- | --- | --- |
 | `REPLACE_WITH_DOCS_DIRECTORY` | Absolute path to this downloaded repository | Copying the supplied example |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Absolute protected directory you chose in the credential guide | Helm reads `license.txt` from this workstation |
-| `tokonoma-values.yaml` | Your copy of the base example | Every install or upgrade command |
+| `REPLACE_WITH_SECRET_DIRECTORY` | Absolute protected directory you chose in the credential guide | Helm reads the license and selected credential files from this workstation |
+| `values.yaml` | Your copy of the commented example, edited for your installation | Every install or upgrade command |
 
-Copy the [commented base example](../examples/memory-values.yaml) once, before it contains your changes. Step 6 adds the required analysis and runner configuration:
+Copy the [commented values file](../examples/values.yaml) once. For an existing installation, edit its saved file instead of replacing it:
 
 ```sh
-cp "REPLACE_WITH_DOCS_DIRECTORY/examples/memory-values.yaml" tokonoma-values.yaml
+cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 ```
 
-Read the comments and apply the choices for your installation. The base example is for restricted local access; configure authentication before sharing it.
+The required runner and analysis settings are already enabled. Read the comments, fill the selected integration sections, and keep credentials in protected files or existing Secrets.
 
-If you chose an external database, complete its [preparation](external-postgres.md) and save `tokonoma-external-postgres.yaml` before installing. If you chose the optional cloud telemetry stack, prepare `tokonoma-full.yaml` using the platform guide. Authentication and routing guides specify their own files.
+1. Prepare the [license and credentials](credentials.md). Analysis always needs an Anthropic credential, even when the runner uses another model provider.
+2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
+3. For Slack results, [create the Slack app](slack-app.md#create-the-app), save both tokens, invite it to the results channel, and uncomment Slack delivery in `values.yaml`.
+4. Merge any [external database](external-postgres.md), [authentication](oauth.md), [routing](public-mcp-ingress.md), or cloud telemetry settings into the same file. Complete their prerequisites first. Configure authentication before sharing access.
 
-Keep the commented source files and a list of their order, starting with `tokonoma-values.yaml`, for future changes. `helm get values` does not retain comments. Later files override matching keys and replace lists. Store credential references in YAML and values in protected files or Kubernetes Secrets.
+Keep this commented source file for future changes; `helm get values` does not retain comments. Merge snippets into the matching YAML sections without duplicating top-level keys. Preserve existing settings; lists replace rather than append. If an existing installation already uses multiple files, retain their order until you deliberately consolidate them.
 
 ## 3. Install
 
-First install the base services with a local license file. Without `--version`, Helm selects the latest stable chart; the chart currently defaults to the application image tag `latest`. Continue through step 6 to complete the installation:
+Install after the required credentials and selected integrations are ready. Without `--version`, Helm selects the latest stable chart; the chart currently defaults to the application image tag `latest`:
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma \
   oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --namespace tokonoma --create-namespace \
-  --values tokonoma-values.yaml \
+  --values values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
+  --set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt" \
+  --set-file credentials.alertmanagerToken="REPLACE_WITH_SECRET_DIRECTORY/alertmanager-token.txt" \
+  --set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" \
+  --set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt" \
   --wait --timeout 10m
 ```
 
-For a prepared optional configuration, add its `--values` argument after the base file and before `--set-file`: `--values tokonoma-external-postgres.yaml` for the external database, or `--values tokonoma-full.yaml` for cloud telemetry. Include every selected authentication/routing file in its documented order. If using an existing license Secret, configure its reference as described in [credentials](credentials.md#use-existing-kubernetes-secrets) and omit the license `--set-file` argument.
+Use only the credential inputs for your choices. Existing Secret references replace their matching `--set-file` arguments. For Datadog-only alerts, omit the Alertmanager token and retain the Datadog Secret reference. Without Slack delivery, omit both Slack inputs. If Grafana is enabled, add `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"` or use its existing Secret option. Keep the analysis credential in every complete installation.
 
 Expect status `deployed`. Diagnose timeouts before retrying; do not uninstall to bypass errors. Helm stores the license in release metadata and a Secret. Restrict access to both.
 
@@ -92,6 +99,8 @@ Expect status `deployed`. Diagnose timeouts before retrying; do not uninstall to
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-mcp --timeout=10m
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-mcp-unattended --timeout=10m
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-runner --timeout=10m
 ```
 
 Expect ready pods and Bound persistent-volume claims (PVCs). In **terminal A**, start a local connection and leave it running:
@@ -120,16 +129,15 @@ Require a saved record identifier and matching full body. Search results and hea
 
 Optionally run `Run Tokonoma onboard.` to prepare investigation context. Review proposed records and file or hook changes before accepting them; see [onboarding](coding-agents.md#3-onboard-your-coding-agent).
 
-## 6. Configure and verify the runner
+## 6. Verify analysis and investigations
 
-The runner and memory analysis are required. Chart defaults leave `runner.enabled: false`; the runner guide enables it together with its credentials and dedicated MCP instance.
+Check [analysis configuration](memory-llm.md), then verify the runner with your selected integrations.
 
-1. Configure [memory analysis](memory-llm.md), including its Anthropic credential, and check the configured provider. This is required even when the runner uses another model provider.
-2. Set up the [Tokonoma Slack app](slack-app.md) for the result delivery used by these guides.
-3. Follow [runner setup](alert-investigations.md) with your selected model provider and investigation tools. Use the Grafana example only if you use Grafana. For Datadog alerts, follow the [Datadog guide](datadog-alerts.md) alongside the runner prerequisites; webhook setup and query access are separate.
-4. Complete the runner guide's [verification](alert-investigations.md#check-it-works): send one approved test alert and confirm the completed investigation, saved record, and result in Slack. Preserve existing paging routes.
+1. Complete the [Slack connection checks](slack-app.md#verify-the-connection) if enabled.
+2. Add the selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender configuration after the receiver is ready. Preserve existing paging routes.
+3. Complete the runner guide's [verification](alert-investigations.md#check-it-works): send one approved test alert and confirm the completed investigation, saved record, and configured result delivery.
 
-Record the target, versions, values-file order, credential locations without secret values, integrations, and check results. Installation is complete when analysis is configured and both the memory check and runner investigation check pass.
+Record the target, versions, saved configuration, credential locations without secret values, integrations, and check results. Installation is complete when analysis is configured and both the memory check and runner investigation check pass.
 
 ## Next steps
 

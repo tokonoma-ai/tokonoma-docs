@@ -2,9 +2,9 @@
 
 Prepare persistent storage for Amazon Elastic Kubernetes Service (EKS). Telemetry ingestion with S3 storage and self-monitoring are optional.
 
-Run commands on a workstation with `kubectl`, Helm 3.14+, AWS CLI and access to the intended cluster and AWS account. Save values in your [installation working directory](../install.md), outside this repository. Replace `REPLACE_WITH_*` inputs; agents must ask for unresolved choices.
+Run commands on a workstation with `kubectl`, Helm 3.14+, AWS CLI and access to the intended cluster and AWS account. Keep `values.yaml` in your [installation working directory](../install.md), outside this repository. Replace `REPLACE_WITH_*` inputs; agents must ask for unresolved choices.
 
-Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](../upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](../upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
 
 | Input | Source and when required |
 |---|---|
@@ -12,7 +12,7 @@ Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [confi
 | `REPLACE_WITH_CLUSTER`, `REPLACE_WITH_REGION` | EKS cluster name and AWS region from the cluster owner; required for the storage checks. |
 | `REPLACE_WITH_ADDON_VERSION` | EBS CSI add-on version selected by the cluster owner; required only when configuring that add-on. |
 | `REPLACE_WITH_CUSTOMER` | Optional full-stack organization slug: at most 42 lowercase letters, digits, or hyphens, starting with a letter. |
-| `REPLACE_WITH_IRSA_ROLE_ARN` | Role created for optional S3 access below; required only for that overlay. |
+| `REPLACE_WITH_IRSA_ROLE_ARN` | Role created for optional S3 access below; required only for that configuration. |
 
 ## Persistent volumes
 
@@ -61,11 +61,11 @@ In the Terraform that owns the customer environment, create:
 3. An object-storage IAM policy with bucket-level `ListBucket` and `GetBucketLocation`, plus object-level read, write, delete, and multipart-upload access to the bucket.
 4. An IRSA role trusted by `system:serviceaccount:tokonoma:tokonoma-sa`, with that policy attached.
 
-Apply Terraform and save the role ARN. The chart creates the annotated ServiceAccount. If a bucket name is taken, choose a unique name and set `objectStorage.indexesBucket` in the overlay.
+Apply Terraform and save the role ARN. The chart creates the annotated ServiceAccount. If a bucket name is taken, choose a unique name and set `objectStorage.indexesBucket` in `values.yaml`.
 
-### 2. Save the overlay
+### 2. Update the values
 
-Save as `tokonoma-full.yaml` in your customer working directory. Use the same region as the bucket:
+Merge these settings into `values.yaml`, preserving the required services and other configuration. Use the same region as the bucket:
 
 ```yaml
 # Used in telemetry index names and the default bucket name.
@@ -84,18 +84,18 @@ prometheus:    { enabled: true }
 grafana:       { enabled: true }
 ```
 
-For a first [installation](../install.md#3-install), include this overlay after `tokonoma-values.yaml`. Keep MCP private during verification; configure [OAuth](../oauth.md) before shared or public access.
+For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file. Keep MCP private during verification; configure [OAuth](../oauth.md) before shared or public access.
 
-For an existing installation, follow [upgrade preparation](../upgrading.md), then apply the overlay with existing values and Secret references preserved:
+For an existing installation, follow [upgrade preparation](../upgrading.md), then apply the updated `values.yaml` with existing settings and Secret references preserved:
 
 ```sh
 helm upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --kube-context REPLACE_WITH_KUBE_CONTEXT --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
-  --reset-then-reuse-values -f tokonoma-values.yaml -f tokonoma-full.yaml \
+  --reset-then-reuse-values --values values.yaml \
   --wait --timeout 15m
 ```
 
-Include other changed overlays. Expect `STATUS: deployed`.
+Include any changed credential inputs. Expect `STATUS: deployed`.
 
 ### 3. Verify the optional services
 
@@ -105,7 +105,7 @@ Check workloads, persistent storage, and index creation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc,jobs
 ```
 
-Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access. Complete the [MCP health and memory checks](../install.md#4-verify), then the required [runner setup and verification](../install.md#6-configure-and-verify-the-runner).
+Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access. Complete the [MCP health and memory checks](../install.md#4-verify), then the required [analysis and investigation checks](../install.md#6-verify-analysis-and-investigations).
 
 In a separate terminal, leave this running:
 

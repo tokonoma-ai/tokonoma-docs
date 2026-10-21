@@ -2,31 +2,31 @@
 
 Datadog notifications go to `toko-runner`. After a delay and duplicate check, it investigates and posts results to Slack. The [runner guardrails](alert-investigations.md#guardrails) apply; Datadog has its own delay, severity filter, and token.
 
-Datadog needs a public HTTPS webhook. The chart adds it to your existing MCP Ingress.
+Datadog needs a public HTTPS webhook. The chart routes it through MCP Ingress.
 
 ## Before you start
 
-- Use Helm 3.14+. Keep the complete install values, including HTTPS ingress and authentication, in `tokonoma-values.yaml`.
-- Complete the [runner prerequisites](alert-investigations.md): `mcp.sibling.enabled`, a model provider key, a Slack destination, and OAuth credentials when `mcp.auth` is enabled. Datadog-only installations need no Alertmanager token, but at least one source token is required.
-- MCP Ingress must serve HTTPS only. Follow [Public MCP Ingress](public-mcp-ingress.md). The bearer token travels in a header; the chart cannot enforce HTTPS terminated through provider annotations. GKE's GCE controller initially serves HTTP too. Once its certificate and load balancer are active, add `kubernetes.io/ingress.allow-http: "false"` to `mcp.ingress.annotations`, upgrade, and verify HTTPS-only access before enabling deliveries.
+- Use Helm 3.14+. Keep the complete install values, including HTTPS ingress and authentication, in `values.yaml`.
+- Prepare the [runner configuration](alert-investigations.md): `mcp.sibling.enabled`, a model provider key, a Slack destination, and OAuth credentials when `mcp.auth` is enabled. Datadog-only installations need no Alertmanager token, but at least one source token is required.
+- MCP Ingress must serve HTTPS only before Datadog deliveries begin. Prepare its settings with [Public MCP Ingress](public-mcp-ingress.md). The bearer token travels in a header; the chart cannot enforce HTTPS terminated through provider annotations. GKE's GCE controller initially serves HTTP too. Once its certificate and load balancer are active, add `kubernetes.io/ingress.allow-http: "false"` to `mcp.ingress.annotations`, upgrade, and verify HTTPS-only access before enabling deliveries.
 - Use Datadog Terraform provider 3.83.0 or later for notification-rule `filter.scope` support. Add the three resources below to your existing project. Outside US1, set your site's API in `provider "datadog"`, for example `api_url = "https://api.us3.datadoghq.com/"`.
 - Use credentials with read and write access to webhooks, custom variables, and notification rules. Terraform reads resources after creation and during refresh, so write-only keys fail. Verify permissions against your organization's role policy.
 
 ## Inputs and files
 
-Complete steps 1 through 5 of [installation](install.md). Use this guide with the runner prerequisites to complete installation step 6. Run Kubernetes and Helm commands from the installation's working directory on its administration workstation, outside this checkout. Use your existing Datadog Terraform project. Replace placeholders first; agents must ask for missing inputs.
+Prepare the token and settings before the first [installation](install.md#3-install). Run Kubernetes and Helm commands from the customer working directory on its administration workstation, outside this checkout. Use your existing Datadog Terraform project. Replace placeholders first; agents must ask for missing inputs.
 
-Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing deployment, follow [configuration checks](upgrading.md#before-changing-configuration) and preserve its installed chart version.
 
 | Input | Meaning and source | Required when |
 |---|---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts` | Cluster commands |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Protected directory chosen during base installation | Secret files and Terraform plan |
-| `REPLACE_WITH_MCP_HOSTNAME` | Public HTTPS host from the completed [ingress setup](public-mcp-ingress.md) | Datadog deliveries |
+| `REPLACE_WITH_SECRET_DIRECTORY` | Protected directory chosen in [credentials](credentials.md) | Secret files and Terraform plan |
+| `REPLACE_WITH_MCP_HOSTNAME` | Public HTTPS host selected in [ingress setup](public-mcp-ingress.md) | Datadog deliveries |
 | `REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY` | Existing Terraform project with your Datadog provider and credentials | Provider setup below |
 | `REPLACE_WITH_DATADOG_WEBHOOK_TOKEN` | Generated token from step 1, also copied into the protected Terraform variable file | Both ends of webhook authentication |
 
-Keep `tokonoma-values.yaml`, `runner-values.yaml`, `runner-datadog-values.yaml` and every existing overlay in the customer working directory. Step 1 creates `datadog-webhook-token.txt` in the protected directory; the license remains in `license.txt`. Step 3 adds `tokonoma.tf` in your Datadog Terraform project and `tokonoma-datadog.tfvars` plus `tokonoma-datadog.tfplan` in the protected directory. Retain all credentials already used by the installation.
+Keep all installation settings in `values.yaml` in the customer working directory. Step 1 creates `datadog-webhook-token.txt` in the protected directory; the license remains in `license.txt`. Step 3 adds `tokonoma.tf` in your Datadog Terraform project and `tokonoma-datadog.tfvars` plus `tokonoma-datadog.tfplan` in the protected directory. Retain all credentials already used by the installation.
 
 ## What is exposed
 
@@ -56,51 +56,36 @@ openssl rand -hex 32 | tr -d '\n' > "REPLACE_WITH_SECRET_DIRECTORY/datadog-webho
 
 Use all 32 bytes for this public route; shorter tokens cause a startup warning.
 
+Check the target namespace before creating the Secret:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT get namespace tokonoma
+```
+
+Reuse it if it exists. Only if the response is `NotFound`, create it:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT create namespace tokonoma
+```
+
+Permission errors need the cluster owner's help; they do not mean the namespace is absent. Create the token Secret:
+
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT create secret generic toko-runner-datadog-webhook -n tokonoma \
   --from-file=token="REPLACE_WITH_SECRET_DIRECTORY/datadog-webhook-token.txt"
 ```
 
-Expected output from Kubernetes: `secret/toko-runner-datadog-webhook created`. This command requires the `tokonoma` namespace from base installation.
+Expected output: `secret/toko-runner-datadog-webhook created`. If it already exists, preserve it and confirm its owner and token through your secret-management workflow. Use [rotation](#rotating-the-token) for an intended token change.
 
 ## 2. Configure the runner
 
-Save this as `runner-datadog-values.yaml` in the customer working directory. If your existing runner already exposes Alertmanager, retain it with `webhookPaths: [/webhooks/datadog, /webhooks/alertmanager]` before applying this overlay.
+In `values.yaml`, uncomment the Datadog source and public webhook settings in the [example](../examples/values.yaml). Set `runner.sources.datadog.tokenSecretRef.name` to `toko-runner-datadog-webhook` and `.key` to `token`. Set `runner.ingress.webhookPaths` to `[/webhooks/datadog]`, or keep both paths if you also receive Alertmanager alerts.
 
-```yaml
-# runner-datadog-values.yaml
-mcp:
-  ingress:
-    enabled: true
-  auth:
-    enabled: true
-runner:
-  ingress:
-    enabled: true
-    webhookPaths: [/webhooks/datadog]
-  sources:
-    datadog:
-      tokenSecretRef:
-        name: toko-runner-datadog-webhook
-        key: token
-```
+Keep `mcp.auth.enabled: true`, the identity-provider settings, and HTTPS ingress in the same file. Configure the runner's OAuth client with the [runner guide](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). Datadog-only installations omit the Alertmanager credential; retain any source credentials already in use.
 
-For an existing runner, add this overlay after its complete values. Preserve the source tokens and other credentials used by that installation:
+After all selected integrations are prepared, use the [single install command](install.md#3-install). For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration). Keep the license, required analysis key, runner model credential, and selected Slack credentials. Expected result: Helm reports release `tokonoma` as `deployed`.
 
-```sh
-helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
-  --reset-then-reuse-values --values tokonoma-values.yaml \
-  --values runner-values.yaml --values runner-datadog-values.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --wait --timeout 10m
-```
-
-Expected result: Helm reports release `tokonoma` as `deployed`. Include every existing overlay and credential input, including the runner model and Slack credentials, in the command above.
-
-For a new Datadog-only runner, create the Datadog token Secret first. Follow the [runner install](alert-investigations.md#install) and OAuth client setup, omit `--set-file credentials.alertmanagerToken=...`, and append `--values runner-datadog-values.yaml`. Base values must include working HTTPS ingress and an MCP identity provider. The Datadog overlay re-enables ingress after the private runner values.
-
-Do this in one upgrade: missing source tokens prevent rendering, and missing referenced Secrets cause `CreateContainerConfigError`.
+Missing source tokens prevent rendering, and missing referenced Secrets cause `CreateContainerConfigError`. Verify the HTTPS endpoint before enabling Datadog deliveries in step 3.
 
 The Secret registers `/webhooks/datadog`; ingress routes it. `webhookPaths` replaces earlier lists and defaults to `[]`. Use absolute paths served by the runner with `Exact` matching. To retain [Alertmanager exposure](alert-investigations.md#external-alertmanager-or-grafana-alerting), include both paths and its token. Routing requires the runner, runner ingress, and MCP Ingress to be enabled. It does not create receivers or change authentication. Health and metrics remain private.
 

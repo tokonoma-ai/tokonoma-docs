@@ -7,7 +7,7 @@ Run `kubectl` commands below from an operator workstation with access to the int
 | Input | Source and when required |
 |---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Intended cluster context from `kubectl config get-contexts`; required for cluster commands. |
-| `REPLACE_WITH_CUSTOMER` | The `customer` slug in your saved values; required only for telemetry ingest headers. |
+| `REPLACE_WITH_CUSTOMER` | The `customer` slug in `values.yaml`; required only for telemetry ingest headers. |
 | `REPLACE_WITH_SOURCE_TOKEN` | The receiver token from your secret-management workflow; required only for alert webhook requests. |
 
 | Service | Port | Use |

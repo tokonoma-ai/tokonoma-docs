@@ -1,6 +1,6 @@
 # Choose integrations
 
-Start with your saved values files and installed release to see which integrations are configured. The runner is required; choose its model provider, alert sources, and investigation tools as part of [installation](install.md#6-configure-and-verify-the-runner). The commented examples are starting points for the selected integrations. Agents inspect existing configuration and ask about missing settings, conflicts, or additions. Each guide supplies the inputs, commands, and checks.
+Start with your saved values files and installed release to see which integrations are configured. The runner is required; choose its model provider, alert sources, and investigation tools as part of [installation](install.md#2-prepare-your-files). The commented examples are starting points for the selected integrations. Agents inspect existing configuration and ask about missing settings, conflicts, or additions. Each guide supplies the inputs, commands, and checks.
 
 | Integration | What it does | Setup |
 |---|---|---|
@@ -17,6 +17,6 @@ This release has no CloudWatch adapter. Enabling telemetry storage does not conn
 
 Model-assisted memory processing uses the Anthropic API. The investigation runner has its own provider configuration; verify credentials and provider-specific model identifiers before changing that configuration. See [memory LLM setup](memory-llm.md) and [data flows](data-flows.md).
 
-For the Grafana runner example, copy and edit [runner-grafana-values.yaml](../examples/runner-grafana-values.yaml), then use the credential command in the [complete guide](alert-investigations.md#install-with-oss-grafana-mcp).
+Uncomment your selected integrations in [values.yaml](../examples/values.yaml). The [runner guide](alert-investigations.md) covers credentials, alert routing, and verification.
 
 Return to the [documentation index](../README.md). Agents start with the [root skill](../SKILL.md) and use these same guides.

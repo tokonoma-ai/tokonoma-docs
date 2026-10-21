@@ -47,7 +47,7 @@ Install the published Helm chart from public Amazon Elastic Container Registry (
 
 The installation includes the Tokonoma MCP service, the runner and its dedicated MCP instance, PostgreSQL for saved records and state, and Ollama for local search embeddings (numeric representations of text). Your agent calls Tokonoma through the Model Context Protocol (MCP).
 
-The [installation guide](references/install.md) prepares the base services, then configures the required runner using your [selected integrations](references/integrations.md).
+The [installation guide](references/install.md) uses one `values.yaml` for the required services and your [selected integrations](references/integrations.md).
 
 The diagram shows required model connections and the integrations you configure. Model providers can receive investigation context, and a hosted coding agent can also send retrieved records to its own provider. The [data-flow reference](references/data-flows.md) explains the callers, destinations, and network requirements.
 
@@ -79,14 +79,14 @@ Run commands from an authorized workstation. You handle login, issued credential
 
 ## Read the documentation
 
-The YAML files in `examples/` explain the settings you edit. The guides in `references/` cover setup, commands, and checks. Start with installation, or connect to an existing release; humans and agents use the same files.
+[`examples/values.yaml`](examples/values.yaml) contains required settings and commented integration sections. The guides in `references/` cover setup, commands, and checks. Start with installation, or connect to an existing release; humans and agents use the same files.
 
 | Your task | Documentation |
 | --- | --- |
 | Understand and prepare | [Data flows](references/data-flows.md), [credentials and license](references/credentials.md), [input conventions](references/placeholder-examples.md) |
 | Install and connect | [Installation](references/install.md), [coding agents](references/coding-agents.md), [external PostgreSQL](references/external-postgres.md) |
 | Add features or access | [Integrations](references/integrations.md), [private access](references/private-access.md), [authentication](references/oauth.md), [public routing](references/public-mcp-ingress.md) |
-| Look up configuration | [Base values](examples/memory-values.yaml), [runner values](examples/runner-grafana-values.yaml), [endpoints](references/endpoints.md), [version choices](references/upgrading.md#before-changing-configuration) |
+| Look up configuration | [values.yaml](examples/values.yaml), [endpoints](references/endpoints.md), [version choices](references/upgrading.md#before-changing-configuration) |
 | Operate the installation | [Upgrade](references/upgrading.md), [troubleshoot](references/troubleshooting.md), [remove Tokonoma](references/uninstall.md) |
 
 Use your Tokonoma contact for a license or deployment help. Keep credentials, issued licenses, customer data, and unredacted diagnostics out of this repository and public issues.

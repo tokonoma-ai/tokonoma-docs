@@ -4,18 +4,18 @@ If you need an external database, choose and prepare it before the first install
 
 This setup has not been validated on managed services such as Amazon RDS or Cloud SQL. The chart is tested against its bundled PostgreSQL 18 with pgvector 0.8.6. Talk to Tokonoma before using an external database in production.
 
-Run `kubectl` commands from a computer with access to the intended cluster. Run the SQL in an administrative database session. Save the overlay in the customer working directory used by the [installation guide](install.md), outside this repository. Replace each `REPLACE_WITH_*` input before use. Agents must ask for unresolved choices.
+Run `kubectl` commands from a computer with access to the intended cluster. Run the SQL in an administrative database session. Edit `values.yaml` in the customer working directory used by the [installation guide](install.md), outside this repository. Replace each `REPLACE_WITH_*` input before use. Agents must ask for unresolved choices.
 
 | Input | Source and when required |
 |---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Intended cluster context from `kubectl config get-contexts`; required for cluster commands. |
-| `REPLACE_WITH_DATABASE_HOST` | DNS name supplied by the database administrator; required in the overlay. |
+| `REPLACE_WITH_DATABASE_HOST` | DNS name supplied by the database administrator; required in `values.yaml`. |
 | `REPLACE_WITH_POSTGRES_PASSWORD` | Password chosen through your secret-management workflow; required when creating the `tokonoma` database role. |
 | `REPLACE_WITH_SECRET_DIRECTORY/postgres-password.txt` | Protected file containing the same raw password with no trailing newline; required only when creating the Kubernetes Secret from a file. |
 
 With `telemetryPlatform: true`, keep database `tokonoma`, user `tokonoma`, Secret name `toko-postgres`, and Secret key `password`. These match the bundled search backend. Use a URL-safe password containing letters, digits, `.`, `_`, `~`, or `-` because the search backend places it in a PostgreSQL URI.
 
-Changing the database host does not migrate existing records. For an existing installation, back up and migrate the data before switching hosts, then use the [upgrade guide](upgrading.md) with this overlay. Do not run the new-database SQL against an existing database without reviewing it.
+Changing the database host does not migrate existing records. For an existing installation, back up and migrate the data before switching hosts, then use the [upgrade guide](upgrading.md) with the updated `values.yaml`. Do not run the new-database SQL against an existing database without reviewing it.
 
 ## 1. Prepare the database
 
@@ -59,7 +59,7 @@ Expect `secret/toko-postgres created`. An existing secret-management workflow ma
 
 ## 3. Save the values
 
-Save as `tokonoma-external-postgres.yaml` in your customer working directory:
+Merge these settings into the existing `postgres` section in `values.yaml`:
 
 ```yaml
 postgres:
@@ -74,7 +74,7 @@ postgres:
 
 The chart creates an `ExternalName` Service called `toko-postgres` that points to `postgres.host`. The MCP server and optional telemetry backend use it to reach the same database.
 
-Return to [install Tokonoma](install.md#3-install). Include this overlay after `tokonoma-values.yaml` in the first Helm installation. You do not need to install the bundled database first.
+Return to [install Tokonoma](install.md#3-install). The first Helm installation uses the updated `values.yaml`. You do not need to install the bundled database first.
 
 ## 4. Verify after installation
 

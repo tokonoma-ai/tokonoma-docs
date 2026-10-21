@@ -39,55 +39,44 @@ Create the files required by your runner configuration and other selected featur
 | `anthropic-api-key.txt` | Issued API key from your Anthropic account | Required analysis, unless you use an existing Secret |
 | `slack-bot-token.txt`, `slack-app-token.txt` | Tokens from your Slack app | Following [Slack setup](slack-app.md) |
 | `alertmanager-token.txt` | Token shared with your alert sender | Following [Alertmanager setup](alert-investigations.md) |
+| `datadog-webhook-token.txt` | Token shared with Datadog | Following [Datadog setup](datadog-alerts.md) |
 | `grafana-viewer-token.txt` | Your existing Grafana service-account credential | Enabling the Grafana query adapter |
 
 Apply `chmod 600` to each created file. Agents ask you to save issued credentials and supply their paths, never their contents in chat.
 
-The first [base-services command](install.md#3-install) needs only `license.txt`. The required [runner setup](alert-investigations.md) supplies additional credential inputs to complete installation. Save the complete values-file order and credential inputs for upgrades.
+Before the first [install command](install.md#3-install), prepare the license, Anthropic analysis key, at least one alert-source token, and credentials for your selected integrations. Slack delivery needs both Slack tokens. Keep these inputs with the saved `values.yaml` for upgrades.
 
 `--set-file` keeps tokens out of commands but stores them in Helm release records and Kubernetes Secrets. Restrict access to both. Never commit token files or log rendered Secrets.
 
 ## Use existing Kubernetes Secrets
 
-Existing Secrets must be in the release namespace. Replace example names and keys with those supplied by the secret owner. Merge selected sections into `tokonoma-values.yaml`, preserving other settings. Secret references override direct inputs.
+Existing Secrets must be in the release namespace. Replace example names and keys with those supplied by the secret owner. Uncomment the matching Secret references in [values.yaml](../examples/values.yaml), preserving other settings. For license, analysis, Slack, and runner credentials, references override direct inputs. The example notes the separate Grafana precedence rule.
 
-```yaml
-mcp:
-  licenseSecret:
-    name: tokonoma-license
-    key: license
-  memoryLlm:
-    apiKeySecret:
-      name: tokonoma-anthropic
-      key: apiKey
-  slack:
-    tokenSecret:
-      name: tokonoma-slack
-      botTokenKey: botToken
-      appTokenKey: appToken
-
-# Runner credentials for an Anthropic and Alertmanager installation.
-runner:
-  engine:
-    apiKeySecret:
-      name: tokonoma-anthropic
-      key: apiKey
-  sources:
-    alertmanager:
-      tokenSecretRef:
-        name: tokonoma-alertmanager
-        key: token
-```
-
-These references do not create Secrets. Use credentials for your selected provider and alert source. `mcp.memoryLlm.apiKeySecret` does not configure the runner; supply both references when sharing that key.
+These references do not create Secrets. Prepare them before installing, using the namespace check below. Use credentials for your selected provider and alert source. `mcp.memoryLlm.apiKeySecret` does not configure the runner; supply both references when sharing that key.
 
 Integration guides cover Datadog tokens and API keys, Grafana credentials, OAuth clients, and storage identities. These do not replace the license or Slack tokens.
+
+## Prepare the namespace for Secrets
+
+When creating a Secret before the first installation, check the release namespace:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT get namespace tokonoma
+```
+
+Reuse it if it exists. Only if the response is `NotFound`, create it:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT create namespace tokonoma
+```
+
+Use the verified cluster context and your assigned namespace if it differs. Permission errors need the cluster owner's help. Create the selected Secrets through their setup guide or your secret-management workflow; keep existing Secrets and their owners intact.
 
 ## Offline rendering
 
 Normal Helm installs generate the bundled PostgreSQL password and Grafana adapter caller token, then reuse their existing Secrets on upgrades. These Secrets survive uninstall; delete them only when intentionally resetting the installation. Client-only `helm template` and GitOps rendering cannot look up those Secrets. Use stable `postgres.auth.password` and `grafanaMcp.auth.token` inputs from protected files, or externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
 
-For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [runner example](../examples/runner-grafana-values.yaml). For token changes, follow [credential rotation](alert-investigations.md#rotate-credentials). Rendering does not check third-party token permissions; verify the integration after deployment.
+For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [values example](../examples/values.yaml). For token changes, follow [credential rotation](alert-investigations.md#rotate-credentials). Rendering does not check third-party token permissions; verify the integration after deployment.
 
 ## Renew and rotate
 

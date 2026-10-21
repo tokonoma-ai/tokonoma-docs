@@ -11,7 +11,7 @@ Follow the same [customer guides](README.md#read-the-documentation) humans use. 
 
 Identify the requested task, authorized cluster context, release, namespace, features, and access model. Check the existing installation before making changes.
 
-The Tokonoma runner and memory analysis are required. Configure an Anthropic credential for analysis even if the runner uses another provider. For a new installation, complete base services, analysis configuration, and runner setup before declaring the installation ready. Chart defaults leave the runner disabled. Configure its credentials and dependencies, then enable it explicitly.
+The Tokonoma runner and memory analysis are required. Configure an Anthropic credential for analysis even if the runner uses another provider. The supplied `values.yaml` enables the required services. Before installing, prepare analysis credentials, at least one alert source, and the selected investigation tools. Configure selected integrations in the same file.
 
 Read the customer's saved values files, including comments, in application order and check the installed release first. Inspect nonsecret integration settings and Secret references; do not print secret values. Do not infer the customer's tools from the defaults in the supplied examples. Ask only about missing settings, conflicts, or requested additions. Confirm which integrations to enable and save those choices in the customer's values files.
 
@@ -27,7 +27,7 @@ Group missing inputs and decisions into one question where practical. Explain hu
 | Shared access or login | [Private access](references/private-access.md), [OAuth](references/oauth.md), chosen [Google](references/google-saml.md) or [Okta](references/okta-saml.md) provider; [public routing](references/public-mcp-ingress.md) only when selected |
 | Existing installation | [Configuration preservation](references/upgrading.md), then the feature, [troubleshooting](references/troubleshooting.md), or [uninstall](references/uninstall.md) guide |
 
-Check [data flows](references/data-flows.md) before changing exposure or data destinations. Use the commented [base](examples/memory-values.yaml) and [runner](examples/runner-grafana-values.yaml) examples for field guidance, and [endpoints](references/endpoints.md) and [input conventions](references/placeholder-examples.md) for lookups. Cloud hosting does not require optional telemetry.
+Check [data flows](references/data-flows.md) before changing exposure or data destinations. Use the commented [values.yaml](examples/values.yaml) example for field guidance, and [endpoints](references/endpoints.md) and [input conventions](references/placeholder-examples.md) for lookups. Cloud hosting does not require optional telemetry.
 
 ## Prepare and execute
 

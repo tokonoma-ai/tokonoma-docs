@@ -24,8 +24,8 @@ New installations use the latest released chart and its application image defaul
 
 ## Configuration and provider syntax
 
-Save YAML under the guide's filename in your working directory. Record values-file order: later files override keys and replace lists. Keep the base file when adding overlays.
+Keep installation settings in one `values.yaml` in your working directory. Start from the [commented example](../examples/values.yaml), uncomment only your selected integrations, and replace their placeholders. Keep one copy of each YAML key; merge guide settings into the existing sections. Lists replace rather than append. Keep credentials in protected files or Kubernetes Secrets.
 
 Keep Datadog notification variables such as `$ID` and `$TOKONOMA_TOKEN` intact. They are provider syntax, not shell inputs.
 
-For the complete sequence, return to [installation](install.md). For configuration fields, read the [base](../examples/memory-values.yaml) or [runner](../examples/runner-grafana-values.yaml) example comments. Use [endpoints](endpoints.md) for service addresses.
+For the complete sequence, return to [installation](install.md). For configuration fields, read the [values.yaml comments](../examples/values.yaml). Use [endpoints](endpoints.md) for service addresses.

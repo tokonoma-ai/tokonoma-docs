@@ -2,11 +2,11 @@
 
 Keep the MCP endpoint private during initial setup. Before allowing shared or public access, prepare the identity provider and authentication values using [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Without authentication, anyone who reaches the endpoint can use its tools, including memory writes.
 
-You need Helm 3.14+, a working ingress controller, DNS control, and a valid TLS certificate. Start with the [installation](install.md) values in `tokonoma-values.yaml`; save the authentication settings as `tokonoma-oauth.yaml`. This guide deploys the authentication and ingress settings together.
+You need Helm 3.14+, a working ingress controller, DNS control, and a valid TLS certificate. Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files). Merge authentication and ingress settings into that file before deploying.
 
-Run shell commands from your deployment working directory on the computer with cluster access. Save values files there. Replace placeholders with the inputs below before running commands. Agents must ask for unresolved choices and secret file paths, keeping secret contents out of chat.
+Run shell commands from your deployment working directory on the computer with cluster access. Keep `values.yaml` there. Replace placeholders with the inputs below before running commands. Agents must ask for unresolved choices and secret file paths, keeping secret contents out of chat.
 
-Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -14,7 +14,7 @@ Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [confi
 | `REPLACE_WITH_MCP_HOSTNAME` and DNS access | Your DNS owner | Before preparing routing values |
 | Ingress controller and its class | Your platform team | Before selecting one controller example |
 | Certificate and issuer or ACM certificate ARN | Your certificate administrator or cloud console | Before deployment |
-| Complete `tokonoma-oauth.yaml` with `mcp.auth.enabled: true` | The selected authentication guide above | Before exposing the endpoint |
+| Complete authentication settings in `values.yaml` with `mcp.auth.enabled: true` | The selected authentication guide above | Before exposing the endpoint |
 
 Verify the selected cluster:
 
@@ -23,7 +23,7 @@ kubectl config get-contexts "REPLACE_WITH_KUBE_CONTEXT"
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" cluster-info
 ```
 
-Both commands must identify the intended cluster. Save this as `tokonoma-public.yaml`:
+Both commands must identify the intended cluster. Set these keys in `values.yaml`, preserving the other `mcp` settings:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -34,7 +34,7 @@ mcp:
 
 ## 1. Save the values for your controller
 
-Save one block as `tokonoma-ingress.yaml`.
+Merge one controller block into `values.yaml` under the existing `mcp` key.
 
 ### nginx
 
@@ -143,18 +143,19 @@ Point DNS at the Traefik load balancer. The named cert-manager `ClusterIssuer` m
 
 ## 2. Deploy
 
+For a first installation, finish preparing `values.yaml` and credentials, then use [install Tokonoma](install.md#3-install). Return here to verify access. For an existing release, apply the updated file:
+
 ```sh
-helm upgrade --install tokonoma --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
+helm upgrade tokonoma --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --create-namespace \
-  -f tokonoma-values.yaml -f tokonoma-public.yaml -f tokonoma-ingress.yaml \
-  -f tokonoma-oauth.yaml \
+  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
+  --values values.yaml \
   --set mcp.auth.enabled=true \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
   --wait --timeout 10m
 ```
 
-Wait for Helm to report `STATUS: deployed`. Keep all values files used by the release in the upgrade command. Authentication alone does not create a network route or certificate; the controller and DNS must also be ready.
+Wait for Helm to report `STATUS: deployed`. Keep all required credential inputs and Secret references with this file. Authentication alone does not create a network route or certificate; the controller and DNS must also be ready.
 
 ## 3. Verify and connect
 

@@ -54,7 +54,7 @@ aws cognito-idp create-user-pool-client \
 
 Use the pool ID because names can repeat. Using the wrong pool causes token rejection. Protect the output file containing `ClientId` and `ClientSecret`. The pool needs a Cognito domain and `toko-mcp/query` resource-server scope; see [OAuth](oauth.md).
 
-In `hybrid` mode, Tokonoma can admit a verified provider client on its first grant. For `preregistered_only`, append this client to `mcp.auth.clients` before testing, preserving existing clients:
+In `hybrid` mode, Tokonoma can admit a verified provider client on its first grant. For `preregistered_only`, append this client to `mcp.auth.clients` in `values.yaml` before testing, preserving existing clients:
 
 ```yaml
 mcp:

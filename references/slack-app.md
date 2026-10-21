@@ -2,27 +2,24 @@
 
 `@Tokonoma` runs inside your MCP server. It uses Slack Socket Mode, so it can run in a private cluster without a public Slack callback URL or ingress. This is Tokonoma's own app. The separate `@Claude` integration uses Claude's connectors and has different network requirements.
 
-Complete steps 1 through 5 of [installation](install.md) first, then use this guide to prepare Slack delivery for the runner.
-
-Before changing an existing release, follow [version and configuration checks](upgrading.md#before-changing-configuration). Replace `REPLACE_WITH_INSTALLED_CHART_VERSION` with its installed chart version and preserve existing image overrides.
+Create the Slack app and prepare its tokens before [installation](install.md#3-install). For an existing deployment, apply the settings with the [upgrade guide](upgrading.md#before-changing-configuration).
 
 ## Inputs and files
 
-Run shell commands on the administration workstation used for the [base installation](install.md), from its customer working directory outside this documentation checkout. Replace placeholders before running commands. An agent must ask the operator for missing inputs.
+Run shell commands on the administration workstation used for [installation](install.md), from its customer working directory outside this documentation checkout. Replace placeholders before running commands. An agent must ask the operator for missing inputs.
 
 | Input | Meaning and source | Required when |
 |---|---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts` | Every cluster command |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Protected credential directory chosen during base installation | File-based credentials |
+| `REPLACE_WITH_SECRET_DIRECTORY` | Protected credential directory chosen in [credentials](credentials.md) | File-based credentials |
 | `slack-app-token.txt` | Socket Mode app token from Slack, saved in the protected directory | This integration |
 | `slack-bot-token.txt` | Bot User OAuth Token from Slack, saved in the protected directory | This integration |
-| `license.txt` | Tokonoma-issued license, saved during base installation | Helm upgrade |
 
-Keep `tokonoma-values.yaml` and every existing overlay in the customer working directory. This guide creates no additional values file. Keep all existing credential inputs when upgrading. Model-backed Slack features also use `anthropic-api-key.txt`; see [memory processing](memory-llm.md).
+Keep all settings in your working `values.yaml`. Preserve existing settings and credential inputs when upgrading. Slack questions and timelines use the required `anthropic-api-key.txt`; see [memory analysis](memory-llm.md).
 
 ## Create the app
 
-You need permission to create and install a Slack app, a working Tokonoma database, and permission to update the Helm release. Allow outbound HTTPS to Slack's API at `slack.com:443` and secure WebSocket connections to the Socket Mode URL Slack returns. A proxy must support the WebSocket upgrade. Slack rotates that URL; do not pin one returned URL permanently. See [Slack's Socket Mode documentation](https://docs.slack.dev/apis/events-api/using-socket-mode/).
+You need permission to create and install a Slack app. Tokonoma does not need to be running yet. Allow outbound HTTPS to Slack's API at `slack.com:443` and secure WebSocket connections to the Socket Mode URL Slack returns. A proxy must support the WebSocket upgrade. Slack rotates that URL; do not pin one returned URL permanently. See [Slack's Socket Mode documentation](https://docs.slack.dev/apis/events-api/using-socket-mode/).
 
 1. Open [Slack's app management page](https://api.slack.com/apps), choose **Create New App**, then **From a manifest**.
 2. Select your workspace and paste [slack-app-manifest.yaml](../examples/slack-app-manifest.yaml). Review the requested permissions and create the app.
@@ -31,36 +28,29 @@ You need permission to create and install a Slack app, a working Tokonoma databa
 
 The manifest enables Socket Mode, mentions, channel message events, and interactive buttons. You can optionally upload your preferred icon under **Basic Information > Display Information**. For Slack's manifest workflow, see [configuring apps with manifests](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/).
 
-## Connect it to Tokonoma
+## Save the connection settings
 
-Use the protected directory from [credentials](credentials.md). Token files must contain only the token, with no final newline. In the customer working directory, add both Slack inputs to your complete installation command:
+Use the protected directory from [credentials](credentials.md). Token files must contain only the token, with no final newline:
 
 ```sh
 chmod 600 "REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" "REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt"
-
-helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version REPLACE_WITH_INSTALLED_CHART_VERSION \
-  --namespace tokonoma \
-  --reset-then-reuse-values -f tokonoma-values.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" \
-  --set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt" \
-  --wait --timeout 10m
 ```
 
-Helm should report release `tokonoma` as `deployed`. Keep every values overlay and credential input already used by your installation. Retain the required analysis credential through `--set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt"` or its existing Secret reference. If you use existing Secrets, keep those references in `tokonoma-values.yaml` instead of supplying direct token inputs.
+In `values.yaml`, uncomment the Slack settings from the [example](../examples/values.yaml) and set `runner.destinations.slackApp.enabled: true` for investigation results. Include both token files in the complete install or upgrade command: `--set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt"` and `--set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt"`. For existing Secrets, use `mcp.slack.tokenSecret` in `values.yaml` instead of these direct inputs.
 
-In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default channel for results; set `mcp.slack.investigationsChannel` only when you want a different channel name. The app must be a member of that channel.
+In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default results channel; set `mcp.slack.investigationsChannel` only for a different channel name.
+
+After preparing all selected integrations, [install Tokonoma](install.md#3-install) once. For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration). Keep the license, required analysis key, source token, and other selected credentials in that command.
 
 ## Verify the connection
 
-On the administration workstation, read the MCP logs:
+After installation, read the MCP logs on the administration workstation:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness after runner setup. Complete [runner setup](alert-investigations.md) before declaring the installation ready.
+Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. Complete [runner verification](alert-investigations.md#check-it-works) before declaring the installation ready.
 
 | Symptom | Check |
 | --- | --- |
@@ -84,13 +74,7 @@ Expected result: the Deployment successfully rolls out. Repeat the Slack reply c
 
 Without an Anthropic key, exact commands such as `help`, `start REPLACE_WITH_SESSION_TITLE`, `state`, `stop`, and `resume` work. Agents can check into a session. Reading `full record for REPLACE_WITH_RECORD_UUID` needs a valid Tokonoma license. Answering questions, judging relevance, and creating session timelines require the Anthropic key and send relevant content to Anthropic.
 
-Automatic memory recall on alerts is off by default. To make the app reply to alerts from other apps, merge this into `tokonoma-values.yaml` and repeat the complete Helm upgrade:
-
-```yaml
-mcp:
-  slack:
-    autoRecallEnabled: true
-```
+Automatic memory recall on alerts is off by default. To make the app reply to alerts from other apps, set `mcp.slack.autoRecallEnabled: true` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration).
 
 Automatic recall also requires the Slack features that call a model. This switch does not configure the required runner. Set `runner.destinations.slackApp.enabled: true` in the [runner setup](alert-investigations.md) to deliver investigation results through this app. Avoid also configuring a legacy Slack webhook destination unless you want both deliveries.
 

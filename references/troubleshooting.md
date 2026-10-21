@@ -28,17 +28,7 @@ helm pull oci://public.ecr.aws/tokonoma/charts/tokonoma
 
 Helm prints the downloaded chart version and digest. Record them and use the archive it saved in this directory. If the same error remains, preserve it and contact Tokonoma before changing more credentials. Do not disable TLS verification.
 
-The downloaded archive can replace the OCI URL in subsequent commands. Replace `REPLACE_WITH_DOWNLOADED_CHART_FILE` with its actual path:
-
-```sh
-helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma "REPLACE_WITH_DOWNLOADED_CHART_FILE" \
-  --namespace tokonoma --create-namespace \
-  --values tokonoma-values.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --wait --timeout 10m
-```
-
-Include any selected configuration overlays and other credential inputs from your installation plan. For an existing release, use the [upgrade guide](upgrading.md) with the archive path instead of running `install` again. See [Helm registry logout](https://helm.sh/docs/helm/helm_registry_logout/) for the credential-removal command.
+In your complete [installation command](install.md#3-install), replace the OCI URL with the downloaded archive's actual path. Keep `values.yaml` and all selected credential inputs. For an existing release, make the same replacement in the [upgrade command](upgrading.md) instead of running `install` again. See [Helm registry logout](https://helm.sh/docs/helm/helm_registry_logout/) for the credential-removal command.
 
 ## Install / upgrade
 

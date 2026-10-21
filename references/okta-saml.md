@@ -1,6 +1,6 @@
 # Direct Okta SAML login
 
-Complete the [installation](install.md), then configure Okta login.
+Prepare your `values.yaml` with the [installation guide](install.md#2-prepare-your-files), then configure Okta login before shared access.
 
 Okta users can use private memories and `toko:everyone`. Tokonoma does not import Okta groups; do not add a group statement.
 
@@ -8,11 +8,11 @@ Okta users can use private memories and `toko:everyone`. Tokonoma does not impor
 
 Use Helm 3.14+ and `jq`. Run commands from your deployment directory on a computer with cluster access. Configure Okta in Okta Admin Console. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
 
-Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| `REPLACE_WITH_KUBE_CONTEXT`, `tokonoma-values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
+| `REPLACE_WITH_KUBE_CONTEXT`, `values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
 | `REPLACE_WITH_MCP_HOSTNAME` and allowed email domains | Your DNS and identity administrators | Before creating the Okta app |
 | Okta SAML app and assigned test user | Okta administrator with app creation and assignment permissions | Before the first login |
 | Okta issuer, SSO URL and signing certificate | The app's **Sign On** setup instructions, step 3 | Before saving authentication values |
@@ -120,7 +120,7 @@ Save the certificate as `REPLACE_WITH_SECRET_DIRECTORY/okta-signing.crt`.
 
 ## 4. Deploy the connection
 
-Prepare public routing files with the [HTTPS Ingress guide](public-mcp-ingress.md) and deploy them with authentication below. For an existing private HTTPS proxy, omit `tokonoma-public.yaml` and `tokonoma-ingress.yaml` from both commands. Keep the hostname, `domain`, and OAuth origin identical.
+For public access, merge the [HTTPS Ingress settings](public-mcp-ingress.md) into `values.yaml`. Existing private HTTPS routing needs no public Ingress settings. Keep the hostname, `domain`, and OAuth origin identical.
 
 Create the namespace and certificate Secret, then record the JSON-file checksum. The namespace command also works if it already exists. If you lack namespace permissions, ask the platform team to create it first:
 
@@ -143,7 +143,9 @@ sha256sum "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
 
 On macOS, use `shasum -a 256`. Hash the JSON file, not the certificate fingerprint or raw PEM. Put only the Secret name, key, and checksum in Helm values.
 
-Save as `tokonoma-oauth.yaml`, preserving any existing credential-provider settings. Copy the printed checksum into `checksum`:
+The required runner needs a machine credential alongside human SAML login. Configure or preserve the Cognito or legacy Google credential provider from [OAuth](oauth.md), then prepare the [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled).
+
+Merge these SAML settings into `values.yaml`, preserving the credential provider, runner configuration, and other `mcp` settings. Copy the printed checksum into `checksum`:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -151,10 +153,7 @@ domain: REPLACE_WITH_MCP_HOSTNAME
 mcp:
   auth:
     enabled: true
-    # SAML can be the only login path. Keep an existing cognito/google
-    # provider here only when the deployment intentionally offers both.
-    provider: none
-
+    # Keep the configured credential provider for the runner.
     saml:
       enabled: true
       provider: okta
@@ -182,41 +181,31 @@ mcp:
 
 Do not set `groupAttribute` for Okta. If using `mcp.auth.baseUrl` instead of `domain`, build ACS and metadata URLs from that HTTPS origin.
 
-Record the current revision before changing an existing release:
+For a first installation, finish preparing `values.yaml` and credentials, then use [install Tokonoma](install.md#3-install). Return here to verify metadata and login.
+
+For an existing release, record the current revision:
 
 ```sh
 helm --kube-context "REPLACE_WITH_KUBE_CONTEXT" history tokonoma \
   --namespace tokonoma
 ```
 
-Render, then deploy with every existing values file and the new overlays. The rendered file contains Secrets; keep it protected and uncommitted:
+Apply the updated `values.yaml` to the existing release. This command preserves its stored analysis, runner, and integration credentials; include any changed credential inputs. For a separate manifest review, follow [offline rendering](credentials.md#offline-rendering) with every selected credential input from the [installation command](install.md#3-install). Keep rendered Secrets protected and uncommitted.
 
 ```sh
-helm template tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version REPLACE_WITH_INSTALLED_CHART_VERSION \
-  --namespace tokonoma \
-  --values tokonoma-values.yaml \
-  --values tokonoma-public.yaml --values tokonoma-ingress.yaml \
-  --values tokonoma-oauth.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" > "REPLACE_WITH_SECRET_DIRECTORY/rendered.yaml"
-
-helm upgrade --install tokonoma --reset-then-reuse-values \
+helm upgrade tokonoma --reset-then-reuse-values \
   oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
   --version REPLACE_WITH_INSTALLED_CHART_VERSION \
   --namespace tokonoma \
-  --create-namespace \
-  --values tokonoma-values.yaml \
-  --values tokonoma-public.yaml --values tokonoma-ingress.yaml \
-  --values tokonoma-oauth.yaml \
+  --values values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
   --wait --timeout 10m
 ```
 
 Expect Helm `STATUS: deployed` and namespace/Secret results `created`, `configured`, or `unchanged`.
 
-Rendering rejects incomplete SAML settings, non-HTTPS SSO, empty domain allowlists, or missing certificate checksums. Changing the checksum restarts the Tokonoma pod.
+The chart rejects incomplete SAML settings, non-HTTPS SSO, empty domain allowlists, or missing certificate checksums. Changing the checksum restarts the Tokonoma pod.
 
 ## 5. Verify metadata and login
 

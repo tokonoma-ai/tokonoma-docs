@@ -21,7 +21,7 @@ Use the port-forward from [installation](install.md). It binds to localhost by d
 ## Team access
 
 1. Agree on a private route with your platform team, such as an existing VPN or internal Ingress. Choose its stable HTTPS hostname without opening shared access yet.
-2. Configure [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Set `mcp.auth.enabled: true` explicitly. Use the same hostname for the auth base URL and identity-provider redirect configuration.
+2. Configure [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Set `mcp.auth.enabled: true` explicitly in `values.yaml`. Use the same hostname for the auth base URL and identity-provider redirect configuration.
 3. Deploy the authentication settings with the private route. The hostname must be reachable by the MCP client and the user's browser.
 4. From a user's device, request `https://REPLACE_WITH_MCP_HOSTNAME/mcp` without credentials and expect `401`. Complete login through a [coding agent](coding-agents.md) and confirm it can list Tokonoma tools.
 

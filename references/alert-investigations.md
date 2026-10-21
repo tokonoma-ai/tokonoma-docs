@@ -2,11 +2,11 @@
 
 Alertmanager sends firing alerts to `toko-runner`. After a delay and duplicate check, the runner investigates through a dedicated Tokonoma MCP instance, saves its findings, and posts a Slack summary.
 
-The [runner example](../examples/runner-grafana-values.yaml) configures delivery through the native Slack app. Invite the app to the alert and investigations channels. Each alert gets an announcement, followed by its result in a thread.
+For Slack results, enable the Slack sections in your saved [values file](../examples/values.yaml) and invite the app to the alert and investigations channels. Each alert gets an announcement, followed by its result in a thread.
 
 The runner is required for a complete Tokonoma installation. The chart defaults `runner.enabled` to `false`; this guide sets it to `true` with the required credentials and dedicated MCP instance. Investigations send alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Summaries and links go to Slack. Review source permissions before enabling unattended work.
 
-For Datadog-only alerts, create the [Datadog token Secret](datadog-alerts.md) first. Omit the Alertmanager token input and include the Datadog values file in the same upgrade. Both sources can run together. The chart requires at least one source token; a missing referenced Secret leaves the pod in `CreateContainerConfigError`.
+For Datadog-only alerts, create the [Datadog token Secret](datadog-alerts.md) and configure its reference in `values.yaml`. Omit the Alertmanager token input. Both sources can run together. The chart requires at least one source token; a missing referenced Secret leaves the pod in `CreateContainerConfigError`.
 
 ## What gets deployed
 
@@ -23,17 +23,16 @@ Bundled PostgreSQL needs no additional setup. For external PostgreSQL (`postgres
 
 ## Before you start
 
-Complete steps 1 through 5 of [installation](install.md), then [Tokonoma Slack app setup](slack-app.md). This guide completes the required runner step. Use Helm 3.14+ and preserve the existing configuration when adding the runner.
+Prepare the runner in your saved `values.yaml` before a new installation, or edit that same file for an existing release. Complete [Slack app setup](slack-app.md) if you want Slack results. Use Helm 3.14+ and preserve existing settings and credentials.
 
 Run commands from the installation's working directory on its administration workstation, outside this checkout. Replace placeholders first; agents must ask for missing inputs.
 
-Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings. For a new release, finish preparation here and return to [Install](install.md#3-install).
 
 | Input | Meaning and source | Required when |
 |---|---|---|
-| `REPLACE_WITH_DOCS_DIRECTORY` | Absolute path to this downloaded repository | Copying the runner example |
 | `REPLACE_WITH_KUBE_CONTEXT` | Target cluster context from `kubectl config get-contexts` | Every cluster command |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Protected directory chosen during base installation | File-based credentials |
+| `REPLACE_WITH_SECRET_DIRECTORY` | Protected directory chosen in [credentials](credentials.md) | File-based credentials |
 | `license.txt` | Tokonoma-issued license in the protected directory | Helm upgrades |
 | `anthropic-api-key.txt` | Anthropic API key shared by memory processing and the runner | This example |
 | `slack-bot-token.txt`, `slack-app-token.txt` | Tokens from [Slack app setup](slack-app.md) | Slack results |
@@ -42,7 +41,7 @@ Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [confi
 | `runner-client-id.txt`, `runner-client-secret.txt` | Dedicated runner credentials from the selected [identity provider](oauth.md) | MCP authentication enabled |
 | `REPLACE_WITH_MCP_HOSTNAME`, `REPLACE_WITH_TLS_SECRET_NAME` | Public host and existing TLS Secret from [ingress setup](public-mcp-ingress.md) | External alert sender |
 
-Save raw credentials under `REPLACE_WITH_SECRET_DIRECTORY`, without quotes or a trailing newline. Keep all values files and `alertmanagerconfig-tokonoma.yaml`, if used, in the installation's working directory. The sections below name each file; Datadog-only setups also use `runner-datadog-values.yaml` from the [Datadog guide](datadog-alerts.md).
+Save raw credentials under `REPLACE_WITH_SECRET_DIRECTORY`, without quotes or a trailing newline. Keep `values.yaml` and `alertmanagerconfig-tokonoma.yaml`, if used, in the installation's working directory. Merge settings from the [Datadog guide](datadog-alerts.md) into the same `values.yaml` when needed.
 
 Generate `alertmanager-token.txt` only if no receiver token exists. Preserve existing tokens when adding a source or upgrading:
 
@@ -67,7 +66,7 @@ For the legacy Google Identity Platform/Firebase verifier, enable Email/Password
 
 Declare the Cognito app client ID or Google account email in `mcp.auth.clients` with `origin: external`, grant `client_credentials`, scope `toko-mcp/query`, and `tokenEndpointAuthMethod: client_secret_post`. SAML-only login cannot issue a machine credential: keep the selected credential provider alongside SAML for the runner.
 
-Keep an existing runner credential Secret if it works. Otherwise, save the raw credentials as `runner-client-id.txt` and `runner-client-secret.txt` in the protected directory, then create the Secret in the existing namespace:
+Keep an existing runner credential Secret if it works. Otherwise, save the raw credentials as `runner-client-id.txt` and `runner-client-secret.txt` in the protected directory. [Prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets), then create the runner credential Secret:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-runner-oauth \
@@ -75,7 +74,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic to
   --from-file=clientSecret="REPLACE_WITH_SECRET_DIRECTORY/runner-client-secret.txt"
 ```
 
-Expected output: `secret/toko-runner-oauth created`. After copying the runner example below, merge this into `runner-values.yaml` before the upgrade. Keep the full identity-provider settings in `tokonoma-values.yaml`:
+Expected output: `secret/toko-runner-oauth created`. Merge this into `values.yaml`, retaining the full identity-provider settings in that file:
 
 ```yaml
 runner:
@@ -86,37 +85,34 @@ runner:
       key: clientSecret
 ```
 
-## Install
+## Configure the runner
 
 ### Install with OSS Grafana MCP
 
-This example queries an existing Grafana through a private adapter. It retains your MCP authentication and routing. The adapter requires Kubernetes 1.25+ and connects to the runner automatically.
+To query an existing Grafana, uncomment `grafanaMcp` in your saved [values file](../examples/values.yaml). Replace the Grafana URL and choose a protected Viewer token file or existing Secret reference. The private adapter requires Kubernetes 1.25+ and connects to the runner automatically.
 
-Copy the [commented runner example](../examples/runner-grafana-values.yaml) once into the customer working directory. If you already have `runner-values.yaml`, update it instead of overwriting it:
+Leave Grafana commented if you do not use it. Configure your actual [investigation tools](#adding-your-own-mcp-servers), including their endpoints, credentials, and allowed tools. Alert webhooks alone do not provide query access.
 
-```sh
-cp "REPLACE_WITH_DOCS_DIRECTORY/examples/runner-grafana-values.yaml" runner-values.yaml
-```
+### Apply the configuration
 
-Read its comments, replace the Grafana URL, and choose credential files or existing Secret references. Merge the runner authentication block above when MCP authentication is enabled. Apply this overlay after your saved `tokonoma-values.yaml`.
+For a new installation, finish preparing `values.yaml` and the credential files, then run the command in [Install](install.md#3-install). For an existing release, use the upgrade below with its installed chart version.
 
-For a deployment without Grafana, omit the `grafanaMcp` block and the `--set-file grafanaMcp.grafana.apiKey` argument below. Configure your actual [investigation tools](#adding-your-own-mcp-servers), including their endpoints, credentials, and allowed tools, before verification. Alert webhooks alone do not provide query access.
-
-Replace the file paths and run this from the customer working directory, including every existing overlay and credential input. With existing Secrets, keep their references and omit the matching `--set-file` inputs:
+This command uses Anthropic, Alertmanager and Slack. Replace the file paths and keep every credential input used by your installation. With existing Secrets, keep their references in `values.yaml` and omit the matching `--set-file` inputs:
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --wait --timeout 10m \
-  --values tokonoma-values.yaml --values runner-values.yaml \
+  --values values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
   --set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt" \
   --set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" \
   --set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt" \
-  --set-file credentials.alertmanagerToken="REPLACE_WITH_SECRET_DIRECTORY/alertmanager-token.txt" \
-  --set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"
+  --set-file credentials.alertmanagerToken="REPLACE_WITH_SECRET_DIRECTORY/alertmanager-token.txt"
 ```
 
-Expected result: Helm reports `tokonoma` as `deployed`. Keep all values and credentials on every upgrade. When MCP authentication is enabled, configure the runner credential above. Keep authentication enabled.
+If you enabled Grafana with a token file, add `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"`. Omit the Slack inputs when not using Slack. For Datadog-only alerts, omit the Alertmanager token and keep the Datadog Secret reference.
+
+Expected result: Helm reports `tokonoma` as `deployed`. When MCP authentication is enabled, configure the runner credential above and retain authentication. Complete [verification](#check-it-works) after installation or upgrade.
 
 Protected files keep tokens out of shell history, but Helm stores their values in release metadata. Restrict access to the files, Helm metadata, and Secrets.
 
@@ -211,10 +207,9 @@ Expected result: `alertmanagerconfig.monitoring.coreos.com/toko-runner` is creat
 
 In-cluster Alertmanager uses the private URL without Ingress. External senders, including Grafana Cloud, need an approved HTTPS ingress or relay. Grafana Cloud cannot reach ClusterIP or Tailscale-only addresses.
 
-Save this as `runner-alertmanager-ingress-values.yaml` in the customer working directory. Add it after the complete runner values above. It references an existing TLS Secret and keeps the Alertmanager token supplied during installation:
+Merge these settings into your existing `values.yaml`, retaining other fields under `mcp` and `runner`. They reference an existing TLS Secret and keep the configured Alertmanager token:
 
 ```yaml
-# runner-alertmanager-ingress-values.yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
 mcp:
   auth:
@@ -231,36 +226,13 @@ runner:
     webhookPaths: [/webhooks/alertmanager]
 ```
 
-Configure the identity provider and runner OAuth client above before applying either public overlay. Add the overlay after `runner-values.yaml` in the Helm command, and keep the complete OAuth configuration in your base values. Replace the host/TLS reference and configure your existing controller using
+Configure the identity provider and runner OAuth client before applying public routing. Keep their complete configuration in the same `values.yaml`. Replace the host/TLS reference and configure your existing controller using
 [Public MCP Ingress](public-mcp-ingress.md). This adds an `Exact` rule for
 `/webhooks/alertmanager` to that MCP Ingress, forwarding to `toko-runner:8080`.
 It does not enable the runner by itself. For Datadog-only exposure, use the
-explicit [Datadog overlay](datadog-alerts.md#2-configure-the-runner).
+explicit [Datadog settings](datadog-alerts.md#2-configure-the-runner).
 
-To expose both receivers, save this as `runner-both-ingress-values.yaml` in the customer working directory. Use it instead of the single-source ingress overlay. It keeps the chart-created Alertmanager token and adds the Datadog token Secret from the [Datadog guide](datadog-alerts.md):
-
-```yaml
-# runner-both-ingress-values.yaml
-domain: REPLACE_WITH_MCP_HOSTNAME
-mcp:
-  auth:
-    enabled: true
-  ingress:
-    enabled: true
-    host: REPLACE_WITH_MCP_HOSTNAME
-    tls:
-      enabled: true
-      secretName: REPLACE_WITH_TLS_SECRET_NAME
-runner:
-  ingress:
-    enabled: true
-    webhookPaths: [/webhooks/datadog, /webhooks/alertmanager]
-  sources:
-    datadog:
-      tokenSecretRef:
-        name: toko-runner-datadog-webhook
-        key: token
-```
+To expose both receivers, set `runner.ingress.webhookPaths: [/webhooks/datadog, /webhooks/alertmanager]` in `values.yaml`. Keep the Alertmanager token and add the Datadog Secret reference using the [Datadog guide](datadog-alerts.md).
 
 `webhookPaths` defaults to `[]`, exposing no webhooks. Helm replaces the whole list. Use absolute paths served by the runner with `Exact` matching. Routing requires the runner, runner ingress, and MCP Ingress to be enabled; it does not create receivers or change token authentication. Health and metrics stay private.
 
@@ -329,15 +301,15 @@ curl --fail --show-error --silent http://localhost:8080/metrics | grep runner_
 
 The health request should return HTTP 200. Record the counters before sending the test so you can compare them afterwards. Health alone does not prove investigations or Slack delivery.
 
-### Send one controlled alert and verify its Slack result
+### Send one controlled alert and verify its result
 
-Use an operator-approved test alert that can make model calls and post to the investigations channel. Keep existing paging routes intact. For Grafana Alertmanager, use its documented [contact-point test](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#test-a-contact-point):
+Use an operator-approved test alert that can make model calls and post to any configured destination. Keep existing paging routes intact. For Grafana Alertmanager, use its documented [contact-point test](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#test-a-contact-point):
 
 1. Open **Alerting > Notification configuration > Contact points**. Edit the Tokonoma webhook contact point and select **Test**.
 2. Choose **Custom**. Use a fresh `alertname`, `severity: warning` and the service or namespace labels needed by your configured filters. State in the annotation that this is an installation test, not a production incident.
 3. Select **Send test notification** once. This uses the contact point's configured bearer token. Allow the source's `delaySeconds` and any queue wait before expecting a result.
 4. Repeat the metrics command in terminal 2. Check accepted delivery, then a completed run in `runner_run_total`. If the alert was skipped, read the reason in `runner_intake_skipped_total` and correct the test's labels or eligibility before another send.
-5. In the configured investigations channel, find this alert's announcement and its result thread. Confirm the summary and linked memory record describe the installation test. A delivery count without that result does not complete the check.
+5. With Slack enabled, find this alert's announcement and result thread in the configured investigations channel. Confirm the summary and linked memory record describe the installation test. Without Slack, use your connected coding agent to find the saved investigation by its unique test alert name and fetch its full body. Require the record identifier and findings that describe this test. An accepted delivery without a completed investigation and saved record does not complete the check.
 
 Grafana's contact-point test is available only for Grafana Alertmanager. With raw or operator-managed Alertmanager, use your team's approved test alert through its existing rule and routing process. For Datadog, follow [its verification steps](datadog-alerts.md#4-verify). Do not change production thresholds or remove paging receivers to force a test.
 
@@ -373,31 +345,18 @@ For source-token rotation, save old and new tokens comma-separated, then upgrade
 
 ## Adding your own MCP servers
 
-To add vendor telemetry or read-only source control, merge its connection into `runner-values.yaml` and create the referenced Secret before the next complete Helm upgrade:
+For a code integration, uncomment `runner.mcpServers` in [values.yaml](../examples/values.yaml). Obtain the endpoint and exact read-only tool names from the provider. Create the referenced bearer-credential Secret before installation or upgrade. To add another server, append an entry to the existing list; do not replace other connections.
 
-```yaml
-runner:
-  mcpServers:
-    - name: source-control
-      kind: source-control
-      url: https://api.githubcopilot.com/mcp/
-      # Only listed tools are permitted; an unlisted call is denied, not prompted for.
-      expectedTools: [get_pull_request, list_commits]
-      authSecretRef:
-        name: toko-runner-github
-        key: appInstallationToken
-```
-
-Limit the GitHub App installation token to the permissions the runner needs. The runner gains all access that credential grants.
+Only tools listed in `expectedTools` are permitted. Limit the credential to the access the runner needs; the runner gains all access it grants. Telemetry providers with a different authentication scheme need their provider-specific connection settings.
 
 ## Stop the runner for maintenance
 
-This stops investigations and removes the runner, its dedicated MCP instance, and the Grafana adapter. Use it only for a planned service interruption. Pause only Tokonoma alert deliveries, preserving existing paging routes. Record the component settings, then set these three flags to `false` in the saved installation values. From the customer working directory, include every existing overlay and credential input when applying the change:
+This stops investigations and removes the runner, its dedicated MCP instance, and the Grafana adapter. Use it only for a planned service interruption. Pause only Tokonoma alert deliveries, preserving existing paging routes. Record the component settings, then set these three flags to `false` in `values.yaml`. From the customer working directory, retain every credential input when applying the change:
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --reset-then-reuse-values \
-  --values tokonoma-values.yaml --values runner-values.yaml \
+  --values values.yaml \
   --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
   --set runner.enabled=false --set mcp.sibling.enabled=false \
   --set grafanaMcp.enabled=false \
