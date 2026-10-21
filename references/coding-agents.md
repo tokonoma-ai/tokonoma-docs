@@ -79,7 +79,7 @@ are enabled.
 
 ## Verify memory access
 
-Before onboarding, complete the [save-and-full-body-read check](install.md#5-connect-and-confirm-memory-access). Confirm the saved record's identifier and that its retrieved text matches what you saved.
+You can run the [save-and-full-body-read check](install.md#connect-and-confirm-memory-access) before onboarding. If you do, confirm the saved record's identifier and that its retrieved text matches what you saved.
 
 ## 3. Onboard your coding agent
 

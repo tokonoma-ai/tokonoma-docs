@@ -69,7 +69,7 @@ The walkthrough uses bundled PostgreSQL, a temporary local connection, and Slack
 
 **With an agent:** download the whole repository, open it in your agent's workspace, and add your known cluster and features to this request:
 
-> Read SKILL.md and help me install Tokonoma with agentic monitoring and automatic investigations enabled. Identify the intended cluster and whether an installation already exists. Check my saved integration and monitoring settings, then ask for missing inputs before making changes. Use the shared installation guides and report the functional checks you complete.
+> Read SKILL.md and help me install Tokonoma with agentic monitoring and automatic investigations enabled. Identify the intended cluster and whether an installation already exists. Check my saved integration and monitoring settings, then ask for missing inputs before making changes. Finish once the deployment is running and health checks pass; leave monitoring setup and investigations running in the background.
 
 Keep `references/` and `examples/` with `SKILL.md`. The skill tells the agent how to use these files; opening it does not install anything.
 

@@ -90,6 +90,6 @@ Expect `successfully rolled out`. Then inspect startup logs:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=100
 ```
 
-Confirm `memory module: schema applied` appears. The pod keeps running even when the memory store cannot start, so a successful rollout alone does not prove the database works. Complete the [memory access check](install.md#5-connect-and-confirm-memory-access).
+Confirm `memory module: schema applied` appears. The pod keeps running even when the memory store cannot start, so a successful rollout alone does not prove the database works. You can also run the [memory access check](install.md#connect-and-confirm-memory-access); it is not required to finish installation.
 
 For `password authentication failed`, check that the Secret matches the database role's password. For `memory module: ensure_schema failed`, check the `vector` extension and database ownership.

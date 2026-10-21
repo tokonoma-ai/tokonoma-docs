@@ -114,7 +114,7 @@ helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT --reset-then-reus
 
 If you enabled Grafana with a token file, add `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"`. Omit the Slack inputs when not using Slack. For Datadog-only alerts, omit the Alertmanager token and keep the Datadog Secret reference.
 
-Expected result: Helm reports `tokonoma` as `deployed`. When MCP authentication is enabled, configure the runner credential above and retain authentication. Complete [verification](#check-it-works) after installation or upgrade.
+Expected result: Helm reports `tokonoma` as `deployed`. When MCP authentication is enabled, configure the runner credential above and retain authentication. Use the [installation health checks](install.md#4-verify) to confirm it is running; the [investigation checks](#check-it-works) are optional follow-ups.
 
 Protected files keep tokens out of shell history, but Helm stores their values in release metadata. Restrict access to the files, Helm metadata, and Secrets.
 
@@ -276,6 +276,8 @@ Until startup loads the queue, deliveries return `500` and increment `runner_del
 Tune limits using the cost and duration recorded in `runner.agent_run` spans and the counters at `/metrics`.
 
 ## Check it works
+
+Use these optional checks to verify alert delivery and investigation results after installation. A completed test investigation is not an installation requirement.
 
 ### Check the deployment
 

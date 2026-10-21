@@ -116,7 +116,7 @@ Check workloads, persistent storage, and index creation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc,jobs
 ```
 
-Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check Workload Identity and bucket access. Complete the [MCP health and memory checks](../install.md#4-verify), then the required [analysis and investigation checks](../install.md#6-verify-analysis-and-investigations).
+Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check Workload Identity and bucket access. Complete the [installation health checks](../install.md#4-verify). [Monitoring and integration checks](../install.md#check-monitoring-and-integrations) are optional follow-ups.
 
 In a separate terminal, leave this running:
 

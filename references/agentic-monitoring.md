@@ -59,6 +59,8 @@ Keep this UI on the direct localhost connection. Ordinary browser sessions canno
 
 ## Verify monitoring
 
+These are optional follow-up checks after installation. Monitoring setup and evaluations run in the background; installation does not wait for them.
+
 A ready runner pod does not prove monitoring is working. Confirm that setup completed for the intended scope and that detectors are approved. Address missing telemetry access, incomplete setup, and degraded detectors before treating coverage as operational.
 
 To check ongoing evaluations, use the runner port-forward in [runner verification](alert-investigations.md#check-the-deployment). From another terminal:

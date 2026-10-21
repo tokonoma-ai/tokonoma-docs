@@ -41,6 +41,8 @@ Explain the changes and proceed within the customer's authorization. Resolve mis
 
 ## Verify and hand off
 
-For a new installation, check analysis configuration, monitoring setup and coverage, licensed reads, and a completed runner investigation with its saved result and configured delivery. Run functional checks for other selected features. Ready pods do not prove licensed reads, monitoring, login, Slack replies, or investigations. Do not create a production anomaly to test monitoring. Run port-forwards separately from checks. Preserve errors and troubleshoot without weakening authentication or deleting data.
+Finish installation when Helm reports `deployed`, the required workloads are ready, persistent-volume claims are Bound, and the MCP health check passes. Monitoring setup continues in the background. Do not wait for detector approvals, evaluation results, or a completed investigation.
+
+Memory write/read tests, Slack replies, controlled alerts, and monitoring checks are optional follow-ups when requested. Report them separately from deployment health and do not claim untested features are verified. Do not create a production anomaly to test monitoring. Run port-forwards separately from checks. Preserve errors and troubleshoot without weakening authentication or deleting data.
 
 Report the target, versions, enabled features, configuration files and order, credential references without values, and observed checks. Identify remaining human or service actions and link the relevant operation guides.

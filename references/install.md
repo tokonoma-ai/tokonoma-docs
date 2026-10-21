@@ -115,9 +115,15 @@ After it reports `Forwarding from`, run this in **terminal B**:
 curl -fsS http://127.0.0.1:8000/health
 ```
 
-Expect `ok`. This confirms the process is responding. Database startup, license access, and integrations need their own checks. See [troubleshooting](troubleshooting.md) for failures.
+Expect `ok`. Installation is complete when Helm reports `deployed`, the required workloads are ready, persistent-volume claims are Bound, and this health check passes. See [troubleshooting](troubleshooting.md) for failures.
 
-## 5. Connect and confirm memory access
+Monitoring setup continues in the background. Do not wait for detector approvals, evaluation results, or a completed investigation to finish installation. Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health.
+
+## After installation
+
+Use the guides below to connect clients and alert senders when needed. Feature tests are optional follow-ups and do not block installation completion.
+
+### Connect and confirm memory access
 
 Follow [Connect a coding agent](coding-agents.md), using `http://127.0.0.1:8000/mcp` for the local path. Keep terminal A open. If you configured shared access, use its authenticated endpoint and complete a real login.
 
@@ -129,7 +135,7 @@ Require a saved record identifier and matching full body. Search results and hea
 
 Optionally run `Run Tokonoma onboard.` to prepare investigation context. Review proposed records and file or hook changes before accepting them; see [onboarding](coding-agents.md#3-onboard-your-coding-agent).
 
-## 6. Verify analysis and investigations
+### Check monitoring and integrations
 
 Check [analysis configuration](memory-llm.md) and [monitoring setup and coverage](agentic-monitoring.md#verify-monitoring), then verify the runner with your selected integrations.
 
@@ -137,7 +143,7 @@ Check [analysis configuration](memory-llm.md) and [monitoring setup and coverage
 2. Add the selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender configuration after the receiver is ready. Preserve existing paging routes.
 3. Complete the runner guide's [verification](alert-investigations.md#check-it-works): send one approved test alert and confirm the completed investigation, saved record, and configured result delivery.
 
-Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, integrations, and check results. Installation is complete when analysis is configured, monitoring has approved detectors with observed successful evaluations, and both the memory check and runner investigation check pass. Report monitoring as awaiting review or incomplete if those checks are still pending.
+Report any follow-up checks you perform separately from deployment health. Mark untested integrations as unverified; monitoring can still be setting up while the installation is running.
 
 ## Next steps
 

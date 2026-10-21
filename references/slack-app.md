@@ -44,13 +44,13 @@ After preparing all selected integrations, [install Tokonoma](install.md#3-insta
 
 ## Verify the connection
 
-After installation, read the MCP logs on the administration workstation:
+These connection checks are optional follow-ups after installation. Read the MCP logs on the administration workstation:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. Complete [runner verification](alert-investigations.md#check-it-works) before declaring the installation ready.
+Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. You can test investigation delivery separately with [runner verification](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |
