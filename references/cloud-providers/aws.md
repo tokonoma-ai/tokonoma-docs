@@ -68,20 +68,21 @@ Apply Terraform and save the role ARN. The chart creates the annotated ServiceAc
 Save as `tokonoma-full.yaml` in your customer working directory. Use the same region as the bucket:
 
 ```yaml
+# Used in telemetry index names and the default bucket name.
 customer: REPLACE_WITH_CUSTOMER
-region: REPLACE_WITH_REGION
-telemetryPlatform: true
+region: REPLACE_WITH_REGION  # Use the bucket location.
+telemetryPlatform: true  # Optional telemetry backend; disabled by default.
 objectStorage:
-  serviceAccountName: tokonoma-sa
-  serviceAccountCreate: true
+  # Set indexesBucket here if you changed the bucket name in step 1.
+  serviceAccountName: tokonoma-sa  # Must match the cloud identity binding.
+  serviceAccountCreate: true  # Create the annotated Kubernetes account; default is false.
   serviceAccountAnnotations:
     eks.amazonaws.com/role-arn: REPLACE_WITH_IRSA_ROLE_ARN
+# Optional self-monitoring components; all are disabled by default.
 otelCollector: { enabled: true }
 prometheus:    { enabled: true }
 grafana:       { enabled: true }
 ```
-
-The customer slug determines index and default bucket names. Telemetry uses `tokonoma-sa` for S3 access.
 
 For a first [installation](../install.md#3-install), include this overlay after `tokonoma-values.yaml`. Keep MCP private during verification; configure [OAuth](../oauth.md) before shared or public access.
 

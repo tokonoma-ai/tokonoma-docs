@@ -2,9 +2,7 @@
 
 Alertmanager sends firing alerts to `toko-runner`. After a delay and duplicate check, the runner investigates through a dedicated Tokonoma MCP instance, saves its findings, and posts a Slack summary.
 
-To receive results in Slack, supply `credentials.slackBotToken` and `credentials.slackAppToken`, or `mcp.slack.tokenSecret`. Enable `runner.destinations.slackApp.enabled` and invite the app to the alert and investigations channels. Each alert gets an announcement, followed by its result in a thread. Omit `runner.destinations.slack.webhookUrlSecretRef` to avoid duplicate delivery through the legacy webhook.
-
-Leave `mcp.slack.autoRecallEnabled: false` unless you want immediate memory recall replies. Those replies require an Anthropic key through `credentials.anthropicApiKey` or `mcp.memoryLlm.apiKeySecret`, with `mcp.memoryLlm.enabled: true`. Explicit mentions and session updates work independently.
+The [runner example](../examples/runner-grafana-values.yaml) configures delivery through the native Slack app. Invite the app to the alert and investigations channels. Each alert gets an announcement, followed by its result in a thread.
 
 The runner is required for a complete Tokonoma installation. The chart defaults `runner.enabled` to `false`; this guide sets it to `true` with the required credentials and dedicated MCP instance. Investigations send alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Summaries and links go to Slack. Review source permissions before enabling unattended work.
 
@@ -33,6 +31,7 @@ Before running Helm, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [confi
 
 | Input | Meaning and source | Required when |
 |---|---|---|
+| `REPLACE_WITH_DOCS_DIRECTORY` | Absolute path to this downloaded repository | Copying the runner example |
 | `REPLACE_WITH_KUBE_CONTEXT` | Target cluster context from `kubectl config get-contexts` | Every cluster command |
 | `REPLACE_WITH_SECRET_DIRECTORY` | Protected directory chosen during base installation | File-based credentials |
 | `license.txt` | Tokonoma-issued license in the protected directory | Helm upgrades |
@@ -56,7 +55,7 @@ This writes without printing the token. Configure the same value on the sender.
 
 `--set-file` creates chart-owned Secrets; no prior `kubectl create secret` is needed. To use an external secret manager, give each component a reference to its Secret.
 
-Helm generates the bundled PostgreSQL password and Grafana MCP caller token during installation and reuses them on upgrades. Their Secrets survive uninstall; remove them only when intentionally resetting that installation. Client-only `helm template` and Argo rendering cannot reliably look up these Secrets. Supply `postgres.auth.password` and `grafanaMcp.auth.token`, or [external Secret references](values.md#oss-grafana-mcp), for consistent rendering.
+Helm generates the bundled PostgreSQL password and Grafana MCP caller token during installation and reuses them on upgrades. Their Secrets survive uninstall; remove them only when intentionally resetting that installation. Follow [offline rendering](credentials.md#offline-rendering) if your deployment tool cannot look up existing Secrets.
 
 The chart includes Grafana MCP support; no separate Grafana MCP release or external MCP OAuth setup is needed. If `mcp.auth` is enabled, configure the runner's `runner.tokoMcp.oauthClientSecretRef` below.
 
@@ -76,7 +75,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic to
   --from-file=clientSecret="REPLACE_WITH_SECRET_DIRECTORY/runner-client-secret.txt"
 ```
 
-Expected output: `secret/toko-runner-oauth created`. Merge this into `runner-values.yaml` below before the upgrade. Keep the full identity-provider settings in `tokonoma-values.yaml`:
+Expected output: `secret/toko-runner-oauth created`. After copying the runner example below, merge this into `runner-values.yaml` before the upgrade. Keep the full identity-provider settings in `tokonoma-values.yaml`:
 
 ```yaml
 runner:
@@ -91,39 +90,19 @@ runner:
 
 ### Install with OSS Grafana MCP
 
-This example queries an existing Grafana and keeps both MCP endpoints private. `grafanaMcp.enabled` installs the upstream `grafana-mcp` subchart and connects the runner automatically. The adapter requires Kubernetes 1.25+. Leave it disabled if you do not need it.
+This example queries an existing Grafana through a private adapter. It retains your MCP authentication and routing. The adapter requires Kubernetes 1.25+ and connects to the runner automatically.
 
-Save this as `runner-values.yaml` in the customer working directory. Merge the authentication block above when needed. On an existing public installation, retain its ingress settings instead of adding `mcp.ingress.enabled: false`.
+Copy the [commented runner example](../examples/runner-grafana-values.yaml) once into the customer working directory. If you already have `runner-values.yaml`, update it instead of overwriting it:
 
-```yaml
-# runner-values.yaml
-mcp:
-  ingress:
-    enabled: false
-  storage:
-    backend: none
-  sibling:
-    enabled: true
-  memoryLlm:
-    enabled: true
-  slack:
-    autoRecallEnabled: false
-
-runner:
-  enabled: true
-  destinations:
-    slackApp:
-      enabled: true
-
-grafanaMcp:
-  enabled: true
-  grafana:
-    url: REPLACE_WITH_GRAFANA_URL
+```sh
+cp "REPLACE_WITH_DOCS_DIRECTORY/examples/runner-grafana-values.yaml" runner-values.yaml
 ```
+
+Read its comments, replace the Grafana URL, and choose credential files or existing Secret references. Merge the runner authentication block above when MCP authentication is enabled. Apply this overlay after your saved `tokonoma-values.yaml`.
 
 For a deployment without Grafana, omit the `grafanaMcp` block and the `--set-file grafanaMcp.grafana.apiKey` argument below. Configure your actual [investigation tools](#adding-your-own-mcp-servers), including their endpoints, credentials, and allowed tools, before verification. Alert webhooks alone do not provide query access.
 
-If using Grafana, replace its URL. Replace the file paths and run this from the customer working directory, including every existing overlay and credential input:
+Replace the file paths and run this from the customer working directory, including every existing overlay and credential input. With existing Secrets, keep their references and omit the matching `--set-file` inputs:
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \

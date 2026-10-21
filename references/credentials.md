@@ -83,6 +83,12 @@ These references do not create Secrets. Use credentials for your selected provid
 
 Integration guides cover Datadog tokens and API keys, Grafana credentials, OAuth clients, and storage identities. These do not replace the license or Slack tokens.
 
+## Offline rendering
+
+Normal Helm installs generate the bundled PostgreSQL password and Grafana adapter caller token, then reuse their existing Secrets on upgrades. These Secrets survive uninstall; delete them only when intentionally resetting the installation. Client-only `helm template` and GitOps rendering cannot look up those Secrets. Use stable `postgres.auth.password` and `grafanaMcp.auth.token` inputs from protected files, or externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
+
+For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [runner example](../examples/runner-grafana-values.yaml). For token changes, follow [credential rotation](alert-investigations.md#rotate-credentials). Rendering does not check third-party token permissions; verify the integration after deployment.
+
 ## Renew and rotate
 
 Use the verified cluster context. For direct `credentials.*` inputs, update the protected file and rerun the complete Helm upgrade. The chart automatically restarts deployments using changed Anthropic, Slack, and Alertmanager values.

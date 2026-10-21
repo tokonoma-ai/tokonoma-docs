@@ -73,20 +73,20 @@ The walkthrough uses bundled PostgreSQL, a temporary local connection, and Slack
 
 Keep `references/` and `examples/` with `SKILL.md`. The skill tells the agent how to use these files; opening it does not install anything.
 
-**By hand:** follow [Install Tokonoma](references/install.md). Replace `REPLACE_WITH_...` inputs using each guide's table, then run the native commands. No installer scripts or shell exports are required.
+**By hand:** follow [Install Tokonoma](references/install.md). Read the comments in the YAML examples, replace `REPLACE_WITH_...` inputs, and follow the guide's native commands. No installer scripts or shell exports are required.
 
 Run commands from an authorized workstation. You handle login, issued credentials, and administrator-only actions. An agent uses verified values and asks for missing inputs. Supply credentials through protected files or Kubernetes Secret references, never chat.
 
 ## Read the documentation
 
-All documentation is in `references/`. Start with installation, or connect to an existing release. Then follow the links for the features you need. Each setup guide includes prerequisites and checks; humans and agents use the same files.
+The YAML files in `examples/` explain the settings you edit. The guides in `references/` cover setup, commands, and checks. Start with installation, or connect to an existing release; humans and agents use the same files.
 
 | Your task | Documentation |
 | --- | --- |
 | Understand and prepare | [Data flows](references/data-flows.md), [credentials and license](references/credentials.md), [input conventions](references/placeholder-examples.md) |
 | Install and connect | [Installation](references/install.md), [coding agents](references/coding-agents.md), [external PostgreSQL](references/external-postgres.md) |
 | Add features or access | [Integrations](references/integrations.md), [private access](references/private-access.md), [authentication](references/oauth.md), [public routing](references/public-mcp-ingress.md) |
-| Look up configuration | [Values](references/values.md), [endpoints](references/endpoints.md), [version choices](references/upgrading.md#before-changing-configuration) |
+| Look up configuration | [Base values](examples/memory-values.yaml), [runner values](examples/runner-grafana-values.yaml), [endpoints](references/endpoints.md), [version choices](references/upgrading.md#before-changing-configuration) |
 | Operate the installation | [Upgrade](references/upgrading.md), [troubleshoot](references/troubleshooting.md), [remove Tokonoma](references/uninstall.md) |
 
 Use your Tokonoma contact for a license or deployment help. Keep credentials, issued licenses, customer data, and unredacted diagnostics out of this repository and public issues.

@@ -77,22 +77,23 @@ Check that each command succeeds. The bucket policy must show the account under 
 Save as `tokonoma-full.yaml` in your customer working directory. Use the same bucket name and location as above:
 
 ```yaml
+# Used in telemetry index names and the default bucket name.
 customer: REPLACE_WITH_CUSTOMER
-region: REPLACE_WITH_REGION
-telemetryPlatform: true
+region: REPLACE_WITH_REGION  # Use the bucket location.
+telemetryPlatform: true  # Optional telemetry backend; disabled by default.
 objectStorage:
+  # Native GCS uses Workload Identity; omit endpoint, flavor and credentialsSecret.
   indexesScheme: gs
   indexesBucket: REPLACE_WITH_CUSTOMER-tokonoma-indexes
-  serviceAccountName: tokonoma-sa
-  serviceAccountCreate: true
+  serviceAccountName: tokonoma-sa  # Must match the cloud identity binding.
+  serviceAccountCreate: true  # Create the annotated Kubernetes account; default is false.
   serviceAccountAnnotations:
     iam.gke.io/gcp-service-account: tokonoma-sa@REPLACE_WITH_PROJECT.iam.gserviceaccount.com
+# Optional self-monitoring components; all are disabled by default.
 otelCollector: { enabled: true }
 prometheus:    { enabled: true }
 grafana:       { enabled: true }
 ```
-
-The customer slug determines telemetry index names. Do not set `objectStorage.endpoint`, `flavor`, or `credentialsSecret` for native GCS.
 
 For a first [installation](../install.md#3-install), include this overlay after `tokonoma-values.yaml`. Keep MCP private for verification and configure [OAuth](../oauth.md) before shared or public access.
 

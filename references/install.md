@@ -58,17 +58,17 @@ Work from an existing directory outside this checkout. Save nonsecret values the
 | `REPLACE_WITH_SECRET_DIRECTORY` | Absolute protected directory you chose in the credential guide | Helm reads `license.txt` from this workstation |
 | `tokonoma-values.yaml` | Your copy of the base example | Every install or upgrade command |
 
-Copy the base example once, before it contains your changes. It prepares the services needed by the runner; step 6 supplies the runner configuration:
+Copy the [commented base example](../examples/memory-values.yaml) once, before it contains your changes. Step 6 adds the required analysis and runner configuration:
 
 ```sh
 cp "REPLACE_WITH_DOCS_DIRECTORY/examples/memory-values.yaml" tokonoma-values.yaml
 ```
 
-Review the YAML. It uses the chart's application image default and `mcp.storage.backend: none`. Public routing and authentication are disabled for local access. Any caller who can reach it can use it. Restrict network access and port-forward permissions; configure authentication for shared access.
+Read the comments and apply the choices for your installation. The base example is for restricted local access; configure authentication before sharing it.
 
 If you chose an external database, complete its [preparation](external-postgres.md) and save `tokonoma-external-postgres.yaml` before installing. If you chose the optional cloud telemetry stack, prepare `tokonoma-full.yaml` using the platform guide. Authentication and routing guides specify their own files.
 
-Keep a list of every values file in order, starting with `tokonoma-values.yaml`, for future changes. Later files override matching keys and replace lists. Store credential references in YAML and values in protected files or Kubernetes Secrets.
+Keep the commented source files and a list of their order, starting with `tokonoma-values.yaml`, for future changes. `helm get values` does not retain comments. Later files override matching keys and replace lists. Store credential references in YAML and values in protected files or Kubernetes Secrets.
 
 ## 3. Install
 

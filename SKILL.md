@@ -13,7 +13,7 @@ Identify the requested task, authorized cluster context, release, namespace, fea
 
 The Tokonoma runner and memory analysis are required. Configure an Anthropic credential for analysis even if the runner uses another provider. For a new installation, complete base services, analysis configuration, and runner setup before declaring the installation ready. Chart defaults leave the runner disabled. Configure its credentials and dependencies, then enable it explicitly.
 
-Read the customer's saved values files in application order and check the installed release first. Inspect nonsecret integration settings and Secret references; do not print secret values. Do not infer the customer's tools from the defaults in the supplied examples. Ask only about missing settings, conflicts, or requested additions. Confirm which integrations to enable and save those choices in the customer's values files.
+Read the customer's saved values files, including comments, in application order and check the installed release first. Inspect nonsecret integration settings and Secret references; do not print secret values. Do not infer the customer's tools from the defaults in the supplied examples. Ask only about missing settings, conflicts, or requested additions. Confirm which integrations to enable and save those choices in the customer's values files.
 
 Group missing inputs and decisions into one question where practical. Explain human-only actions, such as obtaining a license, signing in, or approving an app, and how to check completion.
 
@@ -27,13 +27,13 @@ Group missing inputs and decisions into one question where practical. Explain hu
 | Shared access or login | [Private access](references/private-access.md), [OAuth](references/oauth.md), chosen [Google](references/google-saml.md) or [Okta](references/okta-saml.md) provider; [public routing](references/public-mcp-ingress.md) only when selected |
 | Existing installation | [Configuration preservation](references/upgrading.md), then the feature, [troubleshooting](references/troubleshooting.md), or [uninstall](references/uninstall.md) guide |
 
-Check [data flows](references/data-flows.md) before changing exposure or data destinations. Use [values](references/values.md), [endpoints](references/endpoints.md), and [input conventions](references/placeholder-examples.md) for lookups. Cloud hosting does not require optional telemetry.
+Check [data flows](references/data-flows.md) before changing exposure or data destinations. Use the commented [base](examples/memory-values.yaml) and [runner](examples/runner-grafana-values.yaml) examples for field guidance, and [endpoints](references/endpoints.md) and [input conventions](references/placeholder-examples.md) for lookups. Cloud hosting does not require optional telemetry.
 
 ## Prepare and execute
 
 Use the guides' native commands. Do not create wrappers or shell exports. Replace every `REPLACE_WITH_...` input; never invent identifiers or credentials.
 
-Resolve documentation paths from this skill directory. Copy examples into the customer's working directory. Preserve existing configuration, credentials, storage, and values-file order; never overwrite them with an example.
+Resolve documentation paths from this skill directory. Read the comments before adapting an example and keep the source YAML in the customer's working directory; `helm get values` does not retain comments. Preserve existing configuration, credentials, storage, and values-file order; never overwrite them with an example.
 
 Ask for protected credential paths or Secret names and keys, never secret contents in chat. Do not print secrets. Leave provider template variables such as Datadog notification fields intact.
 
