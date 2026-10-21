@@ -2,16 +2,16 @@
 
 Verify persistent storage for Google Kubernetes Engine (GKE). Telemetry ingestion with Google Cloud Storage (GCS) and self-monitoring are optional.
 
-Run commands on a workstation with `kubectl`, Helm 3.14+, gcloud and access to the intended cluster and Google Cloud project. Keep `values.yaml` in your [installation working directory](../install.md), outside this repository. Replace `REPLACE_WITH_*` inputs; agents must ask for unresolved choices.
+Use `kubectl`, Helm 3.14+, and gcloud on a workstation with access to the intended cluster and Google Cloud project. Run commands from your [installation working directory](../install.md), following [input conventions](../placeholder-examples.md).
 
-For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](../upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing release, use its chart version for `REPLACE_WITH_INSTALLED_CHART_VERSION`; see [configuration checks](../upgrading.md#before-changing-configuration).
 
 | Input | Source and when required |
 |---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts`; required for cluster commands. |
 | `REPLACE_WITH_PROJECT` | Google Cloud project ID from the cluster owner; required only for the optional GCS recipe. |
 | `REPLACE_WITH_REGION` | Bucket location selected with the cloud administrator; required only for the optional GCS recipe. |
-| `REPLACE_WITH_CUSTOMER` | Optional full-stack organization slug: at most 42 lowercase letters, digits, or hyphens, starting with a letter. |
+| `REPLACE_WITH_CUSTOMER` | Telemetry organization slug: at most 42 lowercase letters, digits, or hyphens, starting with a letter. |
 
 ## Persistent volumes
 
@@ -74,7 +74,7 @@ Check that each command succeeds. The bucket policy must show the account under 
 
 ### 2. Update the values
 
-Merge these settings into `values.yaml`, preserving the required services and other configuration. Use the same bucket name and location as above:
+Merge these settings into `values.yaml`, preserving existing configuration. Use the same bucket name and location as above:
 
 ```yaml
 # Used in telemetry index names and the default bucket name.
@@ -97,7 +97,7 @@ grafana:       { enabled: true }
 
 For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file. Keep MCP private for verification and configure [OAuth](../oauth.md) before shared or public access.
 
-For an existing installation, follow [upgrade preparation](../upgrading.md), then apply the updated `values.yaml` with existing settings and Secret references preserved:
+For an existing release, follow [configuration checks](../upgrading.md#before-changing-configuration) and apply the updated file with existing settings and Secret references preserved:
 
 ```sh
 helm upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
@@ -118,24 +118,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc,jobs
 
 Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check Workload Identity and bucket access. Complete the [installation health checks](../install.md#4-verify). [Monitoring and integration checks](../install.md#check-monitoring-and-integrations) are optional follow-ups.
 
-In a separate terminal, leave this running:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-grafana 3000:80
-```
-
-Once it reports `Forwarding from`, check from another terminal:
-
-```sh
-curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/login
-```
-
-Expect `200`. If port 3000 is busy, change the mapping’s left side and URL. Open <http://127.0.0.1:3000> as `admin`; retrieve the password privately:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get secret toko-grafana \
-  -o jsonpath='{.data.admin-password}' | base64 -d
-```
+For dashboards, [open the self-monitoring Grafana UI](../endpoints.md#self-monitoring-grafana-ui).
 
 Ship OpenTelemetry Protocol (OTLP) data from inside the cluster to `toko-indexer:7281` with headers `qw-otel-logs-index: REPLACE_WITH_CUSTOMER-logs` and `qw-otel-traces-index: REPLACE_WITH_CUSTOMER-traces`. See [endpoints](../endpoints.md).
 

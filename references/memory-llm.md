@@ -1,17 +1,15 @@
-# Server-side LLM work on memory records
+# Memory analysis
 
-Memory analysis is required for a complete Tokonoma installation. It needs an Anthropic key and `mcp.memoryLlm.enabled: true`. The [values example](../examples/values.yaml) enables it; supply the key before installation. When enabled, the Tokonoma server sends memory content to Anthropic for these tasks:
+Memory analysis is required for a complete Tokonoma installation. The [values example](../examples/values.yaml) enables `mcp.memoryLlm.enabled: true`; supply an Anthropic key before installation. Analysis supports:
 
-- Review possible duplicates. The server continuously links records that cover the same ground. A similarity score cannot tell whether they reach the same conclusion, so a model reads both and classifies their relationship. Search results collapse redundant records into one result. Records that disagree appear together with a conflict warning.
-- Triage messages when the Slack app is enabled. The model decides whether another app's post is an alert that warrants memory recall, whether the retrieved memories are worth posting, and how to interpret free-text `@Tokonoma` questions.
+- Duplicate review: search groups redundant records and warns when records disagree.
+- Slack features: interpreting `@Tokonoma` questions and, when automatic recall is enabled, deciding which memories to post in response to alerts.
 
-Both features send content outside your cluster and share one switch.
+Both send relevant content to Anthropic and share this switch. Only Anthropic API credentials are supported, regardless of the runner's model provider.
 
 ## If analysis is disabled
 
-Deduplication still runs. The server links overlapping records, and search collapses re-saves with identical authored content: the same title, summary and body.
-
-Similarity alone does not merge records. Two records can describe the same symptoms and services in similar prose but name different root causes. Without a model to read their conclusions, those pairs remain linked and unresolved. The links accumulate without changing search results.
+Search can still collapse identical re-saves, but model-based duplicate review and Slack interpretation stop. Existing reviewed records stay collapsed; other similar records remain separate.
 
 Before changing an existing release, follow [configuration checks](upgrading.md#before-changing-configuration).
 
@@ -48,36 +46,19 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deploy toko-mcp \
 
 Expected output: `anthropic`. This confirms the configured provider, not a successful model request. Check `@Tokonoma setup` if the [Slack app](slack-app.md) is installed.
 
-The server reviews duplicates periodically. A backlog of already-linked pairs is processed over the following passes, not immediately.
-
 ## Temporarily stop analysis
 
-To stop analysis for maintenance, set `mcp.memoryLlm.enabled: false` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration). Keep the existing key and Secret references so the required runner can continue using them. Records already collapsed stay collapsed; no new pairs are reviewed.
+To stop analysis for maintenance, set `mcp.memoryLlm.enabled: false` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration). Keep the existing key and Secret references so the runner can continue using them.
 
 Restore `mcp.memoryLlm.enabled: true` and repeat the upgrade when maintenance ends.
 
-## Anthropic only
-
-Only Anthropic API credentials are supported for this feature. A runner configured for another model provider does not change where memory processing sends its data.
-
 ## Choosing a model
 
-The default is the chart-wide `llm.model` (Claude Sonnet 5), which the runner
-uses too. Set `llm.model` in `values.yaml` to change both, or override analysis alone:
-
-```yaml
-mcp:
-  memoryLlm:
-    model: claude-haiku-4-5-20251001
-```
-
-These short, structured tasks run often. Consider a smaller model if lower cost matters more than the quality of its judgments.
+Analysis and the runner default to the chart-wide `llm.model`. Set it in `values.yaml` to change both, or set `mcp.memoryLlm.model` to change analysis alone. Use an Anthropic model identifier supported by your account and test its results before changing production.
 
 ## What it costs
 
-Usage depends on the selected model and the amount of content processed. Check your provider’s current pricing and usage dashboard before installation.
-
-Duplicate review makes one call for each newly linked pair. Identical re-saves skip this step, and unrelated records are never linked. Usage therefore depends on how often your team writes about the same thing twice, rather than the total number of records.
+Usage depends on the selected model, record activity, and Slack features. Check your provider's current pricing and usage dashboard before installation.
 
 ## Data handling
 

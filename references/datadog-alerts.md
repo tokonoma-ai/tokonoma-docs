@@ -1,13 +1,13 @@
 # Datadog alerts
 
-Datadog notifications go to `toko-runner`. After a delay and duplicate check, it investigates and posts results to Slack. The [runner guardrails](alert-investigations.md#guardrails) apply; Datadog has its own delay, severity filter, and token.
+`toko-runner` investigates eligible Datadog notifications and saves its findings. With Slack configured, it also posts results there. The shared [runner guardrails](alert-investigations.md#guardrails) apply; Datadog has its own delay, severity filter, and token.
 
 Datadog needs a public HTTPS webhook. The chart routes it through MCP Ingress.
 
 ## Before you start
 
 - Use Helm 3.14+. Keep the complete install values, including HTTPS ingress and authentication, in `values.yaml`.
-- Prepare the [runner configuration](alert-investigations.md): `mcp.sibling.enabled`, a model provider key, a Slack destination, and OAuth credentials when `mcp.auth` is enabled. Datadog-only installations need no Alertmanager token, but at least one source token is required.
+- Prepare the [runner configuration](alert-investigations.md), including its model credential, telemetry query access, and OAuth client when MCP authentication is enabled. Configure Slack if wanted. Datadog-only installations need no Alertmanager token, but at least one source token is required.
 - MCP Ingress must serve HTTPS only before Datadog deliveries begin. Prepare its settings with [Public MCP Ingress](public-mcp-ingress.md). The bearer token travels in a header; the chart cannot enforce HTTPS terminated through provider annotations. GKE's GCE controller initially serves HTTP too. Once its certificate and load balancer are active, add `kubernetes.io/ingress.allow-http: "false"` to `mcp.ingress.annotations`, upgrade, and verify HTTPS-only access before enabling deliveries.
 - Use Datadog Terraform provider 3.83.0 or later for notification-rule `filter.scope` support. Add the three resources below to your existing project. Outside US1, set your site's API in `provider "datadog"`, for example `api_url = "https://api.us3.datadoghq.com/"`.
 - Use credentials with read and write access to webhooks, custom variables, and notification rules. Terraform reads resources after creation and during refresh, so write-only keys fail. Verify permissions against your organization's role policy.
@@ -26,7 +26,7 @@ For an existing deployment, follow [configuration checks](upgrading.md#before-ch
 | `REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY` | Existing Terraform project with your Datadog provider and credentials | Provider setup below |
 | `REPLACE_WITH_DATADOG_WEBHOOK_TOKEN` | Generated token from step 1, also copied into the protected Terraform variable file | Both ends of webhook authentication |
 
-Keep all installation settings in `values.yaml` in the customer working directory. Step 1 creates `datadog-webhook-token.txt` in the protected directory; the license remains in `license.txt`. Step 3 adds `tokonoma.tf` in your Datadog Terraform project and `tokonoma-datadog.tfvars` plus `tokonoma-datadog.tfplan` in the protected directory. Retain all credentials already used by the installation.
+Keep installation settings in `values.yaml`. Step 1 creates the protected token file. Step 3 creates `tokonoma.tf` in your Terraform project and protected variable and plan files. Retain existing credentials when upgrading.
 
 ## What is exposed
 
@@ -56,19 +56,7 @@ openssl rand -hex 32 | tr -d '\n' > "REPLACE_WITH_SECRET_DIRECTORY/datadog-webho
 
 Use all 32 bytes for this public route; shorter tokens cause a startup warning.
 
-Check the target namespace before creating the Secret:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT get namespace tokonoma
-```
-
-Reuse it if it exists. Only if the response is `NotFound`, create it:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT create namespace tokonoma
-```
-
-Permission errors need the cluster owner's help; they do not mean the namespace is absent. Create the token Secret:
+[Prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets), then create the token Secret:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT create secret generic toko-runner-datadog-webhook -n tokonoma \
@@ -83,25 +71,25 @@ In `values.yaml`, uncomment the Datadog source and public webhook settings in th
 
 Keep `mcp.auth.enabled: true`, the identity-provider settings, and HTTPS ingress in the same file. Configure the runner's OAuth client with the [runner guide](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). Datadog-only installations omit the Alertmanager credential; retain any source credentials already in use.
 
+Configure telemetry query access for agentic monitoring. Use the `runner.mcpServers` entry with `kind: telemetry` in [values.yaml](../examples/values.yaml), or enable its Grafana adapter. Obtain the endpoint, credentials, and permitted read-only tools from the provider, then follow [MCP server setup](alert-investigations.md#adding-your-own-mcp-servers). The Datadog webhook token only authenticates notifications; it does not grant query access.
+
 After all selected integrations are prepared, use the [single install command](install.md#3-install). For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration). Keep the license, required analysis key, runner model credential, and selected Slack credentials. Expected result: Helm reports release `tokonoma` as `deployed`.
 
 Missing source tokens prevent rendering, and missing referenced Secrets cause `CreateContainerConfigError`. Verify the HTTPS endpoint before enabling Datadog deliveries in step 3.
 
-The Secret registers `/webhooks/datadog`; ingress routes it. `webhookPaths` replaces earlier lists and defaults to `[]`. Use absolute paths served by the runner with `Exact` matching. To retain [Alertmanager exposure](alert-investigations.md#external-alertmanager-or-grafana-alerting), include both paths and its token. Routing requires the runner, runner ingress, and MCP Ingress to be enabled. It does not create receivers or change authentication. Health and metrics remain private.
+The token configuration enables the receiver; ingress publishes it. `webhookPaths` replaces earlier lists and defaults to `[]`. Include both paths and tokens to retain [Alertmanager exposure](alert-investigations.md#external-alertmanager-or-grafana-alerting). Health and metrics remain private.
 
 Datadog source defaults:
 
 | Value | Default | What it does |
 |---|---|---|
-| `runner.sources.datadog.delaySeconds` | `60` | A monitor that recovers within the minute is skipped; one that stays triggered for a few minutes is investigated. Increase the delay to skip longer alerts too |
+| `runner.sources.datadog.delaySeconds` | `60` | Wait before investigating; alerts that recover during the wait are skipped |
 | `runner.sources.datadog.filters.severities` | `[critical, warning]` | Datadog `error` alerts are `critical`, `warning` alerts are `warning`. Empty means all. |
-| `runner.sources.datadog.serviceLabels` | `[service, task_family, kube_deployment, kube_stateful_set, kube_daemon_set, kube_service]` | Uses the first non-empty tag to name the service: the unified `service` tag, then the ECS task family, then the Kubernetes workload tags. Alerts without a service are still investigated. |
+| `runner.sources.datadog.serviceLabels` | `[service, task_family, kube_deployment, kube_stateful_set, kube_daemon_set, kube_service]` | Ordered tags used to identify the service. A missing service name does not prevent investigation. |
 
 This source has no namespace filter. The notification rule's scope below controls which alerts arrive, using all tags on the notification.
 
 ## 3. Configure Datadog
-
-See the provider’s [3.83.0 release notes](https://github.com/DataDog/terraform-provider-datadog/releases/tag/v3.83.0) for notification-rule scope support.
 
 Check that resources named `tokonoma` below do not already exist in your Terraform project or Datadog organization. Retain managed resources instead of declaring duplicates.
 
@@ -154,7 +142,7 @@ resource "datadog_monitor_notification_rule" "tokonoma" {
 }
 ```
 
-Replace `REPLACE_WITH_MCP_HOSTNAME` with your MCP hostname. Every payload value is quoted, so this depends on Datadog's substitution and escaping. Verify a real delivery with your monitor text before using it broadly; `schema` identifies the payload format.
+Replace `REPLACE_WITH_MCP_HOSTNAME` with your MCP hostname. Verify a real delivery with your monitor text before using it broadly; Datadog must substitute and escape every payload value correctly.
 
 Save the following as `REPLACE_WITH_SECRET_DIRECTORY/tokonoma-datadog.tfvars`. Replace its value with the exact contents of `datadog-webhook-token.txt`. Keep the file out of source control:
 
@@ -182,7 +170,7 @@ Expected result: `Apply complete!`. Terraform state and saved plans contain the 
 
 ### Leave out recoveries
 
-The default rule sends every transition. Recovery and no-data notifications are not investigated, but each produces a Slack announcement and a *"resolved notification, nothing to investigate"* reply.
+The default rule sends every transition. Recovery and no-data notifications are not investigated. With Slack delivery enabled, they produce an announcement and a *"resolved notification, nothing to investigate"* reply.
 
 To send only alert and warning transitions, use conditional recipients without a fallback. This removes recovery posts, but also prevents recoveries from cancelling delayed or queued investigations as `resolved`. Such alerts can then be investigated after recovery.
 
@@ -212,7 +200,7 @@ resource "datadog_monitor_notification_rule" "tokonoma" {
 
 The rule matches the notification's tagset: the monitor's tags plus the firing group's tags.
 
-The recommended approach is to append `tokonoma:investigate` to each selected monitor's tags. This satisfies the monitor-update requirement below. Preserve all other tags, queries, thresholds, and destinations. This fragment shows only the tag change:
+Append `tokonoma:investigate` to each selected monitor's tags after saving the notification rule. Preserve all other tags, queries, thresholds, and destinations:
 
 ```hcl
 resource "datadog_monitor" "payments_errors" {
@@ -234,20 +222,16 @@ For ECS and Kubernetes together, scope on shared tags such as `env:`, `team:`, a
 ### Caveats
 
 - For existing monitors, save the notification rule before creating or updating the monitors it should match. Adding the opt-in tag is one way to make that update. Validate a real transition before relying on the rule.
-- Terraform state contains the token in plain text as the custom variable's value. Treat the state as you would the Secret.
 - A new group in a multi-alert monitor notifies after the monitor's
   `new_group_delay` (60 s by default), on top of Datadog's own delivery latency of about a minute.
-- Datadog retries a 5xx or a timeout; it never retries a 4xx, so those deliveries are lost.
-  The runner answers 400 only when the body is not a JSON object or lacks `monitor_id`,
-  `cycle_key` or `transition`, and takes a default for anything else. The template supplies
-  those keys. A test notification with empty values is rejected with 400; use a controlled real monitor transition if that occurs.
+- Datadog retries a 5xx or timeout, but not a 4xx. A test notification with an empty `monitor_id`, `cycle_key`, or `transition` is rejected with 400; use a controlled real monitor transition if that occurs.
 - Use each group variable in a multi-alert monitor’s name to avoid Datadog appending a long group description. The runner identifies the alert by monitor and group, not its display title.
 
 The rule's `recipients` entry is `webhook-REPLACE_WITH_WEBHOOK_NAME`, unlike the `@webhook-REPLACE_WITH_WEBHOOK_NAME` mention in a monitor message. The supplied example uses `tokonoma` as that name.
 
 ## 4. Verify
 
-On the administration workstation, keep terminal 1 running:
+These optional checks run after installation. On the administration workstation, keep terminal 1 running:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-runner 8080:8080
@@ -259,12 +243,12 @@ Expected output includes `Forwarding from 127.0.0.1:8080`. In terminal 2 on the 
 curl --fail --show-error --silent http://localhost:8080/metrics | grep runner_
 ```
 
-Use one operator-approved test monitor that matches the notification rule. It must be allowed to make model calls and post to the investigations channel. Keep production monitor thresholds and destinations intact.
+Use one operator-approved test monitor that matches the notification rule. It must be allowed to make model calls and post to any configured destination. Keep production monitor thresholds and destinations intact.
 
 1. In Datadog, open the test monitor and use **Test Notifications**. Select its alert transition and group, then **Run Test**. Datadog documents this [monitor test facility](https://docs.datadoghq.com/monitors/notify/#test-notifications).
 2. Repeat the metrics command. `runner_deliveries_total{source="datadog",outcome="accepted"}` should increase. A simulated notification with an empty monitor ID, cycle key or transition is rejected as `malformed`; if so, use a controlled real transition on the approved test monitor.
 3. Wait for the configured `delaySeconds` and any queue wait. Check `runner_run_total` for completion. A skipped alert appears in `runner_intake_skipped_total` with its reason.
-4. Find the test alert's announcement and result thread in the configured Slack investigations channel. Confirm the summary and linked memory record correspond to the test. Accepted delivery alone does not prove completion.
+4. With Slack configured, find the test alert's announcement and result thread. Confirm the summary and linked memory record correspond to the test. Without Slack, find the saved investigation through your connected coding agent as described in [runner verification](alert-investigations.md#send-one-controlled-alert-and-verify-its-result). Accepted delivery alone does not prove completion.
 5. Return the test monitor to its normal state and verify the recovery path you selected. Stop the port-forward with Ctrl-C.
 
 `unauthorized`, `too_large`, `malformed` and `intake_error` count rejected deliveries. The runner logs rejected deliveries only. Use metrics to check accepted deliveries. `@Tokonoma setup` also shows the last Datadog delivery and its rejection reason, if any.
@@ -309,9 +293,9 @@ The runner answers each rejected delivery with a status code and counts it in
 | Symptom | Cause |
 |---|---|
 | `401`, `outcome="unauthorized"` | The webhook's `Authorization` header does not match the runner's token. Check the custom variable's value against the Secret, and that the header is `Bearer $TOKONOMA_TOKEN`. |
-| `404`, nothing counted | Nothing reached the runner's Datadog route. The image may predate 0.64.0; the URL may not match the `Exact` path (for example, a trailing slash); or runner ingress is disabled or `webhookPaths` omits `/webhooks/datadog`, so the MCP answered instead. |
+| `404`, nothing counted | Confirm that the image supports Datadog, runner ingress is enabled, and `webhookPaths` includes `/webhooks/datadog`. The URL must match the exact path without a trailing slash. |
 | `502` or `503` | The Ingress reached the runner Service and found no ready pod: the runner is starting, is in `CreateContainerConfigError` because a named Secret does not exist, or is in CrashLoopBackOff because it cannot reach Postgres. `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods -l app.kubernetes.io/component=runner` says which. |
-| `413`, `outcome="too_large"` | The body is over 64 KiB. Observed deliveries are about 3.5 KB; a monitor message long enough to hit this needs shortening. Datadog does not retry it. |
+| `413`, `outcome="too_large"` | The body is over 64 KiB. Shorten the monitor message. Datadog does not retry it. |
 | `400`, `outcome="malformed"` | The payload differs from the template above, often Datadog's default payload, which lacks `cycle_key`. Not retried; fix the template and the next transition delivers. |
 | Accepted, no investigation | Expected within `delaySeconds`, for a monitor that recovers inside it, and for up to `maxWaitSeconds` more while every slot is busy. Otherwise `runner_intake_skipped_total` names the reason: severity filter, dedup, prior art, a cap, a recovery that arrived while the alert was still waiting, or an alert found too old to run after a restart. |
 | Ingress rejected on upgrade | Check the Kubernetes or ingress-controller error and use valid [Kubernetes Ingress paths](https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types). A nonempty runner selection also needs MCP Ingress enabled. |

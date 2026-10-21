@@ -13,7 +13,7 @@ Run the commands from the existing installation's working directory on an author
 
 ## Before changing configuration
 
-Configuration guides use `--version REPLACE_WITH_INSTALLED_CHART_VERSION` to keep your existing chart while changing settings. Read the latest deployed revision below and replace the placeholder with its chart version, without the `tokonoma-` prefix. Keep existing application image overrides and use settings supported by that chart. If a feature requires a newer release, plan an upgrade first.
+To change settings without upgrading the chart, use `--version REPLACE_WITH_INSTALLED_CHART_VERSION`. Find the latest deployed revision below and use its chart version without the `tokonoma-` prefix. Keep application image overrides. Upgrade first if the installed chart does not support the new settings.
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT history tokonoma -n tokonoma
@@ -28,11 +28,11 @@ helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.
   --wait --timeout 15m
 ```
 
-This preserves previously supplied credentials. Include any changed credential inputs and keep existing Secret references. Check the affected integration using its guide after Helm reports `deployed`. To update the chart too, follow the upgrade steps below.
+This preserves previously supplied credentials. Include changed credential inputs and keep existing Secret references. After Helm reports `deployed`, use the [installation health checks](install.md#4-verify). Integration guides provide optional functional checks.
 
 The chart's application image default is `latest`, with image pull policy `Always`. A restarted pod can therefore pull a newer application build even when the chart version stays the same. Configuration changes that restart workloads can have this effect too. The unattended MCP and runner inherit the primary MCP image unless overridden.
 
-Fixed versions are optional. If your rollout process needs reproducible builds, choose and test a chart version with `--version` and set `mcp.image.tag` to the intended application release in your saved values. Check separate unattended MCP or runner image overrides too. These guides do not require particular versions.
+For reproducible builds, choose and test a chart version with `--version` and set `mcp.image.tag` to the intended application release. Check separate unattended MCP or runner image overrides too. These guides do not require fixed versions.
 
 ## Before upgrading
 
@@ -81,7 +81,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deploymen
 
 Use the Deployment names in your release. Restart only workloads whose rolling images you intend to update. During runner rollout, investigations pause.
 
-Check pod readiness, the `/health` response, a licensed memory read, and the integrations you enabled. Restart the MCP deployments after a license change; see [credentials](credentials.md). A successful Helm wait does not verify Slack permissions, model-provider access, or external alert delivery.
+Confirm readiness and `/health` with the [installation checks](install.md#4-verify). Restart the MCP deployments after a license change; see [credentials](credentials.md). Optional integration checks can then verify model requests, Slack permissions, and alert delivery; Helm's wait does not test these.
 
 Helm rollback restores chart resources and values, not database state, deleted objects, or revoked credentials. Review application and database compatibility before rolling back; use your backups when a state migration cannot be reversed.
 
@@ -99,7 +99,7 @@ The adapter moved to the upstream `grafana-mcp` subchart. Old keys are not autom
 
 `grafanaMcp.auth.token` remains the direct caller-token input. Keep the Viewer credential separate from the internal caller credential. Current adapter Deployment, Service, and inline Viewer Secret names default to `toko-grafana-mcp-server`; the caller Secret defaults to `toko-grafana-mcp-auth`. Review any name, port, allowed-host, and external Secret overrides together.
 
-Preserve or rotate the credentials during migration, and verify the new rendered Secret references before applying. Remove obsolete keys from your complete values file and use the reset workflow above. After the upgrade, verify the adapter and runner, restart consumers as described in [credential rotation](alert-investigations.md#rotate-credentials), and check that an investigation can query Grafana. This migration has been checked by rendering; test it against your running configuration before rollout.
+Preserve or rotate credentials and verify the rendered Secret references before applying. Remove obsolete keys from the complete values file and use the reset workflow above. After upgrading, restart consumers as described in [credential rotation](alert-investigations.md#rotate-credentials) and check that an investigation can query Grafana.
 
 ## Webhook paths: 0.34.x to 0.35.0 or later
 

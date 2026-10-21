@@ -12,7 +12,7 @@ The default `toko-mcp` Service is `ClusterIP`; the chart creates no public Ingre
 | Login provider and its settings | [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md) | Before opening the team route |
 | Client or webhook sender location | The team operating that client or sender | Before choosing private or public reachability |
 
-Run the linked cluster commands from your deployment working directory on the computer with cluster access. Test connections from a user's device or the actual sender. Agents must ask for unresolved access choices and secret file paths, never secret contents.
+Run cluster commands from your working directory on a workstation with cluster access. Test connections from a user's device or the actual sender. Follow [input conventions](placeholder-examples.md).
 
 ## Local access
 
@@ -25,11 +25,11 @@ Use the port-forward from [installation](install.md). It binds to localhost by d
 3. Deploy the authentication settings with the private route. The hostname must be reachable by the MCP client and the user's browser.
 4. From a user's device, request `https://REPLACE_WITH_MCP_HOSTNAME/mcp` without credentials and expect `401`. Complete login through a [coding agent](coding-agents.md) and confirm it can list Tokonoma tools.
 
-The chart does not install Tailscale, a VPN, PrivateLink, or a NetworkPolicy. Your platform team manages that connectivity, DNS, certificates, and network policy. Private routing alone is not user authentication.
+Your platform team manages private connectivity, DNS, certificates, and network policy. The chart does not install Tailscale, a VPN, PrivateLink, or a NetworkPolicy. Keep user authentication enabled on shared routes.
 
 `mcp.auth.enabled: false` is appropriate only when the reachable clients are trusted and network access is deliberately restricted. With authentication disabled, anyone who reaches the endpoint can use its exposed features.
 
-The [Ingress guide](public-mcp-ingress.md) explains chart routing. Pick an internal controller or internal load-balancer configuration for private access; the guide's public controller examples are not private defaults. Restrict access to `/mcp`, login and callback paths, consistently. The read-only web UI accepts direct localhost connections only in this release; use a local port-forward for it and do not put it behind this Ingress.
+Use the [Ingress guide](public-mcp-ingress.md) with an internal controller or load balancer; its public examples need adapting for private access. Apply access restrictions consistently to `/mcp`, login, and callback paths. Keep the web UI on a local port-forward; it rejects proxied requests.
 
 ## Slack and webhooks
 

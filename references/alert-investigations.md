@@ -1,14 +1,12 @@
 # Automatic investigations
 
-Alertmanager sends firing alerts to `toko-runner`. After a delay and duplicate check, the runner investigates through a dedicated Tokonoma MCP instance, saves its findings, and posts a Slack summary.
+`toko-runner` investigates eligible alerts through a dedicated Tokonoma MCP instance and saves its findings. With Slack configured, it posts an announcement and a result thread in the investigations channel.
 
-The installation example enables automatic investigations with `runner.enabled: true`. [Agentic monitoring](agentic-monitoring.md) can also start investigations from its findings. This guide configures external alert delivery and the shared investigation tools.
+The [installation example](../examples/values.yaml) enables the required runner with `runner.enabled: true`. [Agentic monitoring](agentic-monitoring.md) can also start investigations from its findings. This guide configures external alert delivery and investigation tools.
 
-For Slack results, enable the Slack sections in your saved [values file](../examples/values.yaml) and invite the app to the alert and investigations channels. Each alert gets an announcement, followed by its result in a thread.
+Investigations send alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Configured Slack destinations receive summaries and links. Review source permissions before enabling unattended work.
 
-The runner is required for a complete Tokonoma installation. The chart defaults `runner.enabled` to `false`; this guide sets it to `true` with the required credentials and dedicated MCP instance. Investigations send alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Summaries and links go to Slack. Review source permissions before enabling unattended work.
-
-For Datadog-only alerts, create the [Datadog token Secret](datadog-alerts.md) and configure its reference in `values.yaml`. Omit the Alertmanager token input. Both sources can run together. The chart requires at least one source token; a missing referenced Secret leaves the pod in `CreateContainerConfigError`.
+Use Alertmanager, [Datadog](datadog-alerts.md), or both. At least one source token is required. Datadog-only installations omit the Alertmanager token input.
 
 ## What gets deployed
 
@@ -17,9 +15,8 @@ For Datadog-only alerts, create the [Datadog token Secret](datadog-alerts.md) an
 | `toko-runner` | Receives webhooks, applies the guardrails, runs the agent, posts to Slack |
 | `toko-mcp-unattended` | A second MCP instance with the same image and database as `toko-mcp` |
 | `toko-grafana-mcp-server` | Optional private OSS Grafana MCP subchart, enabled by `grafanaMcp.enabled`, for read-only telemetry queries against your existing Grafana |
-| `runner_runs` | A table the runner creates in your Postgres at startup, holding one row per attempt |
 
-The unattended instance separates alert traffic from interactive requests. It shares your PostgreSQL, holds no Slack credentials, and accepts no external traffic. The runner stores duplicate checks in PostgreSQL so they survive restarts. It refuses to start if the database is unreachable.
+The unattended instance separates investigations from interactive requests. It shares PostgreSQL, holds no Slack credentials, and accepts no external traffic. The runner cannot start without database access.
 
 Bundled PostgreSQL needs no additional setup. For external PostgreSQL (`postgres.enabled=false` with `postgres.host`), the `postgres.auth.username` role needs schema `CREATE`, read/write access, and ownership or equivalent migration rights. The runner updates its tables and indexes at startup; missing permissions cause CrashLoopBackOff.
 
@@ -58,7 +55,7 @@ This writes without printing the token. Configure the same value on the sender.
 
 Helm generates the bundled PostgreSQL password and Grafana MCP caller token during installation and reuses them on upgrades. Their Secrets survive uninstall; remove them only when intentionally resetting that installation. Follow [offline rendering](credentials.md#offline-rendering) if your deployment tool cannot look up existing Secrets.
 
-The chart includes Grafana MCP support; no separate Grafana MCP release or external MCP OAuth setup is needed. If `mcp.auth` is enabled, configure the runner's `runner.tokoMcp.oauthClientSecretRef` below.
+If `mcp.auth` is enabled, configure the runner's `runner.tokoMcp.oauthClientSecretRef` below.
 
 ## Prepare runner credentials when MCP authentication is enabled
 
@@ -93,7 +90,7 @@ runner:
 
 To query an existing Grafana, uncomment `grafanaMcp` in your saved [values file](../examples/values.yaml). Replace the Grafana URL and choose a protected Viewer token file or existing Secret reference. The private adapter requires Kubernetes 1.25+ and connects to the runner automatically.
 
-Leave Grafana commented if you do not use it. Configure your actual [investigation tools](#adding-your-own-mcp-servers), including their endpoints, credentials, and allowed tools. Alert webhooks alone do not provide query access.
+If you do not use Grafana, configure another [telemetry MCP server](#adding-your-own-mcp-servers). Agentic monitoring needs telemetry query access; alert webhooks and code access alone are insufficient.
 
 ### Apply the configuration
 
@@ -154,11 +151,9 @@ receivers:
   - name: toko-runner
     webhook_configs:
       - url: http://toko-runner.tokonoma.svc:8080/webhooks/alertmanager
-        # authorization nests under http_config. At the top level Alertmanager
-        # rejects the config: `field authorization not found in type config.plain`.
         http_config:
           authorization:
-            # The file holds the raw token string and nothing else.
+            # Mounted file containing only the raw source token.
             credentials_file: /etc/alertmanager/runner/token
 ```
 
@@ -186,8 +181,6 @@ spec:
     - name: toko-runner
       webhookConfigs:
         - url: http://toko-runner.tokonoma.svc:8080/webhooks/alertmanager
-          # httpConfig, matching the WebhookConfig CRD schema: authorization is a
-          # field of HTTPConfig, not of the webhook config itself.
           httpConfig:
             authorization:
               credentials:
@@ -257,23 +250,19 @@ HTTPS or establish reachability. If using a separate ingress/relay, leave
 
 ## Guardrails
 
-The runner filters alerts, delays them, and checks for duplicates before making model calls. Adjust the default limits for your alert volume.
+Adjust these defaults for your alert volume and model budget. The first two controls belong under `runner.sources.alertmanager`; Datadog has its own [source settings](datadog-alerts.md#2-configure-the-runner). The remaining controls belong under `runner.guardrails` and are shared.
 
 | Control | Default | What it bounds |
 |---|---|---|
 | `filters.severities` | `[critical, warning]` | Which alerts are eligible at all |
-| `delaySeconds` | `60` | An alert that resolves within the window is skipped; one that lasts a few minutes is investigated. A longer delay skips longer alerts too, but postpones findings. With Alertmanager the run typically starts on a group's first delivery, before members that join at the next `group_interval` |
+| `delaySeconds` | `60` | Wait before investigating; alerts that resolve during the wait are skipped |
 | `dedupWindowMinutes` | `60` | Cooldown after a run starts; `0` disables this check |
-| `priorArtWindowHours` | `24` | A repeat of an alert already investigated is skipped; `0` disables this check, including repeats of the same firing episode, with MCP 0.55.0 or later |
-| `maxConcurrentRuns` | `5` | Limits how many investigations can run at once. Alerts may hold one slot fewer than this (all of them at `1`), so a `@Tokonoma investigate` request still finds a slot during a wave |
-| `maxWaitSeconds` | `1800` | How long an alert whose delay is up waits for a slot, in arrival order. One still waiting after this is skipped as `cap_concurrent`; an alert that resolves while waiting is skipped as `resolved` |
-| `maxRunsPerDay` / `maxRunsPerDayCritical` | `200` / `200` | Bounds sustained spend. The two counters are independent, so the daily total is their sum. |
+| `priorArtWindowHours` | `24` | Skip recently investigated alerts; `0` also permits repeats of the same firing episode |
+| `maxConcurrentRuns` | `5` | Maximum simultaneous investigations; alerts may use one fewer slot when this exceeds `1` |
+| `maxWaitSeconds` | `1800` | Maximum wait for capacity after the delay; timed-out alerts are skipped |
+| `maxRunsPerDay` / `maxRunsPerDayCritical` | `200` / `200` | Separate daily limits whose combined maximum is their sum |
 
-PostgreSQL retains accepted alerts across restarts. Delayed and waiting alerts resume; interrupted runs retry once, then become `retry_exhausted` after a second interruption. Alerts left unattended longer than `priorArtWindowHours` become `stale`.
-
-Until startup loads the queue, deliveries return `500` and increment `runner_deliveries_total{outcome="intake_error"}`. Alertmanager retries them. Queue reads retry indefinitely, starting every 5 seconds and doubling up to 1 minute.
-
-Tune limits using the cost and duration recorded in `runner.agent_run` spans and the counters at `/metrics`.
+Accepted alerts survive runner restarts. Check skipped or failed outcomes in the runner's metrics before resending an alert. During startup, deliveries can return `500`; Alertmanager retries them.
 
 ## Check it works
 
@@ -349,13 +338,15 @@ For source-token rotation, save old and new tokens comma-separated, then upgrade
 
 ## Adding your own MCP servers
 
-For a code integration, uncomment `runner.mcpServers` in [values.yaml](../examples/values.yaml). Obtain the endpoint and exact read-only tool names from the provider. Create the referenced bearer-credential Secret before installation or upgrade. To add another server, append an entry to the existing list; do not replace other connections.
+Uncomment `runner.mcpServers` in [values.yaml](../examples/values.yaml). Use its `kind: telemetry` entry for monitoring queries and its `kind: source-control` entry for code access. Obtain each endpoint, authentication requirements, and exact read-only tool names from the provider. Alert webhook tokens do not grant telemetry query access.
+
+Create referenced credential Secrets before installation or upgrade. Keep all servers in the same list; append entries without replacing existing connections.
 
 Only tools listed in `expectedTools` are permitted. Limit the credential to the access the runner needs; the runner gains all access it grants. Telemetry providers with a different authentication scheme need their provider-specific connection settings.
 
 ## Stop the runner for maintenance
 
-This stops investigations and removes the runner, its dedicated MCP instance, and the Grafana adapter. Use it only for a planned service interruption. Pause only Tokonoma alert deliveries, preserving existing paging routes. Record the component settings, then set these three flags to `false` in `values.yaml`. From the customer working directory, retain every credential input when applying the change:
+This stops investigations and agentic monitoring, and removes the runner, its dedicated MCP instance, and the Grafana adapter. Use it only for a planned service interruption. Pause only Tokonoma alert deliveries, preserving paging routes. Record the component settings, then set these three flags to `false` in `values.yaml`. Retain every credential input when applying the change:
 
 ```sh
 helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \

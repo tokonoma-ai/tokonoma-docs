@@ -1,6 +1,6 @@
 # Set up the Tokonoma Slack app
 
-`@Tokonoma` runs inside your MCP server. It uses Slack Socket Mode, so it can run in a private cluster without a public Slack callback URL or ingress. This is Tokonoma's own app. The separate `@Claude` integration uses Claude's connectors and has different network requirements.
+`@Tokonoma` runs inside your MCP server. Slack Socket Mode lets it connect from a private cluster without a public callback URL or ingress. The separate [`@Claude` integration](claude-in-slack.md) has different network requirements.
 
 Create the Slack app and prepare its tokens before [installation](install.md#3-install). For an existing deployment, apply the settings with the [upgrade guide](upgrading.md#before-changing-configuration).
 
@@ -15,7 +15,7 @@ Run shell commands on the administration workstation used for [installation](ins
 | `slack-app-token.txt` | Socket Mode app token from Slack, saved in the protected directory | This integration |
 | `slack-bot-token.txt` | Bot User OAuth Token from Slack, saved in the protected directory | This integration |
 
-Keep all settings in your working `values.yaml`. Preserve existing settings and credential inputs when upgrading. Slack questions and timelines use the required `anthropic-api-key.txt`; see [memory analysis](memory-llm.md).
+Keep settings in your working `values.yaml` and preserve credentials when upgrading. Slack questions and timelines use the required [memory analysis](memory-llm.md) credential.
 
 ## Create the app
 
@@ -26,21 +26,21 @@ You need permission to create and install a Slack app. Tokonoma does not need to
 3. Under **Basic Information > App-Level Tokens**, generate a token with the `connections:write` scope. Save the `xapp-` token in your protected token directory as `slack-app-token.txt`.
 4. Under **Install App**, install the app to your workspace. Save the **Bot User OAuth Token** (`xoxb-`) as `slack-bot-token.txt`.
 
-The manifest enables Socket Mode, mentions, channel message events, and interactive buttons. You can optionally upload your preferred icon under **Basic Information > Display Information**. For Slack's manifest workflow, see [configuring apps with manifests](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/).
+The manifest enables Socket Mode, mentions, channel message events, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
 ## Save the connection settings
 
-Use the protected directory from [credentials](credentials.md). Token files must contain only the token, with no final newline:
+Token files must contain only the token, with no final newline:
 
 ```sh
 chmod 600 "REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" "REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt"
 ```
 
-In `values.yaml`, uncomment the Slack settings from the [example](../examples/values.yaml) and set `runner.destinations.slackApp.enabled: true` for investigation results. Include both token files in the complete install or upgrade command: `--set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt"` and `--set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt"`. For existing Secrets, use `mcp.slack.tokenSecret` in `values.yaml` instead of these direct inputs.
+In `values.yaml`, uncomment the Slack settings from the [example](../examples/values.yaml), including `runner.destinations.slackApp.enabled: true` for investigation results. Supply both token files through the complete [installation command](install.md#3-install). For existing Secrets, use `mcp.slack.tokenSecret` instead of the two Slack `--set-file` inputs.
 
 In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default results channel; set `mcp.slack.investigationsChannel` only for a different channel name.
 
-After preparing all selected integrations, [install Tokonoma](install.md#3-install) once. For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration). Keep the license, required analysis key, source token, and other selected credentials in that command.
+For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration), including any changed token files and preserving other credentials.
 
 ## Verify the connection
 
@@ -72,11 +72,11 @@ Expected result: the Deployment successfully rolls out. Repeat the Slack reply c
 
 ## Choose what to enable
 
-Without an Anthropic key, exact commands such as `help`, `start REPLACE_WITH_SESSION_TITLE`, `state`, `stop`, and `resume` work. Agents can check into a session. Reading `full record for REPLACE_WITH_RECORD_UUID` needs a valid Tokonoma license. Answering questions, judging relevance, and creating session timelines require the Anthropic key and send relevant content to Anthropic.
+Questions, relevance checks, and session timelines use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, exact commands such as `help`, `state`, `stop`, and `resume` remain available. Reading `full record for REPLACE_WITH_RECORD_UUID` also needs a valid Tokonoma license.
 
 Automatic memory recall on alerts is off by default. To make the app reply to alerts from other apps, set `mcp.slack.autoRecallEnabled: true` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration).
 
-Automatic recall also requires the Slack features that call a model. This switch does not configure the required runner. Set `runner.destinations.slackApp.enabled: true` in the [runner setup](alert-investigations.md) to deliver investigation results through this app. Avoid also configuring a legacy Slack webhook destination unless you want both deliveries.
+Automatic recall is separate from runner investigations. Investigation results use `runner.destinations.slackApp.enabled`. Avoid also configuring a legacy Slack webhook destination unless you want both deliveries.
 
 ## Channel access and shared records
 

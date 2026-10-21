@@ -1,6 +1,6 @@
 # Credentials and license
 
-Prepare the license, Anthropic analysis credential, and selected runner credentials before [installation](install.md#2-prepare-your-files). Add credentials for other features as needed.
+Prepare these credentials before [installation](install.md#2-prepare-your-files). Use protected files or existing Kubernetes Secrets.
 
 ## What you need
 
@@ -12,7 +12,7 @@ Prepare the license, Anthropic analysis credential, and selected runner credenti
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
 | Alertmanager bearer token | Generate a random token and configure the same value in Alertmanager | `credentials.alertmanagerToken` | Authenticating Alertmanager deliveries to the runner |
 
-The MCP server and runner share the Anthropic key unless you configure separate Secret references. Adding it enables memory analysis by default. Keep analysis enabled for normal operation. See [analysis maintenance](memory-llm.md#temporarily-stop-analysis) to stop it temporarily while retaining the runner's key. See [data flows](data-flows.md).
+The MCP server and runner share the Anthropic key unless you configure separate Secret references. Keep analysis enabled for normal operation. See [analysis maintenance](memory-llm.md#temporarily-stop-analysis) for temporary controls and [data flows](data-flows.md) for what reaches the provider.
 
 A valid Tokonoma license is required for full-body recalls, but not search, saving, or skill discovery. An API key cannot replace it and does not enable the runner.
 
@@ -44,7 +44,7 @@ Create the files required by your runner configuration and other selected featur
 
 Apply `chmod 600` to each created file. Agents ask you to save issued credentials and supply their paths, never their contents in chat.
 
-Before the first [install command](install.md#3-install), prepare the license, Anthropic analysis key, at least one alert-source token, and credentials for your selected integrations. Slack delivery needs both Slack tokens. Keep these inputs with the saved `values.yaml` for upgrades.
+Keep the protected files, Secret references, and saved configuration for future upgrades.
 
 `--set-file` keeps tokens out of commands but stores them in Helm release records and Kubernetes Secrets. Restrict access to both. Never commit token files or log rendered Secrets.
 
@@ -52,9 +52,7 @@ Before the first [install command](install.md#3-install), prepare the license, A
 
 Existing Secrets must be in the release namespace. Replace example names and keys with those supplied by the secret owner. Uncomment the matching Secret references in [values.yaml](../examples/values.yaml), preserving other settings. For license, analysis, Slack, and runner credentials, references override direct inputs. The example notes the separate Grafana precedence rule.
 
-These references do not create Secrets. Prepare them before installing, using the namespace check below. Use credentials for your selected provider and alert source. `mcp.memoryLlm.apiKeySecret` does not configure the runner; supply both references when sharing that key.
-
-Integration guides cover Datadog tokens and API keys, Grafana credentials, OAuth clients, and storage identities. These do not replace the license or Slack tokens.
+References do not create Secrets. Prepare them before installing, using the namespace check below. `mcp.memoryLlm.apiKeySecret` does not configure the runner; supply both references when sharing that key.
 
 ## Prepare the namespace for Secrets
 
@@ -70,7 +68,7 @@ Reuse it if it exists. Only if the response is `NotFound`, create it:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT create namespace tokonoma
 ```
 
-Use the verified cluster context and your assigned namespace if it differs. Permission errors need the cluster owner's help. Create the selected Secrets through their setup guide or your secret-management workflow; keep existing Secrets and their owners intact.
+Use your assigned namespace if it differs. Permission errors need the cluster owner's help. Create Secrets through the selected integration guide or your secret-management workflow; preserve existing Secrets and their owners.
 
 ## Offline rendering
 
@@ -80,7 +78,7 @@ For external references, use `postgres.auth.existingSecret` with `postgres.auth.
 
 ## Renew and rotate
 
-Use the verified cluster context. For direct `credentials.*` inputs, update the protected file and rerun the complete Helm upgrade. The chart automatically restarts deployments using changed Anthropic, Slack, and Alertmanager values.
+For direct `credentials.*` inputs, update the protected file and [apply the configuration change](upgrading.md#before-changing-configuration). The chart automatically restarts deployments using changed Anthropic, Slack, and Alertmanager values.
 
 After changing `mcp.license`, restart MCP and its unattended deployment. Restart deployments after changing their externally managed Secrets. With default component names:
 

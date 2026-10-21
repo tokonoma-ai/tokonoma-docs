@@ -6,9 +6,9 @@ Google SAML supplies memory-sharing groups at login. Tokonoma does not query or 
 
 ## Prerequisites
 
-Use Helm 3.14+ and `jq`. Run commands from your deployment directory on a computer with cluster access. Configure Google in Google Admin Console. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
+Use Helm 3.14+ and `jq` from your working directory on a workstation with cluster access. Follow [input conventions](placeholder-examples.md) and keep credentials in the [protected directory](credentials.md#supply-tokens-from-files).
 
-For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing release, use its chart version for `REPLACE_WITH_INSTALLED_CHART_VERSION`; see [configuration checks](upgrading.md#before-changing-configuration).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -137,7 +137,7 @@ sha256sum "REPLACE_WITH_SECRET_DIRECTORY/idp-signing-certificates.json"
 
 On macOS, use `shasum -a 256`. Hash the JSON file, not the certificate fingerprint or raw PEM. Put only the Secret name, key, and checksum in Helm values.
 
-The required runner needs a machine credential alongside human SAML login. Configure or preserve the Cognito or legacy Google credential provider from [OAuth](oauth.md), then prepare the [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled).
+Configure or preserve a Cognito or legacy Google [credential provider](oauth.md) alongside SAML and prepare the [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). The required runner needs machine access.
 
 Merge these SAML settings into `values.yaml`, preserving the credential provider, runner configuration, and other `mcp` settings. Copy the printed checksum into `checksum`:
 
@@ -176,7 +176,7 @@ mcp:
 
 If using `mcp.auth.baseUrl` instead of `domain`, build ACS and metadata URLs from that HTTPS origin.
 
-For a first installation, finish preparing `values.yaml` and credentials, then use [install Tokonoma](install.md#3-install). Return here to verify metadata and login.
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials, then verify metadata and login below.
 
 For an existing release, record the current revision:
 
@@ -185,7 +185,7 @@ helm --kube-context "REPLACE_WITH_KUBE_CONTEXT" history tokonoma \
   --namespace tokonoma
 ```
 
-Apply the updated `values.yaml` to the existing release. This command preserves its stored analysis, runner, and integration credentials; include any changed credential inputs. For a separate manifest review, follow [offline rendering](credentials.md#offline-rendering) with every selected credential input from the [installation command](install.md#3-install). Keep rendered Secrets protected and uncommitted.
+Apply the updated `values.yaml`. This preserves stored credentials; include any changed credential inputs. For an optional manifest review, follow [offline rendering](credentials.md#offline-rendering) with all selected credentials. Keep rendered Secrets protected and uncommitted.
 
 ```sh
 helm upgrade tokonoma --reset-then-reuse-values \
@@ -222,7 +222,7 @@ The metadata must contain:
 
 Connect an MCP client to `https://REPLACE_WITH_MCP_HOSTNAME/mcp/`, select **Continue with Google Workspace**, and finish login.
 
-Verify identity and access with uniquely named temporary memories:
+For an optional identity and sharing check, use uniquely named temporary memories:
 
 1. Save a memory with the default sharing. Its result must contain
    `owner_group_id: "toko:everyone"`. Record the returned `owner_user_id` and
@@ -265,7 +265,7 @@ kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma \
   | grep 'REPLACE_WITH_REQUEST_ID'
 ```
 
-Tokonoma logs the toolkit's safe failure reason without the assertion payload.
+The logs include a failure reason without the assertion payload.
 
 | Symptom | What to compare |
 | --- | --- |

@@ -1,10 +1,10 @@
-# Guide: external PostgreSQL
+# External PostgreSQL
 
 If you need an external database, choose and prepare it before the first installation. It stores MCP memory and, when enabled, the telemetry metastore. The server must be reachable from the cluster by DNS name on port `5432`.
 
 This setup has not been validated on managed services such as Amazon RDS or Cloud SQL. The chart is tested against its bundled PostgreSQL 18 with pgvector 0.8.6. Talk to Tokonoma before using an external database in production.
 
-Run `kubectl` commands from a computer with access to the intended cluster. Run the SQL in an administrative database session. Edit `values.yaml` in the customer working directory used by the [installation guide](install.md), outside this repository. Replace each `REPLACE_WITH_*` input before use. Agents must ask for unresolved choices.
+Run `kubectl` from a workstation with cluster access and SQL in an administrative database session. Edit the `values.yaml` prepared during [installation](install.md), following [input conventions](placeholder-examples.md).
 
 | Input | Source and when required |
 |---|---|
@@ -28,9 +28,9 @@ CREATE DATABASE tokonoma OWNER tokonoma;
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-Confirm that the role, database, and extension were created. The server never creates the `vector` extension itself, so it must exist before the first start. Use your approved database administration workflow to protect the password in session history.
+Confirm the role, database, and `vector` extension exist before starting Tokonoma; the server does not create the extension. Protect the password in database session history.
 
-The `tokonoma` role must own the database. At startup the MCP server creates tables in `public` and queue tables in `pgmq`; the runner also creates its own tables. The telemetry metastore creates tables when enabled. On PostgreSQL 15 and later, only the database owner can create tables in `public` by default.
+The `tokonoma` role must own the database and be able to create schemas and tables. Tokonoma creates and updates its schema at startup. On PostgreSQL 15 and later, only the database owner can create tables in `public` by default.
 
 After a PostgreSQL or pgvector upgrade, the server also tries to update the extension and rebuild indexes. If the role lacks those rights, it logs the required commands and continues starting. Run those commands as an administrative user.
 
@@ -74,7 +74,7 @@ postgres:
 
 The chart creates an `ExternalName` Service called `toko-postgres` that points to `postgres.host`. The MCP server and optional telemetry backend use it to reach the same database.
 
-Return to [install Tokonoma](install.md#3-install). The first Helm installation uses the updated `values.yaml`. You do not need to install the bundled database first.
+[Install Tokonoma](install.md#3-install) with the updated `values.yaml`; no prior bundled database installation is needed.
 
 ## 4. Verify after installation
 
@@ -90,6 +90,6 @@ Expect `successfully rolled out`. Then inspect startup logs:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=100
 ```
 
-Confirm `memory module: schema applied` appears. The pod keeps running even when the memory store cannot start, so a successful rollout alone does not prove the database works. You can also run the [memory access check](install.md#connect-and-confirm-memory-access); it is not required to finish installation.
+Look for `memory module: schema applied`. The pod can run even if the memory store fails, so rollout alone does not verify the database. The optional [memory access check](install.md#connect-and-confirm-memory-access) tests a saved record.
 
 For `password authentication failed`, check that the Secret matches the database role's password. For `memory module: ensure_schema failed`, check the `vector` extension and database ownership.

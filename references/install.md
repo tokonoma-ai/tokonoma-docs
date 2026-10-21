@@ -1,6 +1,6 @@
 # Install Tokonoma
 
-Install the published Helm chart in an existing Kubernetes cluster. Tokonoma requires its MCP service, memory analysis, and investigation runner. The example enables agentic monitoring and automatic investigations. Prepare one `values.yaml`, then install these services together with PostgreSQL and Ollama.
+Install Tokonoma in an existing Kubernetes cluster using one `values.yaml`. The example includes the required MCP service, memory analysis, and runner, with agentic monitoring and automatic investigations enabled. The chart also installs PostgreSQL and Ollama.
 
 The command below uses Anthropic, Alertmanager, and Slack. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
@@ -64,11 +64,11 @@ Copy the [commented values file](../examples/values.yaml) once. For an existing 
 cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 ```
 
-The required runner and analysis settings are already enabled, along with agentic monitoring. Read the comments, fill the selected integration sections and monitoring scope, and keep credentials in protected files or existing Secrets.
+Read the comments in `values.yaml`, fill in the monitoring scope, and uncomment your selected integrations. Keep credentials in protected files or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). Analysis always needs an Anthropic credential, even when the runner uses another model provider.
 2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source and configure [monitoring](agentic-monitoring.md) with telemetry query access and the intended cluster and namespaces. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
-3. For Slack results, [create the Slack app](slack-app.md#create-the-app), save both tokens, invite it to the results channel, and uncomment Slack delivery in `values.yaml`.
+3. For Slack results and detector approvals, [create the Slack app](slack-app.md#create-the-app), save both tokens, invite it to the results channel, and uncomment Slack delivery in `values.yaml`. Without Slack, proposals held for review remain inactive.
 4. Merge any [external database](external-postgres.md), [authentication](oauth.md), [routing](public-mcp-ingress.md), or cloud telemetry settings into the same file. Complete their prerequisites first. Configure authentication before sharing access.
 
 Keep this commented source file for future changes; `helm get values` does not retain comments. Merge snippets into the matching YAML sections without duplicating top-level keys. Preserve existing settings; lists replace rather than append. If an existing installation already uses multiple files, retain their order until you deliberately consolidate them.
@@ -115,7 +115,7 @@ After it reports `Forwarding from`, run this in **terminal B**:
 curl -fsS http://127.0.0.1:8000/health
 ```
 
-Expect `ok`. Installation is complete when Helm reports `deployed`, the required workloads are ready, persistent-volume claims are Bound, and this health check passes. See [troubleshooting](troubleshooting.md) for failures.
+Expect `ok`. Installation is complete when Helm reports `deployed`, required workloads are ready, PVCs are Bound, and this health check passes. See [troubleshooting](troubleshooting.md) for failures.
 
 Monitoring setup continues in the background. Do not wait for detector approvals, evaluation results, or a completed investigation to finish installation. Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health.
 
@@ -153,5 +153,3 @@ Report any follow-up checks you perform separately from deployment health. Mark 
 | Give the team access | [Private access](private-access.md) and [authentication](oauth.md) |
 | Change or upgrade this installation | [Upgrading](upgrading.md) |
 | Diagnose or remove it | [Troubleshooting](troubleshooting.md), [uninstall](uninstall.md) |
-
-Verify each additional feature separately.

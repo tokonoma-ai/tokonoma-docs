@@ -9,19 +9,19 @@ Follow the same [customer guides](README.md#read-the-documentation) humans use. 
 
 ## Establish the requested task
 
-Identify the requested task, authorized cluster context, release, namespace, features, and access model. Check the existing installation before making changes.
+Identify the task, authorized cluster context, release, namespace, features, and access model.
 
-The Tokonoma runner and memory analysis are required. The supplied `values.yaml` enables agentic monitoring and automatic investigations. Configure an Anthropic credential for analysis even if the runner uses another provider. Before installing, prepare analysis credentials, at least one alert source, telemetry query access, and the selected investigation tools in the same file. Confirm the monitored cluster and exact namespaces. Do not assume that empty namespace scope is safe: it includes every namespace, including system workloads.
+The runner and memory analysis are required. The supplied `values.yaml` enables agentic monitoring and automatic investigations. Prepare an Anthropic credential for analysis even if the runner uses another provider. Configure at least one alert source, telemetry query access, and selected tools in the same file. Confirm the monitored cluster and exact namespaces; an empty namespace list includes all namespaces, including system workloads.
 
-Read the customer's saved values files, including comments, in application order and check the installed release first. Inspect nonsecret integration settings and Secret references; do not print secret values. Do not infer the customer's tools from the defaults in the supplied examples. Ask only about missing settings, conflicts, or requested additions. Confirm which integrations to enable and save those choices in the customer's values files.
+Check the installed release and read saved values files, including comments, in application order. Inspect nonsecret settings and Secret references. Example defaults are not evidence of the customer's choices. Ask only about missing settings, conflicts, or additions, then save confirmed choices in the customer's values files.
 
-Group missing inputs and decisions into one question where practical. Explain human-only actions, such as obtaining a license, signing in, or approving an app, and how to check completion.
+Group missing inputs into one question where practical. Explain human-only actions, such as obtaining a license, signing in, or approving an app, and how to check completion.
 
 ## Read only the relevant guides
 
 | Task | Read |
 | --- | --- |
-| New installation | [Install](references/install.md), [credentials](references/credentials.md), [integrations](references/integrations.md), [agentic monitoring](references/agentic-monitoring.md), [runner setup](references/alert-investigations.md), [memory analysis](references/memory-llm.md), [connect an agent](references/coding-agents.md) |
+| New installation | [Install](references/install.md), [credentials](references/credentials.md), [integrations](references/integrations.md), [agentic monitoring](references/agentic-monitoring.md), then the selected integration guides |
 | Cloud provider or database preparation | Applicable [AWS](references/cloud-providers/aws.md), [Google Cloud](references/cloud-providers/google-cloud.md), or [external PostgreSQL](references/external-postgres.md) guide |
 | Monitoring, investigations, Slack, or model features | [Agentic monitoring](references/agentic-monitoring.md) or [integrations](references/integrations.md), then the selected guide; [memory model](references/memory-llm.md) when needed |
 | Shared access or login | [Private access](references/private-access.md), [OAuth](references/oauth.md), chosen [Google](references/google-saml.md) or [Okta](references/okta-saml.md) provider; [public routing](references/public-mcp-ingress.md) only when selected |
@@ -35,7 +35,7 @@ Use the guides' native commands. Do not create wrappers or shell exports. Replac
 
 Resolve documentation paths from this skill directory. Read the comments before adapting an example and keep the source YAML in the customer's working directory; `helm get values` does not retain comments. Preserve existing configuration, credentials, storage, and values-file order; never overwrite them with an example.
 
-Ask for protected credential paths or Secret names and keys, never secret contents in chat. Do not print secrets. Leave provider template variables such as Datadog notification fields intact.
+Ask for protected credential paths or Secret names and keys. Never request or print secret contents in chat. Leave provider template variables such as Datadog notification fields intact.
 
 Explain the changes and proceed within the customer's authorization. Resolve missing inputs and conflicting targets before acting. Ask before destructive changes or broader access or data sharing.
 

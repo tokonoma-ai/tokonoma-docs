@@ -4,7 +4,7 @@ The integrations you enable and where your agent runs determine where data goes.
 
 ## Installed services
 
-Tokonoma runs the MCP service, its required runner and dedicated MCP instance, PostgreSQL with pgvector, and Ollama. The runner monitors selected telemetry and automatically investigates findings and alerts. It sends relevant context to its configured model provider and queries the tools you configure. Your coding agent calls the MCP service over HTTP. Saved records, monitoring state, search chunks, and embeddings are stored in PostgreSQL. Ollama embeds record text and search queries within the deployment; search can fall back to keyword matching when embeddings are unavailable.
+Tokonoma runs the MCP service, its required runner and dedicated MCP instance, PostgreSQL, and Ollama. The runner monitors selected telemetry and automatically investigates findings and alerts using your configured tools and model provider. Your coding agent calls MCP over HTTP. PostgreSQL stores records, monitoring state, and search data. Ollama creates search embeddings locally; keyword search is available when embeddings are not.
 
 The server returns requested records and tool results to your agent. If that agent uses a hosted model, its provider receives the content the agent sends to it. This path exists independently of Tokonoma's own Anthropic API key.
 
@@ -26,11 +26,11 @@ sequenceDiagram
   end
 ```
 
-License signature verification happens locally. The released license implementation does not call a licensing service; usage is recorded in the installation's database. This does not change the data flows of optional integrations.
+License checks run locally, and usage is recorded in your database. No external licensing connection is required.
 
 ## Model and integration connections
 
-Memory analysis requires the Anthropic API. The runner needs its model provider and configured investigation tools. Other connections depend on the features you enable. The coding agent, MCP services, and runner have separate model configurations and credentials.
+The coding agent, MCP services, and runner have separate model configurations. Allow the connections required by the features you enable:
 
 | Caller or feature | Destination | Data and purpose |
 | --- | --- | --- |
@@ -44,13 +44,13 @@ Memory analysis requires the Anthropic API. The runner needs its model provider 
 | Operational telemetry | Configured Prometheus scrape targets or OpenTelemetry (OTLP) endpoint | Process metrics and traces; an external endpoint receives operational data |
 | Authentication | The identity provider you configure | Login and identity information; Tokonoma holds OAuth tokens and related state |
 
-The MCP server uses the Anthropic API for required memory analysis. The runner has its own model-provider configuration; changing it does not change the MCP server's Anthropic calls. See [analysis configuration](memory-llm.md) for setup and temporary maintenance controls.
+Changing the runner's model provider does not change MCP's Anthropic calls. See [analysis configuration](memory-llm.md) for setup and maintenance controls.
 
-Agentic monitoring is enabled in the installation example. It queries the configured telemetry sources within the selected scope and can make model calls without an incoming alert. Its findings can start automatic investigations through the runner. Review [monitoring scope and access](agentic-monitoring.md) before installing.
+Agentic monitoring is enabled in the example. It can query telemetry, make model calls, and start investigations without an incoming alert. Review [monitoring scope and access](agentic-monitoring.md) before installing.
 
 Monitoring uses the runner's model provider by default. If you configure the optional `runner.detection.judge.apiKeySecretRef`, the runner also sends monitoring context to `https://api.typesafe.ai`; allow that destination only when using this credential.
 
-The released webhook sources are Alertmanager and Datadog. CloudWatch is not a released Tokonoma adapter. An additional MCP endpoint is usable only when you configure that endpoint, its authentication, and the specific tools the runner may call; it does not imply a built-in integration.
+Alertmanager and Datadog are supported webhook sources. There is no CloudWatch adapter. Other MCP connections need an endpoint, authentication, and a list of tools the runner may call.
 
 ## Connection direction
 
@@ -80,7 +80,7 @@ The MCP URL is `http://localhost:8000/mcp`. The read-only UI is `http://localhos
 
 For access beyond this local path, configure TLS, explicit MCP authentication, an identity provider or approved client credentials, and network access appropriate to the clients. Private DNS/VPN access works only for clients that can actually reach that network. Cloud-hosted connectors, including Claude's remote connector used separately from `@Tokonoma`, cannot reach your laptop's localhost or an inaccessible private cluster.
 
-Native Slack Socket Mode needs outbound connectivity, not a public incoming Slack endpoint. A Datadog SaaS webhook, by contrast, needs a reachable runner webhook endpoint with its configured bearer token. Internal Alertmanager can use a private in-cluster endpoint. Do not expose an unauthenticated MCP service simply to make a webhook reachable.
+Keep MCP authenticated when publishing a runner webhook endpoint. Slack uses outbound Socket Mode and does not need a public endpoint.
 
 ## Record and channel visibility
 
@@ -88,6 +88,6 @@ Without MCP authentication, callers use the same local identity. For separate us
 
 The Slack app reads shared records under its own service identity. Channel membership controls which Slack channels it can use; it is not a separate per-channel memory permission system. Inviting the app to a channel can therefore make organization-wide shared records available there through its replies. Full-record replies and runner results can remain visible in Slack after a record changes in Tokonoma.
 
-Slack sessions can retain a snapshot of the discussion used for a closing timeline in the Tokonoma database. Selected event content is also queued while work is pending; completed or failed event rows clear saved message content and retain delivery metadata for 48 hours. That queue cleanup is not a retention policy for saved sessions, investigations, database backups, or Slack itself.
+Slack sessions can retain discussion snapshots in the Tokonoma database. Temporary event content is cleared after processing, but saved sessions, investigations, backups, and Slack messages have separate retention rules.
 
 Review the identities and destinations you enable, and configure your database, object-storage, Slack, and model-provider retention policies for the data they receive. See [credentials](credentials.md) and [Slack setup](slack-app.md) for the inputs controlling these paths.

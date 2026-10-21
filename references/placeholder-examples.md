@@ -2,7 +2,7 @@
 
 Replace every `REPLACE_WITH_...` marker with your value before running commands, including inside paths and URLs. Edit the text directly; do not use exports or wrappers.
 
-Use the YAML comments for configuration fields and each guide's input table for command inputs. Agents must use supplied or verified values and ask for missing decisions. Request protected file paths or Secret references; keep secret contents out of chat.
+Read YAML comments for settings and guide tables for command inputs. Agents use verified values and ask for missing decisions or credential paths, never secret contents.
 
 ## Common inputs
 
@@ -28,4 +28,4 @@ Keep installation settings in one `values.yaml` in your working directory. Start
 
 Keep Datadog notification variables such as `$ID` and `$TOKONOMA_TOKEN` intact. They are provider syntax, not shell inputs.
 
-For the complete sequence, return to [installation](install.md). For configuration fields, read the [values.yaml comments](../examples/values.yaml). Use [endpoints](endpoints.md) for service addresses.
+Follow [installation](install.md) for the full sequence and [endpoints](endpoints.md) for service addresses.

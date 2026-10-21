@@ -1,10 +1,10 @@
-# Guide: OAuth
+# OAuth
 
 Configure OAuth before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Prepare your `values.yaml` with the [installation guide](install.md#2-prepare-your-files). You can configure authentication before the first installation. Use Helm 3.14+ and a stable HTTPS hostname. Run commands from your deployment directory on a computer with cluster access. Keep credentials in the [protected secret directory](credentials.md#supply-tokens-from-files). Replace placeholders. Agents must ask for missing choices and secret paths, keeping secret contents out of chat.
+Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files). Authentication can be prepared before installation. Use Helm 3.14+, a stable HTTPS hostname, and a workstation with cluster access. Run commands from your working directory, following [input conventions](placeholder-examples.md) and [credential handling](credentials.md#supply-tokens-from-files).
 
-For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing release, use its chart version for `REPLACE_WITH_INSTALLED_CHART_VERSION`; see [configuration checks](upgrading.md#before-changing-configuration).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -31,7 +31,7 @@ For human SAML login, use [Google Workspace](google-saml.md) or [Okta](okta-saml
 
 For Cognito, create a user pool and record its ID and region. Add a Cognito-managed domain and resource server `toko-mcp` with scope `query`. Create a machine-to-machine app client with a secret, `client_credentials` flow, and `toko-mcp/query` scope.
 
-The browser form and machine grant both verify this app client. Enter its ID as **Client ID** and secret as **Client Secret**. Cognito pool-user usernames and passwords do not work; use SAML for individual human login.
+Both browser and machine login verify this app client. Enter its ID as **Client ID** and secret as **Client Secret**. Cognito pool-user usernames and passwords do not work; use SAML for individual human login.
 
 For legacy Google Identity Platform/Firebase, enable **Email/Password** sign-in and provision accounts. Tokonoma uses `signInWithPassword`: enter account email as **Client ID** and password as **Client Secret** in both browser and machine requests. Google OAuth app credentials do not work. Get that project's API key. Before creating its Secret, [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets).
 
@@ -74,7 +74,7 @@ For public access, merge the [public MCP routing settings](public-mcp-ingress.md
 
 ## 3. Deploy and verify
 
-For a first installation, finish preparing `values.yaml` and credentials, then use [install Tokonoma](install.md#3-install). Return here to verify authentication. For an existing release, apply the updated file:
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials, then verify authentication below. For an existing release, apply the updated file:
 
 ```sh
 helm upgrade tokonoma --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
@@ -105,7 +105,7 @@ Expect `401` before login.
 
 `mcp.auth.clientRegistrationMode` controls which applications can request authorization:
 
-| Mode | DCR `/register` | Declared clients | Unknown verified credential clients |
+| Mode | Dynamic registration `/register` | Declared clients | Unknown verified credential clients |
 |---|---:|---:|---:|
 | `dynamic_only` | Yes | No | No |
 | `hybrid` (default) | Yes | Yes | Registered on first successful Cognito/Google credential grant for compatibility |
@@ -117,7 +117,7 @@ Before changing modes, declare each credential client registered through `hybrid
 
 Do not change external client IDs to avoid collisions. IDs also identify credentials and memory ownership; changes require matching caller and identity provider updates and can create a new owner. Previously issued access tokens remain valid until expiry.
 
-For an interactive application, save a high-entropy secret in `REPLACE_WITH_SECRET_DIRECTORY/requester-client-secret.txt`. Create its Secret, merge these settings into `values.yaml`, and redeploy. Set exact redirects and grants, using an authentication method the client supports:
+For an interactive application, save a high-entropy secret in `REPLACE_WITH_SECRET_DIRECTORY/requester-client-secret.txt`. Create its Secret and merge these settings into `values.yaml`. Set exact redirects, grants, and a supported authentication method before redeploying:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic requester-oauth-client \
@@ -167,7 +167,7 @@ mcp:
 
 With `disabled`, the server consumes and rejects credential refresh tokens; rollback to `legacy` cannot revive them. Existing access tokens retain their expiry. Authorization-code refresh tokens still follow each client's `refresh_token` grant. Older browser password sessions may need one new login because their tokens lack the originating grant.
 
-This release supports `authorization_code`, `refresh_token`, and `client_credentials`. These settings do not enable JWT bearer or ID-JAG redemption.
+Supported grants are `authorization_code`, `refresh_token`, and `client_credentials`; JWT bearer and ID-JAG redemption are unsupported.
 
 ## Optional: direct Google Workspace or Okta SAML login
 

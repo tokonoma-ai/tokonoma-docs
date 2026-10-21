@@ -1,12 +1,12 @@
-# Guide: public MCP Ingress
+# Public MCP Ingress
 
 Keep the MCP endpoint private during initial setup. Before allowing shared or public access, prepare the identity provider and authentication values using [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Without authentication, anyone who reaches the endpoint can use its tools, including memory writes.
 
 You need Helm 3.14+, a working ingress controller, DNS control, and a valid TLS certificate. Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files). Merge authentication and ingress settings into that file before deploying.
 
-Run shell commands from your deployment working directory on the computer with cluster access. Keep `values.yaml` there. Replace placeholders with the inputs below before running commands. Agents must ask for unresolved choices and secret file paths, keeping secret contents out of chat.
+Run commands beside `values.yaml` on a workstation with cluster access. Follow [input conventions](placeholder-examples.md); keep secret contents out of chat.
 
-For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings.
+For an existing release, use its chart version for `REPLACE_WITH_INSTALLED_CHART_VERSION`; see [configuration checks](upgrading.md#before-changing-configuration).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -143,7 +143,7 @@ Point DNS at the Traefik load balancer. The named cert-manager `ClusterIssuer` m
 
 ## 2. Deploy
 
-For a first installation, finish preparing `values.yaml` and credentials, then use [install Tokonoma](install.md#3-install). Return here to verify access. For an existing release, apply the updated file:
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials, then verify access below. For an existing release, apply the updated file:
 
 ```sh
 helm upgrade tokonoma --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
@@ -155,7 +155,7 @@ helm upgrade tokonoma --reset-then-reuse-values oci://public.ecr.aws/tokonoma/ch
   --wait --timeout 10m
 ```
 
-Wait for Helm to report `STATUS: deployed`. Keep all required credential inputs and Secret references with this file. Authentication alone does not create a network route or certificate; the controller and DNS must also be ready.
+Preserve required credential inputs and Secret references. Expect `STATUS: deployed`, then verify the route, certificate, and authentication below.
 
 ## 3. Verify and connect
 

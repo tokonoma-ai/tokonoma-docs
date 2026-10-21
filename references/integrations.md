@@ -1,6 +1,6 @@
 # Choose integrations
 
-Start with your saved values files and installed release to see which integrations are configured. The runner is required; the example enables [agentic monitoring](agentic-monitoring.md) and automatic investigations. Choose its model provider, alert sources, telemetry query access, and investigation tools as part of [installation](install.md#2-prepare-your-files). Agents inspect existing configuration and ask about missing settings, conflicts, or additions. Each guide supplies the inputs, commands, and checks.
+Check your saved values files and installed release before adding integrations. The example enables [agentic monitoring](agentic-monitoring.md) and automatic investigations. Choose the runner's model provider, alert sources, telemetry query access, and tools during [installation](install.md#2-prepare-your-files). Agents read existing choices and ask for missing inputs.
 
 | Integration | What it does | Setup |
 |---|---|---|
@@ -15,8 +15,6 @@ The bundled `grafanaMcp` adapter queries an existing Grafana. The separate `graf
 
 This release has no CloudWatch adapter. Enabling telemetry storage does not connect Tokonoma to CloudWatch.
 
-Model-assisted memory processing uses the Anthropic API. The investigation runner has its own provider configuration; verify credentials and provider-specific model identifiers before changing that configuration. See [memory LLM setup](memory-llm.md) and [data flows](data-flows.md).
+Memory analysis uses the Anthropic API. The runner has its own provider configuration; verify credentials and model identifiers before changing it. See [memory analysis](memory-llm.md) and [data flows](data-flows.md).
 
 Uncomment your selected integrations in [values.yaml](../examples/values.yaml). The [runner guide](alert-investigations.md) covers credentials, alert routing, and verification.
-
-Return to the [documentation index](../README.md). Agents start with the [root skill](../SKILL.md) and use these same guides.

@@ -1,10 +1,10 @@
 # Troubleshooting
 
-Run checks from the installation workstation. Use its verified `REPLACE_WITH_KUBE_CONTEXT`, release, namespace, and saved configuration. Examples use `tokonoma` for release and namespace. Find other placeholder values in the affected resource or selected guide. Start with read-only checks and save the actual error.
+Run checks from the installation workstation with its verified context and saved configuration. Examples use `tokonoma` for the release and namespace; replace them if yours differ. Replace other placeholders from the affected resource or setup guide. Start with read-only checks and save the error.
 
 ## Public ECR reports an expired token
 
-The chart is public and does not require an AWS account or registry login. Helm or Docker can still use a saved credential for a public pull; AWS documents this [expired-credential behavior](https://docs.aws.amazon.com/AmazonECR/latest/public/docker-pull-ecr-image.html). On macOS, an empty temporary config can also allow Helm to discover the native Keychain helper.
+The chart is public and requires no registry login. Helm or Docker can still use an expired saved credential for a public pull; see [AWS's explanation](https://docs.aws.amazon.com/AmazonECR/latest/public/docker-pull-ecr-image.html).
 
 If you no longer need the saved public-registry login, remove that registry's stored Helm credential:
 
@@ -12,13 +12,13 @@ If you no longer need the saved public-registry login, remove that registry's st
 helm registry logout public.ecr.aws
 ```
 
-This changes the workstation's saved login for `public.ecr.aws`; an authenticated workflow will need to log in again. An agent must confirm that this change is within the requested scope before removing an existing login. If Docker also stores a login for this registry, AWS documents this direct removal command:
+This removes the workstation's saved login for `public.ecr.aws`; authenticated workflows will need to log in again. Confirm that removing it is within scope. If Docker also stores a login for this registry:
 
 ```sh
 docker logout public.ecr.aws
 ```
 
-Use the Docker command only if that client is installed and its stored credential is involved. If no login exists, continue looking for the cause. If you must retain the login, have its owner refresh it through the normal registry workflow instead.
+Use the Docker command only if its stored credential is involved. If the login is still needed, have its owner refresh it instead. If no login exists, investigate another cause.
 
 Retry the public download from the customer working directory:
 
@@ -26,7 +26,7 @@ Retry the public download from the customer working directory:
 helm pull oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
-Helm prints the downloaded chart version and digest. Record them and use the archive it saved in this directory. If the same error remains, preserve it and contact Tokonoma before changing more credentials. Do not disable TLS verification.
+Record the chart version and digest Helm prints, and use the archive saved in this directory. If the error remains, contact Tokonoma before changing more credentials. Do not disable TLS verification.
 
 In your complete [installation command](install.md#3-install), replace the OCI URL with the downloaded archive's actual path. Keep `values.yaml` and all selected credential inputs. For an existing release, make the same replacement in the [upgrade command](upgrading.md) instead of running `install` again. See [Helm registry logout](https://helm.sh/docs/helm/helm_registry_logout/) for the credential-removal command.
 

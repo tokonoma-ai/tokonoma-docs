@@ -16,7 +16,7 @@ Use the same `values.yaml` as the rest of the installation. For an existing depl
 | Namespaces | Set `runner.detection.scope.namespaces` to exact namespace names. An empty list watches all namespaces, including system namespaces. Choose that scope deliberately. |
 | Alert source | Keep at least one Alertmanager or Datadog source credential, as required by the chart. Follow [runner setup](alert-investigations.md#before-you-start). |
 
-If the source exposes no usable telemetry tools, monitoring setup cannot complete. Check access with the source owner before deploying. Configure [Slack](slack-app.md) for setup reports, investigation results, and approval commands.
+Check telemetry access with the source owner before deploying. Configure [Slack](slack-app.md) for setup reports, investigation results, and approval commands. Without Slack, automatically activated detectors can run, but proposals held for review remain inactive. Connect Slack to approve or reject them.
 
 Setup and investigations can make model calls and query your integrations. Review the chosen scope and [data flows](data-flows.md) before enabling them.
 
@@ -31,7 +31,7 @@ Monitoring starts setup automatically when first enabled. With Slack connected, 
 @Tokonoma detectors
 ```
 
-The setup response reports progress, missing access, scope questions, or failures. The detector list shows approved detectors and proposals awaiting review. Approved detectors begin monitoring automatically; some proposals need your decision.
+The setup response reports progress, missing access, scope questions, or failures. The detector list shows active checks and proposals awaiting your decision.
 
 If setup stopped, correct the reported configuration or access problem. To request setup again:
 
@@ -46,7 +46,7 @@ Review each held proposal's purpose and query before approving it. Replace the p
 @Tokonoma detectors reject REPLACE_WITH_DETECTOR_ID
 ```
 
-Choose one action per proposal. Re-read `@Tokonoma detectors` to confirm the resulting state. Approval permits that detector to monitor and trigger automatic investigations.
+Choose one action per proposal, then check `@Tokonoma detectors` to confirm. Approval permits monitoring and automatic investigations.
 
 ## Read the monitoring views
 
@@ -55,7 +55,7 @@ Use the local connection from [installation](install.md#4-verify), then open [th
 - **Coverage** shows the monitored entities, saved detector configuration, and pending approvals. Expand a row to review its purpose, query, and available evidence.
 - **Significant Findings** shows recorded findings and their associated investigations. Open the investigation record to read the result.
 
-Keep this UI on the direct localhost connection. Ordinary browser sessions cannot apply detector actions; use the Slack approval commands above. Merely opening these views does not start setup or activate proposals.
+Keep this UI on the direct localhost connection. Browser sessions cannot apply detector actions; use the Slack commands above. Opening a view does not start setup or activate proposals.
 
 ## Verify monitoring
 
