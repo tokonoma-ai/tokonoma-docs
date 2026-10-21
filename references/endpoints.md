@@ -2,7 +2,7 @@
 
 Services use ClusterIP by default. You can enable Ingress for the MCP. Each service exists only when its component is enabled.
 
-Run `kubectl` on a workstation with cluster access. Follow [input conventions](placeholder-examples.md).
+Run `kubectl` on a workstation with cluster access. Follow [input conventions](install.md#inputs-and-placeholders).
 
 | Input | Source and when required |
 |---|---|
@@ -25,13 +25,7 @@ Run `kubectl` on a workstation with cluster access. Follow [input conventions](p
 
 ## MCP client
 
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-mcp 8000:8000
-```
-
-Leave the port-forward running. Once it reports `Forwarding from`, point your MCP client at `http://127.0.0.1:8000/mcp`. Follow the
-[coding agent guide](coding-agents.md) for Claude Code, Cursor, and
-Codex setup.
+The local MCP URL is `http://127.0.0.1:8000/mcp`. Open it with the [installation port-forward and health check](install.md#4-verify), then follow the [coding agent guide](coding-agents.md) for Claude Code, Cursor, or Codex.
 
 The MCP endpoint has no application-level authentication by default. Keep it private for initial setup. Configure [OAuth](oauth.md) before allowing shared or [public access](public-mcp-ingress.md). ClusterIP by itself does not restrict which other cluster workloads can connect.
 
@@ -50,7 +44,7 @@ or [Datadog setup](datadog-alerts.md).
 
 ## OTLP ingest
 
-Ship logs/traces to `toko-indexer:7281` from inside the cluster with headers:
+Send OpenTelemetry Protocol (OTLP) logs and traces to `toko-indexer:7281` from inside the cluster with headers:
 
 - `qw-otel-logs-index: REPLACE_WITH_CUSTOMER-logs`
 - `qw-otel-traces-index: REPLACE_WITH_CUSTOMER-traces`

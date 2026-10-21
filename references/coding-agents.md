@@ -10,19 +10,7 @@ After installation and health checks, connect your client to Tokonoma's Streamab
 
 ## 1. Make the endpoint reachable
 
-For a local connection, keep the installation port-forward running. If needed, start it in terminal A:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-mcp 8000:8000
-```
-
-In a second terminal, verify the endpoint:
-
-```sh
-curl -fsS http://127.0.0.1:8000/health
-```
-
-The expected response is `ok`.
+For a local connection, complete the [installation port-forward and health check](install.md#4-verify). Keep the port-forward running while your coding agent is connected.
 
 ## 2. Add Tokonoma to your coding agent
 

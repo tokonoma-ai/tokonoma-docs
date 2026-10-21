@@ -6,7 +6,6 @@ Datadog needs a public HTTPS webhook. The chart routes it through MCP Ingress.
 
 ## Before you start
 
-- Use Helm 3.14+. Keep the complete install values, including HTTPS ingress and authentication, in `values.yaml`.
 - Prepare the [runner configuration](alert-investigations.md), including its model credential, telemetry query access, and OAuth client when MCP authentication is enabled. Configure Slack if wanted. Datadog-only installations need no Alertmanager token, but at least one source token is required.
 - MCP Ingress must serve HTTPS only before Datadog deliveries begin. Prepare its settings with [Public MCP Ingress](public-mcp-ingress.md). The bearer token travels in a header; the chart cannot enforce HTTPS terminated through provider annotations. GKE's GCE controller initially serves HTTP too. Once its certificate and load balancer are active, add `kubernetes.io/ingress.allow-http: "false"` to `mcp.ingress.annotations`, upgrade, and verify HTTPS-only access before enabling deliveries.
 - Use Datadog Terraform provider 3.83.0 or later for notification-rule `filter.scope` support. Add the three resources below to your existing project. Outside US1, set your site's API in `provider "datadog"`, for example `api_url = "https://api.us3.datadoghq.com/"`.
@@ -14,19 +13,15 @@ Datadog needs a public HTTPS webhook. The chart routes it through MCP Ingress.
 
 ## Inputs and files
 
-Prepare the token and settings before the first [installation](install.md#3-install). Run Kubernetes and Helm commands from the customer working directory on its administration workstation, outside this checkout. Use your existing Datadog Terraform project. Replace placeholders first; agents must ask for missing inputs.
-
-For an existing deployment, follow [configuration checks](upgrading.md#before-changing-configuration) and preserve its installed chart version.
+Prepare the token and settings before [installation](install.md#3-install). Use your existing Datadog Terraform project and the [installation inputs](install.md#inputs-and-placeholders).
 
 | Input | Meaning and source | Required when |
 |---|---|---|
-| `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts` | Cluster commands |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Protected directory chosen in [credentials](credentials.md) | Secret files and Terraform plan |
 | `REPLACE_WITH_MCP_HOSTNAME` | Public HTTPS host selected in [ingress setup](public-mcp-ingress.md) | Datadog deliveries |
 | `REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY` | Existing Terraform project with your Datadog provider and credentials | Provider setup below |
 | `REPLACE_WITH_DATADOG_WEBHOOK_TOKEN` | Generated token from step 1, also copied into the protected Terraform variable file | Both ends of webhook authentication |
 
-Keep installation settings in `values.yaml`. Step 1 creates the protected token file. Step 3 creates `tokonoma.tf` in your Terraform project and protected variable and plan files. Retain existing credentials when upgrading.
+Step 1 creates the protected token file. Step 3 creates `tokonoma.tf` in your Terraform project and variable and plan files in your [protected credential directory](credentials.md#supply-tokens-from-files).
 
 ## What is exposed
 
@@ -73,7 +68,7 @@ Keep `mcp.auth.enabled: true`, the identity-provider settings, and HTTPS ingress
 
 Configure telemetry query access separately using the [general MCP guide and Datadog example](integrations.md#datadog-example), or another selected telemetry integration. The Datadog webhook token only authenticates notifications; it does not grant query access.
 
-After all selected integrations are prepared, use the [single install command](install.md#3-install). For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration). Keep the license, required analysis key, runner model credential, and selected Slack credentials. Expected result: Helm reports release `tokonoma` as `deployed`.
+After all selected integrations are prepared, use the [installation command](install.md#3-install). For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration).
 
 Missing source tokens prevent rendering, and missing referenced Secrets cause `CreateContainerConfigError`. Verify the HTTPS endpoint before enabling Datadog deliveries in step 3.
 
@@ -231,17 +226,7 @@ The rule's `recipients` entry is `webhook-REPLACE_WITH_WEBHOOK_NAME`, unlike the
 
 ## 4. Verify
 
-These optional checks run after installation. On the administration workstation, keep terminal 1 running:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma port-forward svc/toko-runner 8080:8080
-```
-
-Expected output includes `Forwarding from 127.0.0.1:8080`. In terminal 2 on the same workstation, record the current counters:
-
-```sh
-curl --fail --show-error --silent http://localhost:8080/metrics | grep runner_
-```
+These optional checks run after installation. Follow the [runner deployment check](alert-investigations.md#check-the-deployment) to open a port-forward and record the current metrics. Keep that connection open for the test below.
 
 Use one operator-approved test monitor that matches the notification rule. It must be allowed to make model calls and post to any configured destination. Keep production monitor thresholds and destinations intact.
 
@@ -257,9 +242,9 @@ Use one operator-approved test monitor that matches the notification rule. It mu
 
 The runner accepts comma-separated tokens. Keep old and new tokens active during the sender change:
 
-1. Update `datadog-webhook-token.txt` to contain the old token, a comma and the new token, with no spaces or trailing newline. Update the Secret with the command below and restart the runner.
+1. Update `datadog-webhook-token.txt` to contain the old token, a comma and the new token, with no spaces or trailing newline. Update the Secret with the command below and [restart the runner](credentials.md#renew-and-rotate).
 2. Put only the new token in `tokonoma-datadog.tfvars`. Repeat the Terraform plan and apply steps, then verify a delivery.
-3. Put only the new token in `datadog-webhook-token.txt`. Repeat the Secret update and restart commands.
+3. Put only the new token in `datadog-webhook-token.txt`. Repeat the Secret update and runner restart.
 
 Run this on the administration workstation after each token-file edit:
 
@@ -267,11 +252,9 @@ Run this on the administration workstation after each token-file edit:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-runner-datadog-webhook \
   --from-file=token="REPLACE_WITH_SECRET_DIRECTORY/datadog-webhook-token.txt" \
   --dry-run=client -o yaml | kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma apply -f -
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart deployment/toko-runner
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-runner
 ```
 
-Expected result: the Secret is configured and the runner Deployment successfully rolls out.
+Expected result: the Secret is configured. Complete the runner restart before continuing to the next step.
 
 Datadog and Alertmanager use separate tokens. Rotating or revoking one leaves the other unchanged.
 

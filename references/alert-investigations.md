@@ -22,25 +22,16 @@ Bundled PostgreSQL needs no additional setup. For external PostgreSQL (`postgres
 
 ## Before you start
 
-Prepare the runner in your saved `values.yaml` before a new installation, or edit that same file for an existing release. Complete [Slack app setup](slack-app.md) if you want Slack results. Use Helm 3.14+ and preserve existing settings and credentials.
-
-Run commands from the installation's working directory on its administration workstation, outside this checkout. Replace placeholders first; agents must ask for missing inputs.
-
-For an existing release, resolve `REPLACE_WITH_INSTALLED_CHART_VERSION` using [configuration checks](upgrading.md#before-changing-configuration). This keeps the installed chart version while changing its settings. For a new release, finish preparation here and return to [Install](install.md#3-install).
+Prepare the runner in your saved `values.yaml`. Follow [credential setup](credentials.md) for the license, model key, and protected files. Complete [Slack app setup](slack-app.md) if you want Slack results. Use the installation's [input conventions](install.md#inputs-and-placeholders).
 
 | Input | Meaning and source | Required when |
 |---|---|---|
-| `REPLACE_WITH_KUBE_CONTEXT` | Target cluster context from `kubectl config get-contexts` | Every cluster command |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Protected directory chosen in [credentials](credentials.md) | File-based credentials |
-| `license.txt` | Tokonoma-issued license in the protected directory | Helm upgrades |
-| `anthropic-api-key.txt` | Anthropic API key shared by memory processing and the runner | This example |
-| `slack-bot-token.txt`, `slack-app-token.txt` | Tokens from [Slack app setup](slack-app.md) | Slack results |
 | `alertmanager-token.txt` | High-entropy shared token created by the operator and also configured on the sender | Alertmanager or Grafana alerts |
 | `REPLACE_WITH_GRAFANA_URL`, `grafana-viewer-token.txt` | Existing Grafana URL and Viewer service-account token with the required data-source permissions | Grafana MCP adapter |
 | `runner-client-id.txt`, `runner-client-secret.txt` | Dedicated runner credentials from the selected [identity provider](oauth.md) | MCP authentication enabled |
 | `REPLACE_WITH_MCP_HOSTNAME`, `REPLACE_WITH_TLS_SECRET_NAME` | Public host and existing TLS Secret from [ingress setup](public-mcp-ingress.md) | External alert sender |
 
-Save raw credentials under `REPLACE_WITH_SECRET_DIRECTORY`, without quotes or a trailing newline. Keep `values.yaml` and `alertmanagerconfig-tokonoma.yaml`, if used, in the installation's working directory. Merge settings from the [Datadog guide](datadog-alerts.md) into the same `values.yaml` when needed.
+Keep `alertmanagerconfig-tokonoma.yaml`, if used, beside `values.yaml`. Merge any [Datadog settings](datadog-alerts.md) into the same values file.
 
 Generate `alertmanager-token.txt` only if no receiver token exists. Preserve existing tokens when adding a source or upgrading:
 
@@ -51,11 +42,7 @@ openssl rand -hex 32 | tr -d '\n' > "REPLACE_WITH_SECRET_DIRECTORY/alertmanager-
 
 This writes without printing the token. Configure the same value on the sender.
 
-`--set-file` creates chart-owned Secrets; no prior `kubectl create secret` is needed. To use an external secret manager, give each component a reference to its Secret.
-
-Helm generates the bundled PostgreSQL password and Grafana MCP caller token during installation and reuses them on upgrades. Their Secrets survive uninstall; remove them only when intentionally resetting that installation. Follow [offline rendering](credentials.md#offline-rendering) if your deployment tool cannot look up existing Secrets.
-
-If `mcp.auth` is enabled, configure the runner's `runner.tokoMcp.oauthClientSecretRef` below.
+For externally managed Secrets or offline rendering, follow [credentials](credentials.md#use-existing-kubernetes-secrets). If `mcp.auth` is enabled, configure the runner credential below.
 
 ## Prepare runner credentials when MCP authentication is enabled
 
@@ -94,26 +81,9 @@ If you do not use Grafana, configure a [telemetry MCP connection](integrations.m
 
 ### Apply the configuration
 
-For a new installation, finish preparing `values.yaml` and the credential files, then run the command in [Install](install.md#3-install). For an existing release, use the upgrade below with its installed chart version.
+For a new installation, prepare the selected credentials and use [Install](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). If you enabled Grafana with a token file, include `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"`.
 
-This command uses Anthropic, Alertmanager and Slack. Replace the file paths and keep every credential input used by your installation. With existing Secrets, keep their references in `values.yaml` and omit the matching `--set-file` inputs:
-
-```sh
-helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --wait --timeout 10m \
-  --values values.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt" \
-  --set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" \
-  --set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt" \
-  --set-file credentials.alertmanagerToken="REPLACE_WITH_SECRET_DIRECTORY/alertmanager-token.txt"
-```
-
-If you enabled Grafana with a token file, add `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"`. Omit the Slack inputs when not using Slack. For Datadog-only alerts, omit the Alertmanager token and keep the Datadog Secret reference.
-
-Expected result: Helm reports `tokonoma` as `deployed`. When MCP authentication is enabled, configure the runner credential above and retain authentication. Use the [installation health checks](install.md#4-verify) to confirm it is running; the [investigation checks](#check-it-works) are optional follow-ups.
-
-Protected files keep tokens out of shell history, but Helm stores their values in release metadata. Restrict access to the files, Helm metadata, and Secrets.
+Retain authentication and the runner credential when MCP authentication is enabled. Complete the shared installation health checks; [investigation checks](#check-it-works) are optional follow-ups.
 
 Default Secret names and keys are:
 
@@ -310,31 +280,9 @@ Stop the port-forward with Ctrl-C when finished. If the test creates a temporary
 
 ## Rotate credentials
 
-Update protected Anthropic, Slack, or Alertmanager files and repeat the complete Helm upgrade. Changed inputs restart their consumers. External Secret changes require explicit restarts.
+Follow [credential rotation](credentials.md#renew-and-rotate) for model, Slack, and Grafana credentials and the required restarts.
 
-For the Grafana Viewer token, update the protected file and repeat the Helm
-upgrade, then restart the adapter so its environment reads the updated Secret:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart deployment/toko-grafana-mcp-server
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-grafana-mcp-server
-```
-
-The upstream subchart does not automatically restart the adapter when only its
-inline API key changes. The generated internal caller token stays unchanged on
-ordinary upgrades. To deliberately rotate it, supply the new value with
-`--set-file grafanaMcp.auth.token="REPLACE_WITH_SECRET_DIRECTORY/grafana-caller-token.txt"`
-on the Helm upgrade, then restart both consumers:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart deployment/toko-grafana-mcp-server deployment/toko-runner
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-grafana-mcp-server
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-runner
-```
-
-Expect successful rollouts. Substitute actual Deployment names when using name overrides. External Grafana or caller-token Secret changes need the same restarts.
-
-For source-token rotation, save old and new tokens comma-separated, then upgrade to restart the runner. Update the sender and verify delivery before removing the old token and upgrading again. With external Secrets, update the Secret and restart the runner at each step. Webhook authentication is separate from hosted Grafana MCP query authentication.
+For an Alertmanager token, save old and new tokens comma-separated in `alertmanager-token.txt`. [Apply the configuration change](upgrading.md#before-changing-configuration) with the updated `credentials.alertmanagerToken` file. Update the sender and verify delivery before removing the old token and applying again. With an external Secret, update it and restart the runner at each step. For Datadog, use its [token rotation procedure](datadog-alerts.md#rotating-the-token). Webhook credentials do not grant MCP query access.
 
 ## Adding your own MCP servers
 
@@ -342,18 +290,10 @@ Use the shared [MCP connection guide](integrations.md#mcp-connections) for Datad
 
 ## Stop the runner for maintenance
 
-This stops investigations and agentic monitoring, and removes the runner, its dedicated MCP instance, and the Grafana adapter. Use it only for a planned service interruption. Pause only Tokonoma alert deliveries, preserving paging routes. Record the component settings, then set these three flags to `false` in `values.yaml`. Retain every credential input when applying the change:
+This stops investigations and agentic monitoring, and removes the runner, its dedicated MCP instance, and the Grafana adapter. Use it only for a planned service interruption. Pause only Tokonoma alert deliveries, preserving paging routes.
 
-```sh
-helm upgrade tokonoma --kube-context REPLACE_WITH_KUBE_CONTEXT oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma --reset-then-reuse-values \
-  --values values.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --set runner.enabled=false --set mcp.sibling.enabled=false \
-  --set grafanaMcp.enabled=false \
-  --wait --timeout 10m
-```
+Record the component settings, then set `runner.enabled`, `mcp.sibling.enabled`, and `grafanaMcp.enabled` to `false` in `values.yaml`. [Apply the configuration change](upgrading.md#before-changing-configuration), preserving credentials. Confirm those components are removed with `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods`; skip their readiness checks while they are disabled. Existing investigation records remain.
 
-Expect Helm status `deployed`. Confirm the runner and unattended pods are removed with `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods`. Existing investigation records remain. Restore the recorded settings and repeat the complete runner upgrade. Verify one controlled alert before resuming routine Tokonoma deliveries.
+Restore the recorded settings and apply again. Verify one controlled alert before resuming routine Tokonoma deliveries.
 
 Return to [integrations](integrations.md) or continue with [Datadog alerts](datadog-alerts.md).

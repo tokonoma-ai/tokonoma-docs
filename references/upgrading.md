@@ -13,7 +13,7 @@ Run the commands from the existing installation's working directory on an author
 
 ## Before changing configuration
 
-To change settings without upgrading the chart, use `--version REPLACE_WITH_INSTALLED_CHART_VERSION`. Find the latest deployed revision below and use its chart version without the `tokonoma-` prefix. Keep application image overrides. Upgrade first if the installed chart does not support the new settings.
+To change settings without upgrading the chart, use `--version REPLACE_WITH_INSTALLED_CHART_VERSION`. Find the latest deployed revision below, record its revision number for possible rollback, and use its chart version without the `tokonoma-` prefix. Keep application image overrides. Upgrade first if the installed chart does not support the new settings.
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT history tokonoma -n tokonoma
@@ -28,7 +28,11 @@ helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.
   --wait --timeout 15m
 ```
 
-This preserves previously supplied credentials. Include changed credential inputs and keep existing Secret references. After Helm reports `deployed`, use the [installation health checks](install.md#4-verify). Integration guides provide optional functional checks.
+This preserves previously supplied values, including credentials. Add `--set-file` arguments for new or changed credential files using the keys in [credentials](credentials.md#what-you-need) or the selected integration guide. Keep existing Secret references. Removing a setting from the file alone does not clear its saved value; set its intended replacement explicitly.
+
+To remove obsolete keys, review a complete replacement values file and all required credential inputs, then replace `--reset-then-reuse-values` with `--reset-values` in the command above. Keep `--version REPLACE_WITH_INSTALLED_CHART_VERSION` for a configuration-only change.
+
+After Helm reports `deployed`, use the [installation health checks](install.md#4-verify). Follow [credential rotation](credentials.md#renew-and-rotate) for any required restarts. Integration guides provide optional functional checks.
 
 The chart's application image default is `latest`, with image pull policy `Always`. A restarted pod can therefore pull a newer application build even when the chart version stays the same. Configuration changes that restart workloads can have this effect too. The unattended MCP and runner inherit the primary MCP image unless overridden.
 
@@ -99,7 +103,7 @@ The adapter moved to the upstream `grafana-mcp` subchart. Old keys are not autom
 
 `grafanaMcp.auth.token` remains the direct caller-token input. Keep the Viewer credential separate from the internal caller credential. Current adapter Deployment, Service, and inline Viewer Secret names default to `toko-grafana-mcp-server`; the caller Secret defaults to `toko-grafana-mcp-auth`. Review any name, port, allowed-host, and external Secret overrides together.
 
-Preserve or rotate credentials and verify the rendered Secret references before applying. Remove obsolete keys from the complete values file and use the reset workflow above. After upgrading, restart consumers as described in [credential rotation](alert-investigations.md#rotate-credentials) and check that an investigation can query Grafana.
+Preserve or rotate credentials and verify the rendered Secret references before applying. Remove obsolete keys from the complete values file and use the reset workflow above. After upgrading, restart consumers as described in [credential rotation](credentials.md#renew-and-rotate) and check that an investigation can query Grafana.
 
 ## Webhook paths: 0.34.x to 0.35.0 or later
 

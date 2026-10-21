@@ -6,7 +6,7 @@ Complete [OAuth](oauth.md) and [public MCP](public-mcp-ingress.md) setup first. 
 
 ## Prerequisites
 
-Run commands from your [installation working directory](install.md) with AWS CLI and `jq`. Use the protected secret directory with `umask 077` and follow [input conventions](placeholder-examples.md). Console steps run in Claude and Slack.
+Run commands from your [installation working directory](install.md) with AWS CLI and `jq`. Use the protected secret directory with `umask 077` and follow [input conventions](install.md#inputs-and-placeholders). Console steps run in Claude and Slack.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -69,7 +69,7 @@ mcp:
         tokenEndpointAuthMethod: client_secret_post
 ```
 
-Apply the [OAuth deployment command](oauth.md#3-deploy-and-verify). Extract credentials into protected files and verify them before console entry:
+Apply the [configuration change](upgrading.md#before-changing-configuration). Extract credentials into protected files and verify them before console entry:
 
 ```sh
 jq -rj '.UserPoolClient.ClientId' "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client.json" \

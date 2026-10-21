@@ -74,19 +74,32 @@ Use your assigned namespace if it differs. Permission errors need the cluster ow
 
 Normal Helm installs generate the bundled PostgreSQL password and Grafana adapter caller token, then reuse their existing Secrets on upgrades. These Secrets survive uninstall; delete them only when intentionally resetting the installation. Client-only `helm template` and GitOps rendering cannot look up those Secrets. Use stable `postgres.auth.password` and `grafanaMcp.auth.token` inputs from protected files, or externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
 
-For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [values example](../examples/values.yaml). For token changes, follow [credential rotation](alert-investigations.md#rotate-credentials). Rendering does not check third-party token permissions; verify the integration after deployment.
+For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [values example](../examples/values.yaml). For token changes, follow [credential rotation](#renew-and-rotate). Rendering does not check third-party token permissions; verify the integration after deployment.
 
 ## Renew and rotate
 
-For direct `credentials.*` inputs, update the protected file and [apply the configuration change](upgrading.md#before-changing-configuration). The chart automatically restarts deployments using changed Anthropic, Slack, and Alertmanager values.
+For direct file inputs, update the protected file and [apply the configuration change](upgrading.md#before-changing-configuration), including its `--set-file` argument. Changed `credentials.anthropicApiKey`, `credentials.slackBotToken`, `credentials.slackAppToken`, and `credentials.alertmanagerToken` values trigger their consumers' rollouts automatically. Externally managed Secrets require explicit restarts.
 
-After changing `mcp.license`, restart MCP and its unattended deployment. Restart deployments after changing their externally managed Secrets. With default component names:
+Use this table for changes that need a manual restart. Names shown are the defaults; substitute any configured overrides.
+
+| Changed credential | Deployments to restart |
+| --- | --- |
+| License, including direct `mcp.license` | `toko-mcp`, `toko-mcp-unattended` |
+| External Anthropic key | `toko-mcp`, `toko-mcp-unattended`; also `toko-runner` if it uses that Secret |
+| External Slack tokens | `toko-mcp` |
+| External runner model, MCP, or alert-source credential | `toko-runner` |
+| Grafana Viewer token, including direct `grafanaMcp.grafana.apiKey` | `toko-grafana-mcp-server` |
+| Grafana adapter caller token | `toko-grafana-mcp-server`, `toko-runner` |
+
+For each affected Deployment, replace `REPLACE_WITH_DEPLOYMENT_NAME` with its name and run:
 
 ```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart deployment/toko-mcp
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-mcp --timeout=5m
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart deployment/REPLACE_WITH_DEPLOYMENT_NAME
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/REPLACE_WITH_DEPLOYMENT_NAME --timeout=5m
 ```
 
-Restart `deployment/toko-mcp-unattended` after license or shared model-key changes, and `deployment/toko-runner` after its credentials change. Use your actual deployment names.
+Expect a successful rollout, then repeat the integration's connection check. Keep the old credential valid until its replacement works where the provider allows overlap. For incoming alert tokens, follow the [Alertmanager](alert-investigations.md#rotate-credentials) or [Datadog](datadog-alerts.md#rotating-the-token) overlap procedure.
+
+The generated Grafana caller token stays unchanged on ordinary upgrades. To rotate it, supply `--set-file grafanaMcp.auth.token="REPLACE_WITH_SECRET_DIRECTORY/grafana-caller-token.txt"` on the configuration change, then restart both consumers above. The adapter also needs a restart after its inline Viewer token changes.
 
 Check license status in the local UI's **Setup** page, or `/usage-stats` through your existing connection. `/usage-stats` requires a token with `toko-mcp/query` when authentication is enabled. It reports usage and reasons such as `absent`, `invalid_signature`, or `expired`. Expiry grace and quota enforcement follow the issued license; refused recalls do not consume usage. Contact [support@tokonoma.ai](mailto:support@tokonoma.ai) to renew.

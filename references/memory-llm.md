@@ -11,27 +11,11 @@ Both send relevant content to Anthropic and share this switch. Only Anthropic AP
 
 Search can still collapse identical re-saves, but model-based duplicate review and Slack interpretation stop. Existing reviewed records stay collapsed; other similar records remain separate.
 
-Before changing an existing release, follow [configuration checks](upgrading.md#before-changing-configuration).
-
-## Inputs and files
-
-Prepare the analysis credential before [installation](install.md#3-install). Run commands from the customer working directory on its administration workstation, outside this documentation checkout. Replace placeholders before running commands; agents ask the operator for missing inputs.
-
-| Input | Meaning and source | Required when |
-|---|---|---|
-| `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts` | Every cluster command |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Protected credential directory from [credentials](credentials.md) | File-based credentials |
-| `anthropic-api-key.txt` | Anthropic API key from your Anthropic account, saved in the protected directory | Chart-owned credential Secret |
-| `license.txt` | Tokonoma-issued license | Install or upgrade |
-| `REPLACE_WITH_ANTHROPIC_SECRET_NAME`, `REPLACE_WITH_ANTHROPIC_SECRET_KEY` | Existing Secret and key from your secret manager | External Secret option |
-
-Keep all configuration in `values.yaml` in the customer working directory. The protected files contain raw values with no quotes or trailing newline. Existing Secret users keep their references instead of providing a key file.
-
 ## Configure analysis
 
-Keep `mcp.memoryLlm.enabled: true` in `values.yaml`. Supply the Anthropic key with `--set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt"` in the complete [installation](install.md#3-install) or [upgrade](upgrading.md) command. Helm stores this value in release metadata and a Secret; restrict access to both. The runner shares the key when using the Anthropic API unless you configure a separate runner reference.
+Keep `mcp.memoryLlm.enabled: true` in `values.yaml`. Save your Anthropic key as `anthropic-api-key.txt` using [credential setup](credentials.md#supply-tokens-from-files), then use the [installation command](install.md#3-install) or [apply the configuration change](upgrading.md#before-changing-configuration).
 
-For an externally managed Secret, uncomment `mcp.memoryLlm.apiKeySecret` in [values.yaml](../examples/values.yaml) and set its `name` and `key` to the existing Secret. Use the separate `runner.engine.apiKeySecret` reference when the runner should share that key. These references do not create Secrets. See [credential setup](credentials.md#use-existing-kubernetes-secrets).
+For an externally managed Secret, use `mcp.memoryLlm.apiKeySecret` as shown in [values.yaml](../examples/values.yaml). Set `runner.engine.apiKeySecret` too if the runner should share that key; see [existing Secret setup](credentials.md#use-existing-kubernetes-secrets).
 
 After rotating an external Secret, restart its consumers using [credential rotation](credentials.md#renew-and-rotate).
 

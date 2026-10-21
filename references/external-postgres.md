@@ -4,7 +4,7 @@ If you need an external database, choose and prepare it before the first install
 
 This setup has not been validated on managed services such as Amazon RDS or Cloud SQL. The chart is tested against its bundled PostgreSQL 18 with pgvector 0.8.6. Talk to Tokonoma before using an external database in production.
 
-Run `kubectl` from a workstation with cluster access and SQL in an administrative database session. Edit the `values.yaml` prepared during [installation](install.md), following [input conventions](placeholder-examples.md).
+Run `kubectl` from a workstation with cluster access and SQL in an administrative database session. Edit the `values.yaml` prepared during [installation](install.md), following [input conventions](install.md#inputs-and-placeholders).
 
 | Input | Source and when required |
 |---|---|
@@ -36,19 +36,7 @@ After a PostgreSQL or pgvector upgrade, the server also tries to update the exte
 
 ## 2. Create the password Secret
 
-Check whether the namespace exists:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT get namespace tokonoma
-```
-
-If it reports `NotFound`, create it:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT create namespace tokonoma
-```
-
-Save the raw database password in `REPLACE_WITH_SECRET_DIRECTORY/postgres-password.txt` with restricted permissions and no trailing newline. Create the Secret:
+[Prepare the namespace](credentials.md#prepare-the-namespace-for-secrets). Save the raw database password in `REPLACE_WITH_SECRET_DIRECTORY/postgres-password.txt` using the [credential file rules](credentials.md#supply-tokens-from-files), then create the Secret:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-postgres \

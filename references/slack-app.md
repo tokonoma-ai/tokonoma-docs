@@ -4,22 +4,11 @@
 
 Create the Slack app and prepare its tokens before [installation](install.md#3-install). For an existing deployment, apply the settings with the [upgrade guide](upgrading.md#before-changing-configuration).
 
-## Inputs and files
-
-Run shell commands on the administration workstation used for [installation](install.md), from its customer working directory outside this documentation checkout. Replace placeholders before running commands. An agent must ask the operator for missing inputs.
-
-| Input | Meaning and source | Required when |
-|---|---|---|
-| `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts` | Every cluster command |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Protected credential directory chosen in [credentials](credentials.md) | File-based credentials |
-| `slack-app-token.txt` | Socket Mode app token from Slack, saved in the protected directory | This integration |
-| `slack-bot-token.txt` | Bot User OAuth Token from Slack, saved in the protected directory | This integration |
-
-Keep settings in your working `values.yaml` and preserve credentials when upgrading. Slack questions and timelines use the required [memory analysis](memory-llm.md) credential.
-
 ## Create the app
 
 You need permission to create and install a Slack app. Tokonoma does not need to be running yet. Allow outbound HTTPS to Slack's API at `slack.com:443` and secure WebSocket connections to the Socket Mode URL Slack returns. A proxy must support the WebSocket upgrade. Slack rotates that URL; do not pin one returned URL permanently. See [Slack's Socket Mode documentation](https://docs.slack.dev/apis/events-api/using-socket-mode/).
+
+Prepare a [protected token directory](credentials.md#supply-tokens-from-files) for the two tokens below.
 
 1. Open [Slack's app management page](https://api.slack.com/apps), choose **Create New App**, then **From a manifest**.
 2. Select your workspace and paste [slack-app-manifest.yaml](../examples/slack-app-manifest.yaml). Review the requested permissions and create the app.
@@ -29,12 +18,6 @@ You need permission to create and install a Slack app. Tokonoma does not need to
 The manifest enables Socket Mode, mentions, channel message events, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
 ## Save the connection settings
-
-Token files must contain only the token, with no final newline:
-
-```sh
-chmod 600 "REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt" "REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt"
-```
 
 In `values.yaml`, uncomment the Slack settings from the [example](../examples/values.yaml), including `runner.destinations.slackApp.enabled: true` for investigation results. Supply both token files through the complete [installation command](install.md#3-install). For existing Secrets, use `mcp.slack.tokenSecret` instead of the two Slack `--set-file` inputs.
 
@@ -61,14 +44,7 @@ Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
 | Connection fails behind a proxy | Allow Slack API traffic and Socket Mode WebSocket upgrades. |
 
-Chart-owned `credentials.slack*` changes trigger a rollout during Helm upgrade. After rotating an externally managed token Secret, run this on the administration workstation:
-
-```sh
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart deployment/toko-mcp
-kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-mcp
-```
-
-Expected result: the Deployment successfully rolls out. Repeat the Slack reply check above.
+For token changes, follow [credential rotation](credentials.md#renew-and-rotate), then repeat the Slack reply check above.
 
 ## Choose what to enable
 

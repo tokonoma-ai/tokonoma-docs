@@ -4,9 +4,7 @@ Keep the MCP endpoint private during initial setup. Before allowing shared or pu
 
 You need Helm 3.14+, a working ingress controller, DNS control, and a valid TLS certificate. Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files). Merge authentication and ingress settings into that file before deploying.
 
-Run commands beside `values.yaml` on a workstation with cluster access. Follow [input conventions](placeholder-examples.md); keep secret contents out of chat.
-
-For an existing release, use its chart version for `REPLACE_WITH_INSTALLED_CHART_VERSION`; see [configuration checks](upgrading.md#before-changing-configuration).
+Run commands beside `values.yaml` on a workstation with cluster access. Follow [input conventions](install.md#inputs-and-placeholders); keep secret contents out of chat.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -16,14 +14,7 @@ For an existing release, use its chart version for `REPLACE_WITH_INSTALLED_CHART
 | Certificate and issuer or ACM certificate ARN | Your certificate administrator or cloud console | Before deployment |
 | Complete authentication settings in `values.yaml` with `mcp.auth.enabled: true` | The selected authentication guide above | Before exposing the endpoint |
 
-Verify the selected cluster:
-
-```sh
-kubectl config get-contexts "REPLACE_WITH_KUBE_CONTEXT"
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" cluster-info
-```
-
-Both commands must identify the intended cluster. Set these keys in `values.yaml`, preserving the other `mcp` settings:
+Complete the [cluster checks](install.md#1-check-prerequisites), then set these keys in `values.yaml`, preserving the other `mcp` settings:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -74,11 +65,7 @@ Request the ACM certificate first, then point Route 53 or your DNS provider at t
 
 ### GKE GCE
 
-Create the namespace first if it does not already exist:
-
-```sh
-kubectl --context "REPLACE_WITH_KUBE_CONTEXT" create namespace tokonoma
-```
+[Prepare the namespace](credentials.md#prepare-the-namespace-for-secrets) before creating these resources.
 
 Save the certificate and health check as `tokonoma-gke-prerequisites.yaml`:
 
@@ -143,19 +130,7 @@ Point DNS at the Traefik load balancer. The named cert-manager `ClusterIssuer` m
 
 ## 2. Deploy
 
-For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials, then verify access below. For an existing release, apply the updated file:
-
-```sh
-helm upgrade tokonoma --reset-then-reuse-values oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context "REPLACE_WITH_KUBE_CONTEXT" \
-  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
-  --values values.yaml \
-  --set mcp.auth.enabled=true \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --wait --timeout 10m
-```
-
-Preserve required credential inputs and Secret references. Expect `STATUS: deployed`, then verify the route, certificate, and authentication below.
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration), preserving required credential inputs and Secret references. After Helm reports `STATUS: deployed`, verify the route, certificate, and authentication below.
 
 ## 3. Verify and connect
 

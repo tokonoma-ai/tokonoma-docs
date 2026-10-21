@@ -2,14 +2,12 @@
 
 Prepare persistent storage for Amazon Elastic Kubernetes Service (EKS). Telemetry ingestion with S3 storage and self-monitoring are optional.
 
-Use `kubectl`, Helm 3.14+, and AWS CLI on a workstation with access to the intended cluster and AWS account. Run commands from your [installation working directory](../install.md), following [input conventions](../placeholder-examples.md).
-
-For an existing release, use its chart version for `REPLACE_WITH_INSTALLED_CHART_VERSION`; see [configuration checks](../upgrading.md#before-changing-configuration).
+Use `kubectl`, Helm 3.14+, and AWS CLI on a workstation with access to the intended cluster and AWS account. Run commands from your [installation working directory](../install.md), following [input conventions](../install.md#inputs-and-placeholders).
 
 | Input | Source and when required |
 |---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Cluster context from `kubectl config get-contexts`; required for cluster commands. |
-| `REPLACE_WITH_CLUSTER`, `REPLACE_WITH_REGION` | EKS cluster name and AWS region from the cluster owner; required for the storage checks. |
+| `REPLACE_WITH_CLUSTER`, `REPLACE_WITH_REGION` | EKS cluster name and AWS region from the cluster owner; required for the storage checks. The cloud cluster name may differ from its kubeconfig context. |
 | `REPLACE_WITH_ADDON_VERSION` | EBS CSI add-on version selected by the cluster owner; required only when configuring that add-on. |
 | `REPLACE_WITH_CUSTOMER` | Telemetry organization slug: at most 42 lowercase letters, digits, or hyphens, starting with a letter. |
 | `REPLACE_WITH_IRSA_ROLE_ARN` | Role created for optional S3 access below; required only for that configuration. |
@@ -86,16 +84,7 @@ grafana:       { enabled: true }
 
 For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file. Keep MCP private during verification; configure [OAuth](../oauth.md) before shared or public access.
 
-For an existing release, follow [configuration checks](../upgrading.md#before-changing-configuration) and apply the updated file with existing settings and Secret references preserved:
-
-```sh
-helm upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context REPLACE_WITH_KUBE_CONTEXT --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
-  --reset-then-reuse-values --values values.yaml \
-  --wait --timeout 15m
-```
-
-Include any changed credential inputs. Expect `STATUS: deployed`.
+For an existing release, [apply the configuration change](../upgrading.md#before-changing-configuration), preserving existing settings and Secret references.
 
 ### 3. Verify the optional services
 
@@ -109,6 +98,6 @@ Confirm workloads are ready and claims are `Bound`. Helm removes the index-creat
 
 For dashboards, [open the self-monitoring Grafana UI](../endpoints.md#self-monitoring-grafana-ui).
 
-Ship OpenTelemetry Protocol (OTLP) data from inside the cluster to `toko-indexer:7281` with headers `qw-otel-logs-index: REPLACE_WITH_CUSTOMER-logs` and `qw-otel-traces-index: REPLACE_WITH_CUSTOMER-traces`. See [endpoints](../endpoints.md). Choose CPU, memory, storage, and retention settings for your workload. Verify capacity with a representative ingestion test.
+Send OpenTelemetry Protocol (OTLP) data using the [ingest endpoint and headers](../endpoints.md#otlp-ingest). Choose CPU, memory, storage, and retention settings for your workload. Verify capacity with a representative ingestion test.
 
 For the `alb` IngressClass and ACM certificate flow, see [public MCP](../public-mcp-ingress.md).

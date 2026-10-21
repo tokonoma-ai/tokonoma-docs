@@ -27,7 +27,7 @@ Group missing inputs into one question where practical. Explain human-only actio
 | Shared access or login | [Private access](references/private-access.md), [OAuth](references/oauth.md), chosen [Google](references/google-saml.md) or [Okta](references/okta-saml.md) provider; [public routing](references/public-mcp-ingress.md) only when selected |
 | Existing installation | [Configuration preservation](references/upgrading.md), then the feature, [troubleshooting](references/troubleshooting.md), or [uninstall](references/uninstall.md) guide |
 
-Check [data flows](references/data-flows.md) before changing exposure or data destinations. Use the commented [values.yaml](examples/values.yaml) example for field guidance, and [endpoints](references/endpoints.md) and [input conventions](references/placeholder-examples.md) for lookups. Cloud hosting does not require optional telemetry.
+Check [data flows](references/data-flows.md) before changing exposure or data destinations. Use the commented [values.yaml](examples/values.yaml) example for field guidance, and [endpoints](references/endpoints.md) and [input conventions](references/install.md#inputs-and-placeholders) for lookups. Cloud hosting does not require optional telemetry.
 
 ## Prepare and execute
 

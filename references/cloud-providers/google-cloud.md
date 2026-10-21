@@ -2,9 +2,7 @@
 
 Verify persistent storage for Google Kubernetes Engine (GKE). Telemetry ingestion with Google Cloud Storage (GCS) and self-monitoring are optional.
 
-Use `kubectl`, Helm 3.14+, and gcloud on a workstation with access to the intended cluster and Google Cloud project. Run commands from your [installation working directory](../install.md), following [input conventions](../placeholder-examples.md).
-
-For an existing release, use its chart version for `REPLACE_WITH_INSTALLED_CHART_VERSION`; see [configuration checks](../upgrading.md#before-changing-configuration).
+Use `kubectl`, Helm 3.14+, and gcloud on a workstation with access to the intended cluster and Google Cloud project. Run commands from your [installation working directory](../install.md), following [input conventions](../install.md#inputs-and-placeholders).
 
 | Input | Source and when required |
 |---|---|
@@ -97,16 +95,7 @@ grafana:       { enabled: true }
 
 For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file. Keep MCP private for verification and configure [OAuth](../oauth.md) before shared or public access.
 
-For an existing release, follow [configuration checks](../upgrading.md#before-changing-configuration) and apply the updated file with existing settings and Secret references preserved:
-
-```sh
-helm upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --kube-context REPLACE_WITH_KUBE_CONTEXT --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
-  --reset-then-reuse-values --values values.yaml \
-  --wait --timeout 15m
-```
-
-Include any changed credential inputs. Expect `STATUS: deployed`.
+For an existing release, [apply the configuration change](../upgrading.md#before-changing-configuration), preserving existing settings and Secret references.
 
 ### 3. Verify the optional services
 
@@ -120,6 +109,6 @@ Confirm workloads are ready and claims are `Bound`. Helm removes the index-creat
 
 For dashboards, [open the self-monitoring Grafana UI](../endpoints.md#self-monitoring-grafana-ui).
 
-Ship OpenTelemetry Protocol (OTLP) data from inside the cluster to `toko-indexer:7281` with headers `qw-otel-logs-index: REPLACE_WITH_CUSTOMER-logs` and `qw-otel-traces-index: REPLACE_WITH_CUSTOMER-traces`. See [endpoints](../endpoints.md).
+Send OpenTelemetry Protocol (OTLP) data using the [ingest endpoint and headers](../endpoints.md#otlp-ingest).
 
 For the `gce` IngressClass and ManagedCertificate flow, see [public MCP](../public-mcp-ingress.md).

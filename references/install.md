@@ -4,7 +4,7 @@ Install Tokonoma in an existing Kubernetes cluster using one `values.yaml`. The 
 
 The command below uses Anthropic, Alertmanager, and Slack. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
-Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Replace `REPLACE_WITH_...` inputs first. Agents use verified values and ask for missing inputs.
+Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Follow the [input conventions](#inputs-and-placeholders) before running commands.
 
 ## Before installing
 
@@ -52,11 +52,17 @@ If the registry reports an expired token, follow [registry troubleshooting](trou
 
 Work from an existing directory outside this checkout. Save nonsecret values there and credentials in a separate protected directory, outside shared or version-controlled folders.
 
+### Inputs and placeholders
+
+Replace every `REPLACE_WITH_...` marker, including those inside paths and URLs. Edit commands directly; do not use shell exports or wrappers. Keep quotes around paths. Agents use verified values and ask for missing decisions or credential paths, never secret contents.
+
 | Input | Meaning and source | Used by |
 | --- | --- | --- |
-| `REPLACE_WITH_DOCS_DIRECTORY` | Absolute path to this downloaded repository | Copying the supplied example |
+| `REPLACE_WITH_DOCS_DIRECTORY` | Absolute path to this downloaded repository, including `references/` and `examples/` | Copying the supplied example |
 | `REPLACE_WITH_SECRET_DIRECTORY` | Absolute protected directory you chose in the credential guide | Helm reads the license and selected credential files from this workstation |
 | `values.yaml` | Your copy of the commented example, edited for your installation | Every install or upgrade command |
+
+Read YAML comments for settings and each guide's tables for provider inputs. Obtain identifiers from the provider or its administrator. Use hostnames your organization controls; `example.com` is illustrative. Keep provider template variables such as Datadog's `$ID` and `$TOKONOMA_TOKEN` intact.
 
 Copy the [commented values file](../examples/values.yaml) once. For an existing installation, edit its saved file instead of replacing it:
 
