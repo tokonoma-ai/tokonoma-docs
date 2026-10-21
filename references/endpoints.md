@@ -35,6 +35,8 @@ Codex setup.
 
 The MCP endpoint has no application-level authentication by default. Keep it private for initial setup. Configure [OAuth](oauth.md) before allowing shared or [public access](public-mcp-ingress.md). ClusterIP by itself does not restrict which other cluster workloads can connect.
 
+The same direct local connection serves the customer UI at `http://localhost:8000/ui/`. Open **Agentic Monitoring** for coverage and significant findings; see [monitoring checks](agentic-monitoring.md#verify-monitoring). Keep the UI local as described in [data flows](data-flows.md#private-access).
+
 ## Alert webhook access
 
 An in-cluster sender uses

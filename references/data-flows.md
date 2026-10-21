@@ -4,7 +4,7 @@ The integrations you enable and where your agent runs determine where data goes.
 
 ## Installed services
 
-Tokonoma runs the MCP service, its required investigation runner and dedicated MCP instance, PostgreSQL with pgvector, and Ollama. The runner sends investigation context to its configured model provider and queries the tools you configure. Your coding agent calls the MCP service over HTTP. Saved records, search chunks, embeddings, and application state are stored in PostgreSQL. Ollama embeds record text and search queries within the deployment; search can fall back to keyword matching when embeddings are unavailable.
+Tokonoma runs the MCP service, its required runner and dedicated MCP instance, PostgreSQL with pgvector, and Ollama. The runner monitors selected telemetry and automatically investigates findings and alerts. It sends relevant context to its configured model provider and queries the tools you configure. Your coding agent calls the MCP service over HTTP. Saved records, monitoring state, search chunks, and embeddings are stored in PostgreSQL. Ollama embeds record text and search queries within the deployment; search can fall back to keyword matching when embeddings are unavailable.
 
 The server returns requested records and tool results to your agent. If that agent uses a hosted model, its provider receives the content the agent sends to it. This path exists independently of Tokonoma's own Anthropic API key.
 
@@ -37,7 +37,7 @@ Memory analysis requires the Anthropic API. The runner needs its model provider 
 | Tokonoma MCP services: memory analysis | Anthropic API when `credentials.anthropicApiKey` or `mcp.memoryLlm.apiKeySecret` is supplied and `mcp.memoryLlm.enabled` is true | Relevant saved record content to check for duplicates |
 | Native `@Tokonoma` Slack app | Slack API and Socket Mode; the interactive MCP service opens outbound connections | Invited-channel messages and history come in; requested records, session updates, and investigation results go to Slack |
 | Tokonoma MCP services: model-backed Slack features | Anthropic API through the memory model configuration | Relevant channel messages, session evidence, and memory content for questions, relevance checks, and timelines |
-| Investigation runner | Its configured model provider | Alerts, retrieved records, and results from investigation tools; findings are saved in Tokonoma and sent to configured Slack destinations |
+| Runner: monitoring and automatic investigations | Its configured model provider | Service metadata, selected telemetry, alerts, retrieved records, and tool results used to configure monitoring, assess findings, and investigate; results are saved in Tokonoma and sent to configured Slack destinations |
 | Datadog alert sender and investigation runner | Datadog sends inbound webhooks; the runner queries your configured Datadog MCP endpoint | Monitor notifications, tool queries, and requested logs, spans, or other data; webhook and query access use separate credentials |
 | Grafana MCP adapter | Your existing Grafana, which can be private or externally hosted | Read-only queries and telemetry allowed by the Grafana service account; the runner connects to the adapter inside your cluster, and the agent and model receive the results |
 | Optional telemetry backend | Your S3 or GCS bucket | Store and query ingested logs, traces, and configured Kubernetes telemetry; disabled by default |
@@ -45,6 +45,10 @@ Memory analysis requires the Anthropic API. The runner needs its model provider 
 | Authentication | The identity provider you configure | Login and identity information; Tokonoma holds OAuth tokens and related state |
 
 The MCP server uses the Anthropic API for required memory analysis. The runner has its own model-provider configuration; changing it does not change the MCP server's Anthropic calls. See [analysis configuration](memory-llm.md) for setup and temporary maintenance controls.
+
+Agentic monitoring is enabled in the installation example. It queries the configured telemetry sources within the selected scope and can make model calls without an incoming alert. Its findings can start automatic investigations through the runner. Review [monitoring scope and access](agentic-monitoring.md) before installing.
+
+Monitoring uses the runner's model provider by default. If you configure the optional `runner.detection.judge.apiKeySecretRef`, the runner also sends monitoring context to `https://api.typesafe.ai`; allow that destination only when using this credential.
 
 The released webhook sources are Alertmanager and Datadog. CloudWatch is not a released Tokonoma adapter. An additional MCP endpoint is usable only when you configure that endpoint, its authentication, and the specific tools the runner may call; it does not imply a built-in integration.
 

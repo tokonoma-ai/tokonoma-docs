@@ -1,6 +1,6 @@
 # Copy once to your working directory as values.yaml for a new installation.
 # Existing installation: edit your saved file; do not replace it with this example.
-# Required core is active. Uncomment only the integration sections you use.
+# Required core and agentic monitoring are active. Uncomment only integrations you use.
 # Supply license, Anthropic and alert-source credentials through protected files
 # or existing Secret references. See references/install.md and references/credentials.md.
 # Replace placeholders with verified values; agents ask for missing inputs.
@@ -45,6 +45,18 @@ mcp:
 runner:
   # Required: needs the sibling, model credentials and at least one alert-source token.
   enabled: true
+  detection:
+    # Monitoring uses the runner's model and can start investigations automatically.
+    # Setup and checks: references/agentic-monitoring.md.
+    enabled: true
+    scope:
+      # Use the monitored cluster's exact name in your telemetry, not a guessed kube context.
+      cluster: REPLACE_WITH_MONITORED_CLUSTER
+      # Exact namespace names. Use [] only to intentionally watch all, including system ones.
+      namespaces: [REPLACE_WITH_MONITORED_NAMESPACE]
+  # Monitoring needs telemetry query access, such as Grafana or a telemetry MCP connection.
+  # Alert webhooks and code-only connections do not supply that access.
+
   # Anthropic is the walkthrough provider; credentials.anthropicApiKey serves both callers.
   # For an existing Secret, configure this AND mcp.memoryLlm.apiKeySecret above:
   # engine:
@@ -83,9 +95,17 @@ runner:
   #     clientIdKey: REPLACE_WITH_RUNNER_CLIENT_ID_KEY
   #     key: REPLACE_WITH_RUNNER_CLIENT_SECRET_KEY
 
-  # Code integration: get the endpoint and permitted tool names from its provider.
-  # Only listed tools are allowed. The existing Secret supplies its bearer credential.
+  # Uncomment mcpServers and only the connections you use. Keep one combined list.
+  # Get endpoints and permitted read-only tool names from each provider.
+  # These examples use bearer credentials; other authentication needs provider-specific settings.
   # mcpServers:
+  #   - name: telemetry
+  #     kind: telemetry
+  #     url: REPLACE_WITH_TELEMETRY_MCP_URL
+  #     expectedTools: [REPLACE_WITH_TELEMETRY_TOOL_NAME]
+  #     authSecretRef:
+  #       name: REPLACE_WITH_TELEMETRY_SECRET_NAME
+  #       key: REPLACE_WITH_TELEMETRY_SECRET_KEY
   #   - name: source-control
   #     kind: source-control
   #     url: REPLACE_WITH_SOURCE_CONTROL_MCP_URL

@@ -1,6 +1,8 @@
-# Alert-triggered investigations
+# Automatic investigations
 
 Alertmanager sends firing alerts to `toko-runner`. After a delay and duplicate check, the runner investigates through a dedicated Tokonoma MCP instance, saves its findings, and posts a Slack summary.
+
+The installation example enables automatic investigations with `runner.enabled: true`. [Agentic monitoring](agentic-monitoring.md) can also start investigations from its findings. This guide configures external alert delivery and the shared investigation tools.
 
 For Slack results, enable the Slack sections in your saved [values file](../examples/values.yaml) and invite the app to the alert and investigations channels. Each alert gets an announcement, followed by its result in a thread.
 

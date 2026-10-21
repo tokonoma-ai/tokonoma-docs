@@ -1,6 +1,6 @@
 # Install Tokonoma
 
-Install the published Helm chart in an existing Kubernetes cluster. Tokonoma requires its MCP service, memory analysis, and investigation runner. Prepare one `values.yaml`, then install these services together with PostgreSQL and Ollama.
+Install the published Helm chart in an existing Kubernetes cluster. Tokonoma requires its MCP service, memory analysis, and investigation runner. The example enables agentic monitoring and automatic investigations. Prepare one `values.yaml`, then install these services together with PostgreSQL and Ollama.
 
 The command below uses Anthropic, Alertmanager, and Slack. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
@@ -13,7 +13,7 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | Target and existing deployment | Ask the cluster owner for the intended context; inspect the release below | New release: follow this guide. Existing release: [connect your agent](coding-agents.md), or use [upgrading](upgrading.md) for an intended deployment change. |
 | Database | Choose bundled PostgreSQL or have your database owner prepare [external PostgreSQL](external-postgres.md) | Prepare it before installing. Changing the address does not migrate data. |
 | Access | Choose a local connection for one operator, [private team access](private-access.md), or [public authenticated access](public-mcp-ingress.md) | The example starts with a local connection. Set up authentication and routing before exposing a shared endpoint. |
-| Analysis and runner | Prepare an Anthropic credential for analysis. Choose the runner's alert sources, model provider, and investigation tools using [integrations](integrations.md); inspect [data flows](data-flows.md) | Prepare credentials and configuration before running Helm. |
+| Analysis, monitoring, and investigations | Prepare an Anthropic credential for analysis. Choose the runner's alert sources, model provider, and telemetry tools using [integrations](integrations.md). Set the monitored cluster and namespaces using [agentic monitoring](agentic-monitoring.md); inspect [data flows](data-flows.md) | Monitoring makes model and telemetry calls after startup. Prepare access and scope before running Helm. |
 | Additional features | Choose Slack features, authentication, or cloud telemetry as needed | Follow any preparation required by the selected guide. |
 
 Use one release per namespace: component names are fixed. Examples use release and namespace `tokonoma`; substitute assigned names consistently. Do not reuse an unrelated deployment's namespace.
@@ -64,10 +64,10 @@ Copy the [commented values file](../examples/values.yaml) once. For an existing 
 cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 ```
 
-The required runner and analysis settings are already enabled. Read the comments, fill the selected integration sections, and keep credentials in protected files or existing Secrets.
+The required runner and analysis settings are already enabled, along with agentic monitoring. Read the comments, fill the selected integration sections and monitoring scope, and keep credentials in protected files or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). Analysis always needs an Anthropic credential, even when the runner uses another model provider.
-2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
+2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source and configure [monitoring](agentic-monitoring.md) with telemetry query access and the intended cluster and namespaces. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
 3. For Slack results, [create the Slack app](slack-app.md#create-the-app), save both tokens, invite it to the results channel, and uncomment Slack delivery in `values.yaml`.
 4. Merge any [external database](external-postgres.md), [authentication](oauth.md), [routing](public-mcp-ingress.md), or cloud telemetry settings into the same file. Complete their prerequisites first. Configure authentication before sharing access.
 
@@ -131,13 +131,13 @@ Optionally run `Run Tokonoma onboard.` to prepare investigation context. Review 
 
 ## 6. Verify analysis and investigations
 
-Check [analysis configuration](memory-llm.md), then verify the runner with your selected integrations.
+Check [analysis configuration](memory-llm.md) and [monitoring setup and coverage](agentic-monitoring.md#verify-monitoring), then verify the runner with your selected integrations.
 
 1. Complete the [Slack connection checks](slack-app.md#verify-the-connection) if enabled.
 2. Add the selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender configuration after the receiver is ready. Preserve existing paging routes.
 3. Complete the runner guide's [verification](alert-investigations.md#check-it-works): send one approved test alert and confirm the completed investigation, saved record, and configured result delivery.
 
-Record the target, versions, saved configuration, credential locations without secret values, integrations, and check results. Installation is complete when analysis is configured and both the memory check and runner investigation check pass.
+Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, integrations, and check results. Installation is complete when analysis is configured, monitoring has approved detectors with observed successful evaluations, and both the memory check and runner investigation check pass. Report monitoring as awaiting review or incomplete if those checks are still pending.
 
 ## Next steps
 
