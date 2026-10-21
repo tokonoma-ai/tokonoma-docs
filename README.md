@@ -43,7 +43,7 @@ Arrows show who opens each connection; responses and Slack events return over it
 
 Your agent connects through the Model Context Protocol (MCP). The installation includes the Tokonoma MCP service, the required runner and its dedicated MCP instance, PostgreSQL for records and state, and Ollama for local search embeddings (numeric representations of text). PostgreSQL is bundled unless you configure an external database.
 
-The [installation guide](references/install.md) uses the published Helm chart and one `values.yaml` for these services and your [selected integrations](references/integrations.md). It uses the chart's image defaults without requiring a specific release version or access to the application source.
+The [installation guide](references/install.md) uses the published Helm chart and one `values.yaml` for these services and your [selected integrations](references/integrations.md). Connect Datadog, Axiom, or other compatible MCP tools for telemetry and code access. The guide uses the chart's image defaults without requiring a specific release version or access to the application source.
 
 Model providers can receive investigation context. A hosted coding agent can also send retrieved records to its own provider. See [data flows](references/data-flows.md) for callers, destinations, and network requirements.
 

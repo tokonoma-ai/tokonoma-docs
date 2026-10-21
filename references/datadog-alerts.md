@@ -71,7 +71,7 @@ In `values.yaml`, uncomment the Datadog source and public webhook settings in th
 
 Keep `mcp.auth.enabled: true`, the identity-provider settings, and HTTPS ingress in the same file. Configure the runner's OAuth client with the [runner guide](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). Datadog-only installations omit the Alertmanager credential; retain any source credentials already in use.
 
-Configure telemetry query access for agentic monitoring. Use the `runner.mcpServers` entry with `kind: telemetry` in [values.yaml](../examples/values.yaml), or enable its Grafana adapter. Obtain the endpoint, credentials, and permitted read-only tools from the provider, then follow [MCP server setup](alert-investigations.md#adding-your-own-mcp-servers). The Datadog webhook token only authenticates notifications; it does not grant query access.
+Configure telemetry query access separately using the [general MCP guide and Datadog example](integrations.md#datadog-example), or another selected telemetry integration. The Datadog webhook token only authenticates notifications; it does not grant query access.
 
 After all selected integrations are prepared, use the [single install command](install.md#3-install). For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration). Keep the license, required analysis key, runner model credential, and selected Slack credentials. Expected result: Helm reports release `tokonoma` as `deployed`.
 

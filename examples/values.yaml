@@ -96,16 +96,30 @@ runner:
   #     key: REPLACE_WITH_RUNNER_CLIENT_SECRET_KEY
 
   # Uncomment mcpServers and only the connections you use. Keep one combined list.
-  # Get endpoints and permitted read-only tool names from each provider.
-  # These examples use bearer credentials; other authentication needs provider-specific settings.
+  # Remote HTTP MCP: Datadog, Axiom or another compatible telemetry/code provider.
+  # Get the endpoint and exact read-only tool names from the provider; no mcp__ prefix.
+  # Use a unique lowercase name; reserve toko and the bundled adapter's grafana name.
+  # Provider examples and credential setup: references/integrations.md#mcp-connections.
   # mcpServers:
   #   - name: telemetry
   #     kind: telemetry
   #     url: REPLACE_WITH_TELEMETRY_MCP_URL
   #     expectedTools: [REPLACE_WITH_TELEMETRY_TOOL_NAME]
   #     authSecretRef:
+  #       # Raw bearer token, without the "Bearer " prefix.
   #       name: REPLACE_WITH_TELEMETRY_SECRET_NAME
   #       key: REPLACE_WITH_TELEMETRY_SECRET_KEY
+  #     # Named-header alternative, shown for Datadog API/application keys.
+  #     # Remove authSecretRef above before uncommenting headers; do not use both.
+  #     # headers:
+  #     #   - header: DD_API_KEY
+  #     #     secretRef:
+  #     #       name: REPLACE_WITH_DATADOG_API_KEY_SECRET_NAME
+  #     #       key: REPLACE_WITH_DATADOG_API_KEY_SECRET_KEY
+  #     #   - header: DD_APPLICATION_KEY
+  #     #     secretRef:
+  #     #       name: REPLACE_WITH_DATADOG_APP_KEY_SECRET_NAME
+  #     #       key: REPLACE_WITH_DATADOG_APP_KEY_SECRET_KEY
   #   - name: source-control
   #     kind: source-control
   #     url: REPLACE_WITH_SOURCE_CONTROL_MCP_URL

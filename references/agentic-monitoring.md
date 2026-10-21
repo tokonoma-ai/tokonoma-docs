@@ -10,7 +10,7 @@ Use the same `values.yaml` as the rest of the installation. For an existing depl
 
 | Input | What to configure |
 | --- | --- |
-| Telemetry access | Connect [Grafana or another telemetry integration](integrations.md) with read access to the intended systems. External monitoring connections in `runner.mcpServers` need `kind: telemetry`, an endpoint, credentials, and permitted tools. Alert webhooks alone do not provide query access. |
+| Telemetry access | Connect [Datadog, Axiom, or another compatible MCP server](integrations.md#mcp-connections), or the [Grafana adapter](alert-investigations.md#install-with-oss-grafana-mcp). Use `kind: telemetry` for external monitoring connections and permit the required read-only query tools. Alert webhooks alone do not provide query access. |
 | Model credentials | Keep the runner's model credential and the required Anthropic analysis credential from [installation](install.md#2-prepare-your-files). |
 | Cluster | Set `runner.detection.scope.cluster` to the cluster name in your telemetry source. It may differ from the Kubernetes context name. Ask the source owner when unsure; a source containing multiple clusters needs an explicit choice. |
 | Namespaces | Set `runner.detection.scope.namespaces` to exact namespace names. An empty list watches all namespaces, including system namespaces. Choose that scope deliberately. |

@@ -38,7 +38,7 @@ The coding agent, MCP services, and runner have separate model configurations. A
 | Native `@Tokonoma` Slack app | Slack API and Socket Mode; the interactive MCP service opens outbound connections | Invited-channel messages and history come in; requested records, session updates, and investigation results go to Slack |
 | Tokonoma MCP services: model-backed Slack features | Anthropic API through the memory model configuration | Relevant channel messages, session evidence, and memory content for questions, relevance checks, and timelines |
 | Runner: monitoring and automatic investigations | Its configured model provider | Service metadata, selected telemetry, alerts, retrieved records, and tool results used to configure monitoring, assess findings, and investigate; results are saved in Tokonoma and sent to configured Slack destinations |
-| Datadog alert sender and investigation runner | Datadog sends inbound webhooks; the runner queries your configured Datadog MCP endpoint | Monitor notifications, tool queries, and requested logs, spans, or other data; webhook and query access use separate credentials |
+| Runner: external MCP connections | Configured Datadog, Axiom, or other compatible MCP endpoints | Permitted queries and returned telemetry or code context; query access is separate from incoming alert webhooks |
 | Grafana MCP adapter | Your existing Grafana, which can be private or externally hosted | Read-only queries and telemetry allowed by the Grafana service account; the runner connects to the adapter inside your cluster, and the agent and model receive the results |
 | Optional telemetry backend | Your S3 or GCS bucket | Store and query ingested logs, traces, and configured Kubernetes telemetry; disabled by default |
 | Operational telemetry | Configured Prometheus scrape targets or OpenTelemetry (OTLP) endpoint | Process metrics and traces; an external endpoint receives operational data |
@@ -64,7 +64,7 @@ For direct Google Workspace or Okta SAML login, the user's browser visits the id
 
 The installation pulls images from public ECR and Docker Hub and the embedding model from `registry.ollama.ai`. Optional self-monitoring components can also pull from `quay.io` and `registry.k8s.io`; Grafana downloads its configured data-source plugin from GitHub at startup.
 
-Allow the Anthropic API for analysis and the runner's configured model provider. Add only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, your Grafana or Datadog endpoints, your identity provider, and your configured object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
+Allow the Anthropic API for analysis and the runner's configured model provider. Add only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, Grafana and configured MCP endpoints, your identity provider, and object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
 
 Image and model downloads need network access during startup unless you have supplied compatible mirrors and preloaded assets. A fully disconnected installation is not validated by this guide.
 

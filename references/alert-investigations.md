@@ -90,7 +90,7 @@ runner:
 
 To query an existing Grafana, uncomment `grafanaMcp` in your saved [values file](../examples/values.yaml). Replace the Grafana URL and choose a protected Viewer token file or existing Secret reference. The private adapter requires Kubernetes 1.25+ and connects to the runner automatically.
 
-If you do not use Grafana, configure another [telemetry MCP server](#adding-your-own-mcp-servers). Agentic monitoring needs telemetry query access; alert webhooks and code access alone are insufficient.
+If you do not use Grafana, configure a [telemetry MCP connection](integrations.md#mcp-connections), such as Datadog or Axiom. Agentic monitoring needs query access; alert webhooks and code access alone are insufficient.
 
 ### Apply the configuration
 
@@ -338,11 +338,7 @@ For source-token rotation, save old and new tokens comma-separated, then upgrade
 
 ## Adding your own MCP servers
 
-Uncomment `runner.mcpServers` in [values.yaml](../examples/values.yaml). Use its `kind: telemetry` entry for monitoring queries and its `kind: source-control` entry for code access. Obtain each endpoint, authentication requirements, and exact read-only tool names from the provider. Alert webhook tokens do not grant telemetry query access.
-
-Create referenced credential Secrets before installation or upgrade. Keep all servers in the same list; append entries without replacing existing connections.
-
-Only tools listed in `expectedTools` are permitted. Limit the credential to the access the runner needs; the runner gains all access it grants. Telemetry providers with a different authentication scheme need their provider-specific connection settings.
+Use the shared [MCP connection guide](integrations.md#mcp-connections) for Datadog, Axiom, and other compatible telemetry or code servers. Configure endpoints, credentials, and permitted tools in the same `runner.mcpServers` list in `values.yaml`. Alert-source tokens do not grant query access.
 
 ## Stop the runner for maintenance
 
