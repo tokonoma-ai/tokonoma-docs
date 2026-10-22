@@ -53,7 +53,7 @@ Start with phase 1. Your agent reads supplied files and existing configuration, 
 
 Install the bundled services, monitoring, automatic investigations, Slack, and the runner's machine login. MCP stays inside the cluster, with a local port-forward for operator access. The shared hostname and human sign-in can wait until phase 2.
 
-**Checkpoint:** Tokonoma is healthy, detector setup is complete and checks are running, and connected alerts trigger automatic investigations with saved results and Slack delivery. Complete the [monitoring and integration checks](references/install.md#check-monitoring-and-integrations) before phase 2. Report any incomplete checks or customer-selected opt-outs.
+**What you'll have:** Tokonoma running in your cluster, detectors monitoring your services, and connected alerts being investigated automatically, with results saved and posted to Slack. Your agent will [check that everything is working](references/install.md#check-monitoring-and-integrations) before you move on to team access.
 
 #### Required: deployment and access
 
@@ -78,7 +78,7 @@ Install the bundled services, monitoring, automatic investigations, Slack, and t
 
 ### Phase 2: shared engineer access
 
-After the phase 1 checkpoint, prepare these when you want engineers to connect their coding agents. Reuse the runner's phase 1 login. Follow [private and team access](references/private-access.md).
+After phase 1 is complete, prepare these when you want engineers to connect their coding agents. Reuse the runner's phase 1 login. Follow [private and team access](references/private-access.md).
 
 - [ ] **Users and clients:** intended users and coding agents in use.
 - [ ] **Shared endpoint:** preferred HTTPS hostname, routing, and owner for DNS and TLS certificates.
