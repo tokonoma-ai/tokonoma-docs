@@ -76,7 +76,7 @@ The [read-only UI](endpoints.md) uses the same port-forward. It has no sign-in i
 
 For access beyond this local path, configure TLS, explicit MCP authentication, an identity provider or approved client credentials, and network access appropriate to the clients. Private DNS/VPN access works only for clients that can actually reach that network. Cloud-hosted connectors, including Claude's remote connector used separately from `@Tokonoma`, cannot reach your laptop's localhost or an inaccessible private cluster.
 
-Keep MCP authenticated when publishing a runner webhook endpoint. Slack uses outbound Socket Mode and does not need a public endpoint.
+A dedicated runner webhook route can keep MCP private. If the route also exposes MCP, enable MCP authentication before publishing it. Slack uses outbound Socket Mode and does not need a public endpoint.
 
 ## Record and channel visibility
 

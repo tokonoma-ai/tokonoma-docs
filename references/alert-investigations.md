@@ -103,7 +103,7 @@ Rendering fails and names the missing value if the runner lacks its sibling, a s
 
 ## Wire up Alertmanager
 
-Preserve every paging receiver and route. Add a separate runner route with `continue: true` so runner downtime cannot block paging. Select eligible alerts in your existing Alertmanager configuration.
+Preserve every paging receiver and route. Add a separate runner route with `continue: true` so runner downtime cannot block paging. Forward all alerts from your existing Alertmanager configuration. The runner applies investigation controls after delivery.
 
 ### Raw Alertmanager
 
@@ -114,7 +114,6 @@ route:
   receiver: oncall
   routes:
     - receiver: toko-runner
-      matchers: [severity =~ "critical|warning"]
       continue: true          # let the alert also reach oncall
     - receiver: oncall
 receivers:
@@ -131,7 +130,7 @@ Mount `toko-alertmanager`, or your `runner.sources.alertmanager.tokenSecretRef`,
 
 ### prometheus-operator (`AlertmanagerConfig`)
 
-Operator-managed Alertmanager reads the Secret directly. Save `alertmanagerconfig-tokonoma.yaml` in the working directory. Confirm your operator selects this namespace and resource before applying:
+Operator-managed Alertmanager reads the Secret directly. Check its namespace-matching policy so the rendered route covers all intended alerts. Save `alertmanagerconfig-tokonoma.yaml` in the working directory. Confirm your operator selects this namespace and resource before applying:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1alpha1
@@ -142,10 +141,6 @@ metadata:
 spec:
   route:
     receiver: toko-runner
-    matchers:
-      - name: severity
-        matchType: =~
-        value: critical|warning
     continue: true
   receivers:
     - name: toko-runner

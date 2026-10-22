@@ -37,4 +37,6 @@ The native [Tokonoma Slack app](slack-app.md) connects outbound through Socket M
 
 Alertmanager running in your cluster can call the runner's private Service. External Grafana Cloud or Datadog senders need an approved inbound HTTPS route. Select only the required webhook paths, configure their bearer tokens, and test that unauthenticated requests are denied. The runner's bearer tokens are separate from MCP OAuth.
 
+Datadog can use a [separate webhook route](datadog-alerts.md#separate-webhook-route-private-mcp) while MCP stays private. Keep both chart ingress switches disabled and route only `/webhooks/datadog` to `toko-runner:8080`. This does not require MCP OAuth while MCP remains restricted to trusted private clients. To share an existing authenticated MCP hostname instead, use the [shared route](datadog-alerts.md#shared-authenticated-mcp-ingress).
+
 Cloud-hosted MCP clients, including Claude in Slack, cannot use your laptop's `127.0.0.1` or a private cluster address unless that service has supported connectivity to it. Follow [Claude in Slack](claude-in-slack.md) for a reachable authenticated endpoint.
