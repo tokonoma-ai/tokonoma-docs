@@ -59,9 +59,9 @@ Prepare an Anthropic credential for memory analysis, model credentials for the r
 
 ## Give these instructions to your agent
 
-Download the whole repository and open it in your agent's workspace with any values files you have already prepared or received. Keep `SKILL.md`, `references/`, and `examples/` together, then give the agent this request:
+Give your agent this request, along with any values files you have already prepared or received:
 
-> Read SKILL.md and install Tokonoma with Agentic Monitoring and automatic investigations enabled. Use any supplied values files, identify the intended cluster, and check for an existing installation before making changes. Preserve saved integration and monitoring settings and ask me about missing inputs or conflicts. Finish when deployment health checks pass, leaving monitoring setup and investigations running in the background.
+> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and install Tokonoma with Agentic Monitoring and automatic investigations enabled. Use any supplied values files, identify the intended cluster, and check for an existing installation before making changes. Preserve saved integration and monitoring settings and ask me about missing inputs or conflicts. Finish when deployment health checks pass, leaving monitoring setup and investigations running in the background.
 
 Use an authorized workstation and handle sign-ins, credentials, and administrator-only actions when the agent asks. Supply secrets through protected files or Kubernetes Secret references; never paste them into chat.
 
