@@ -2,7 +2,7 @@
 
 Tokonoma monitors your services, detects significant changes, and automatically investigates findings and alerts using your observability tools. Engineers can collaborate through Slack and coding agents. Saved findings and procedures help each investigation build on what your team has learned.
 
-Agentic Monitoring checks telemetry without waiting for an alert. Tokonoma also receives your full alert stream from connected sources for automatic investigation. You control integration access and Slack channels. Both capabilities are enabled in the installation example.
+Agentic Monitoring checks telemetry without waiting for an alert. Tokonoma also receives your full alert stream from connected sources for automatic investigation. You control integration access and Slack channels.
 
 ```mermaid
 flowchart LR
@@ -37,17 +37,15 @@ flowchart LR
   style Connections fill:#f8fafc,stroke:#cbd5e1,color:#334155
 ```
 
-Arrows show who opens each external connection; responses and Slack events return over it. Incoming alerts represent the full customer alert stream. Investigation guardrails manage duplicates, concurrency, and model spend.
-
 ## What you will install
 
-Your agent connects through the Model Context Protocol (MCP). The installation includes the Tokonoma MCP service, the required runner and its dedicated MCP instance, PostgreSQL for records and state, and Ollama for local search embeddings (numeric representations of text). PostgreSQL is bundled unless you configure an external database.
+The installation includes the Tokonoma MCP service, the required runner and its dedicated MCP instance, PostgreSQL for records and state, and Ollama for local search embeddings (numeric representations of text).
 
-The [installation guide](references/install.md) uses the published Helm chart and one `values.yaml` for these services and your [selected integrations](references/integrations.md). Connect Datadog, Axiom, or other compatible MCP tools for telemetry and code access. The guide uses the chart's image defaults without requiring a specific release version or access to the application source.
+The [installation guide](references/install.md) uses the published Helm chart and one `values.yaml` for these services and your [selected integrations](references/integrations.md). Connect compatible MCP tools for telemetry and code access. The guide uses the chart's image defaults without requiring a specific release version or access to the application source.
 
-Model providers can receive investigation context. A hosted coding agent can also send retrieved records to its own provider. See [data flows](references/data-flows.md) for callers, destinations, and network requirements.
+Model providers can receive investigation context. See [data flows](references/data-flows.md) for callers, destinations, and network requirements.
 
-| Optional capability | What it adds | Start here |
+| Capability | What it adds | Start here |
 | --- | --- | --- |
 | Slack | Use `@Tokonoma` in invited channels and receive investigation results | [Slack setup](references/slack-app.md) |
 | Shared team access | A stable endpoint with network access and user authentication | [Private and team access](references/private-access.md) |
@@ -55,13 +53,13 @@ Model providers can receive investigation context. A hosted coding agent can als
 
 ## Before you start
 
-Tokonoma is installed on Kubernetes. You need a cluster for Tokonoma, workload and storage permissions, and a Tokonoma license. Your monitored applications do not need to run in that cluster. Cloud preparation guides cover AWS and Google Cloud. Required memory analysis uses an Anthropic credential. The runner needs model credentials, an alert-source token, and telemetry query access. Check the supported [monitoring scope](references/agentic-monitoring.md) before filling in cluster and namespace settings. See the [prerequisite checks](references/install.md#before-installing).
+Tokonoma is installed on Kubernetes. You need a cluster for Tokonoma, workload and storage permissions for your cloud, and a Tokonoma license. Applications you want to monitor do not need to run in that cluster. Cloud preparation guides cover AWS and Google Cloud. Memory analysis uses an Anthropic credential. The runner also uses the same model credentials, an alert-source configured, and telemetry query access. Check the supported [monitoring scope](references/agentic-monitoring.md) before filling in cluster and namespace settings. See the [prerequisite checks](references/install.md#before-installing).
 
-The walkthrough uses bundled PostgreSQL, a temporary local connection, and Slack for runner results. You need permission to install the Slack app and obtain its tokens. If you want an external database or a shared endpoint, prepare it before installing. Changing a database address does not move data.
+The walkthrough uses bundled PostgreSQL, a temporary local connection, and Slack for runner results. You need permission to install the Slack app and obtain its tokens. If you want an external database or a shared endpoint, prepare it before installing. Changing a database address does not migrate the data.
 
 ## Choose how to install
 
-**With an agent:** download the whole repository, open it in your agent's workspace, and add your known cluster and features to this request:
+**Recommended: With an agent** download the whole repository, open it in your agent's workspace, and add your known cluster and features to this request:
 
 > Read SKILL.md and help me install Tokonoma with agentic monitoring and automatic investigations enabled. Identify the intended cluster and whether an installation already exists. Check my saved integration and monitoring settings, then ask for missing inputs before making changes. Finish once the deployment is running and health checks pass; leave monitoring setup and investigations running in the background.
 
