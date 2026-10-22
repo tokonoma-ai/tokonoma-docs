@@ -1,6 +1,6 @@
 # Credentials and license
 
-Prepare these credentials before [installation](install.md#2-prepare-your-files). Enter their values directly in the command examples, or reuse existing Kubernetes Secrets.
+Prepare credentials for the current [installation phase](install.md#2-prepare-your-files). Enter their values directly in the command examples, or reuse existing Kubernetes Secrets.
 
 ## What you need
 
@@ -10,7 +10,7 @@ Prepare these credentials before [installation](install.md#2-prepare-your-files)
 | Anthropic API key | Your Anthropic account | `credentials.anthropicApiKey` | Server-side memory analysis, Slack questions and timelines, and the runner |
 | Slack bot token (`xoxb-`) | Your Slack app's **Install App** page | `credentials.slackBotToken` | Reading invited channels and posting as `@Tokonoma` |
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
-| Runner client ID and secret | Dedicated machine client from your [identity provider](oauth.md#1-prepare-the-provider) | `mcp.auth.clients`, `runner.tokoMcp.oauthClientSecretRef`, and the example's `mcp.extraEnv` references | Authenticated runner and local Setup/Monitoring UI access during phase 1 |
+| Runner client ID and secret | Dedicated machine client from your [identity provider](oauth.md#1-prepare-the-provider) | `mcp.auth.clients`, `runner.tokoMcp.oauthClientSecretRef`, and `mcp.extraEnv` | When MCP authentication is enabled, normally phase 2; see [runner credential setup](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) |
 
 Add only the credentials required by your selected [telemetry connection](integrations.md#mcp-connections), such as a Grafana Viewer token or a provider's API credentials. Telemetry query access is required while either automatic feature is enabled. Reuse existing working connections and Secrets.
 

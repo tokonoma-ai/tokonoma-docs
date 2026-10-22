@@ -28,7 +28,7 @@ Prepare the runner in your saved `values.yaml`. Follow [credential setup](creden
 |---|---|---|
 | `REPLACE_WITH_ALERTMANAGER_TOKEN` | High-entropy shared token created by the operator and also configured on the sender | Alertmanager or Grafana alerts |
 | `REPLACE_WITH_GRAFANA_URL`, `REPLACE_WITH_GRAFANA_VIEWER_TOKEN` | Existing Grafana URL and Viewer service-account token with the required data-source permissions | Grafana MCP adapter |
-| `REPLACE_WITH_RUNNER_CLIENT_ID`, `REPLACE_WITH_RUNNER_CLIENT_SECRET` | Dedicated runner credentials from the selected [identity provider](oauth.md) | MCP authentication enabled |
+| `REPLACE_WITH_RUNNER_CLIENT_ID`, `REPLACE_WITH_RUNNER_CLIENT_SECRET` | Dedicated runner credentials from the selected [identity provider](oauth.md) | Phase 2, or existing MCP authentication |
 | `REPLACE_WITH_WEBHOOK_HOSTNAME` | Approved HTTPS hostname from the platform team for the selected webhook route or relay | External alert sender |
 | `REPLACE_WITH_MCP_HOSTNAME`, `REPLACE_WITH_TLS_SECRET_NAME` | Existing MCP hostname and TLS Secret from [ingress setup](public-mcp-ingress.md) | Shared MCP Ingress example only |
 
@@ -42,11 +42,11 @@ openssl rand -hex 32
 
 Copy the printed value into `REPLACE_WITH_ALERTMANAGER_TOKEN` in the installation command and configure the same value on the sender.
 
-For externally managed Secrets or offline rendering, follow [credentials](credentials.md#use-existing-kubernetes-secrets). If `mcp.auth` is enabled, configure the runner credential below.
+For externally managed Secrets or offline rendering, follow [credentials](credentials.md#use-existing-kubernetes-secrets). A new phase 1 installation keeps MCP private with authentication disabled and needs no runner OAuth credentials. Prepare the credentials below in phase 2 before enabling MCP authentication. Preserve existing authentication and credentials on upgrades.
 
 ## Prepare runner credentials when MCP authentication is enabled
 
-Use a dedicated Cognito machine-to-machine app client and its ID and secret. Follow [OAuth](oauth.md) to configure its domain, resource-server scope and client-credentials flow. Keep [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) alongside Cognito for individual human sign-in.
+In phase 2, use a dedicated Cognito machine-to-machine app client and its ID and secret. Follow [OAuth](oauth.md) to configure its domain, resource-server scope and client-credentials flow. Keep [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) alongside Cognito for individual human sign-in.
 
 For the legacy Google Identity Platform/Firebase verifier, enable Email/Password and create a dedicated runner account. Its email is the runner's client ID and its password is the client secret. Google OAuth app credentials do not work.
 
@@ -60,9 +60,30 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic to
   --from-literal='clientSecret=REPLACE_WITH_RUNNER_CLIENT_SECRET'
 ```
 
-Expected output: `secret/toko-runner-oauth created`. The [values example](../examples/values.yaml) references it for both the runner and the local Setup/Monitoring UI. If using a different Secret, update both references. Merge this into `values.yaml`, retaining the full identity-provider settings in that file:
+Expected output: `secret/toko-runner-oauth created`. Merge this phase 2 configuration into `values.yaml`, retaining the full identity-provider settings and other `mcp.extraEnv` entries. It supplies the runner's login and lets the local Setup/Monitoring UI use the same identity for authenticated actions. If using a different Secret, update every reference:
 
 ```yaml
+mcp:
+  auth:
+    enabled: true
+    clients:
+      - id: REPLACE_WITH_RUNNER_CLIENT_ID
+        origin: external
+        enabled: true
+        grantTypes: [client_credentials]
+        scopes: [toko-mcp/query]
+        tokenEndpointAuthMethod: client_secret_post
+  extraEnv:
+    - name: TOKO_RUNNER_OAUTH_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: toko-runner-oauth
+          key: clientId
+    - name: TOKO_RUNNER_OAUTH_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: toko-runner-oauth
+          key: clientSecret
 runner:
   tokoMcp:
     oauthClientSecretRef:
@@ -192,7 +213,7 @@ runner:
     webhookPaths: [/webhooks/alertmanager]
 ```
 
-Configure the identity provider and runner OAuth client before applying public routing. Keep their complete configuration in the same `values.yaml`. Replace the host/TLS reference and configure your existing controller using
+Complete [OAuth](oauth.md) and the [runner and local UI credentials](#prepare-runner-credentials-when-mcp-authentication-is-enabled) before applying public routing. Keep their complete configuration in the same `values.yaml`. Replace the host/TLS reference and configure your existing controller using
 [Public MCP Ingress](public-mcp-ingress.md). This adds an `Exact` rule for
 `/webhooks/alertmanager` to that MCP Ingress, forwarding to `toko-runner:8080`.
 It does not enable the runner by itself. For Datadog-only exposure, use the

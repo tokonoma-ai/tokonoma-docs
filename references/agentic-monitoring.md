@@ -41,6 +41,8 @@ If setup stopped, correct the reported configuration or access problem. To reque
 @Tokonoma detectors setup
 ```
 
+Automatic setup and these Slack commands work without MCP OAuth in a new phase 1 installation. The local monitoring views remain readable; finding feedback in the UI requires the phase 2 authentication settings.
+
 ## Read the monitoring views
 
 Use the local connection from [installation](install.md#4-verify), then open [the local UI](http://localhost:8000/ui/) and choose **Agentic Monitoring**:

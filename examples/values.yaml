@@ -15,21 +15,11 @@ mcp:
   #   name: REPLACE_WITH_LICENSE_SECRET_NAME
   #   key: REPLACE_WITH_LICENSE_SECRET_KEY
   auth:
-    # Phase 1: authenticated local access; prepare the provider and runner login first.
-    # Use references/oauth.md for the Google alternative or existing settings.
-    enabled: true
-    baseUrl: http://localhost:8000
-    provider: cognito
-    cognito:
-      region: REPLACE_WITH_AWS_REGION
-      userPoolId: REPLACE_WITH_COGNITO_USER_POOL_ID
-      domainPrefix: REPLACE_WITH_COGNITO_DOMAIN_PREFIX
-    clients:
-      - id: REPLACE_WITH_RUNNER_CLIENT_ID
-        origin: external
-        grantTypes: [client_credentials]
-        scopes: [toko-mcp/query]
-        tokenEndpointAuthMethod: client_secret_post
+    # Phase 1: local operator access, with MCP kept inside the cluster.
+    # Phase 2: configure authentication and runner credentials using references/oauth.md.
+    # Keep supplied or existing authentication when adapting this example.
+    enabled: false
+    provider: none
   ingress:
     # Use a local port-forward first. Public access needs TLS and authentication.
     enabled: false
@@ -46,19 +36,6 @@ mcp:
     # apiKeySecret:
     #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
     #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
-  # The local Setup/Monitoring UI uses the same machine login as the runner.
-  extraEnv:
-    - name: TOKO_RUNNER_OAUTH_CLIENT_ID
-      valueFrom:
-        secretKeyRef:
-          name: toko-runner-oauth
-          key: clientId
-    - name: TOKO_RUNNER_OAUTH_CLIENT_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: toko-runner-oauth
-          key: clientSecret
-
   # Slack: follow references/slack-app.md and supply both Slack tokens in the command.
   # Uncomment this section and runner.destinations.slackApp below for Slack results.
   # slack:
@@ -132,13 +109,8 @@ runner:
   #   slackApp:
   #     enabled: true
 
-  # Create this Secret using references/alert-investigations.md before installing.
-  # Its client ID must match mcp.auth.clients above. Keep an existing working reference.
-  tokoMcp:
-    oauthClientSecretRef:
-      name: toko-runner-oauth
-      clientIdKey: clientId
-      key: clientSecret
+  # Phase 2 adds the MCP login and UI credentials together; see references/oauth.md.
+  # Omit OAuth credential references while MCP authentication is disabled.
 
   # Uncomment mcpServers and only the connections you use. Keep one combined list.
   # Remote HTTP MCP: Datadog, Axiom or another compatible telemetry/code provider.

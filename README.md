@@ -51,7 +51,7 @@ Follow these steps yourself, or [give the instructions below to your agent](#3-g
 
 ### Phase 1: installation
 
-MCP stays inside your cluster during this phase. Use a local port-forward for operator access.
+MCP stays inside your cluster during this phase. Use a local port-forward for operator access. Authentication and the runner's machine login come in phase 2.
 
 #### 1. Choose the cluster and prepare your keys
 
@@ -59,9 +59,7 @@ Choose the Kubernetes context, release name, and installation namespace with you
 
 Get your Tokonoma license and Anthropic API key using the [credential guide](references/credentials.md). The same API key serves the runner and memory analysis. Review the [external data flows](references/data-flows.md#model-and-integration-connections) for your selected connections.
 
-#### 2. Connect the runner and Slack
-
-Prepare the [runner's machine login](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled), including its dedicated client ID and secret and [provider settings](references/oauth.md#1-prepare-the-provider). This login is needed now, while MCP is still private. Human sign-in comes in phase 2.
+#### 2. Connect Slack
 
 Create the [Slack app](references/slack-app.md#create-the-app) from our [manifest](examples/slack-app-manifest.yaml). Obtain its bot token and app-level token with `connections:write`, then invite `@Tokonoma` to your investigations channel.
 
@@ -89,13 +87,13 @@ Follow the [installation checks](references/install.md#check-monitoring-and-inte
 
 ### Phase 2: shared engineer access
 
-Choose the engineers and coding agents that will connect. Set up the shared HTTPS hostname, routing, and employee sign-in using [team access](references/private-access.md). Reuse the runner's phase 1 login.
+Choose the engineers and coding agents that will connect. Follow [team access](references/private-access.md) to configure the shared HTTPS hostname, routing, and employee sign-in. Configure [MCP authentication](references/oauth.md) and the [runner's machine login](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) before sharing access.
 
 ## 3. Give these instructions to your agent
 
 Give your agent this request, along with any values files or supporting files you have already prepared or received:
 
-> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and the guides linked from the README's installation walkthrough. Reuse supplied files and existing configuration, then ask for all remaining phase 1 inputs, conflicts, setup choices, and test-alert approval in one batch. Install the standard setup with Agentic Monitoring, automatic investigations, Slack, and the runner's machine login. Keep MCP private. Complete phase 1 only after deployment health passes, detector setup completes and checks are running, and connected alerts produce completed automatic investigations with saved results and Slack delivery. Report incomplete checks and customer-selected opt-outs. Then configure shared hostname, routing, and human sign-in for phase 2 if requested. Merge supplied values and preserve existing choices, including authentication. Check for an existing installation and prepare required access before changing the cluster. Record any deployment-event connection that still needs follow-up.
+> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and the guides linked from the README's installation walkthrough. Reuse supplied files and existing configuration, then ask for all remaining phase 1 inputs, conflicts, setup choices, and test-alert approval in one batch. Install the standard setup with Agentic Monitoring, automatic investigations, and Slack. Keep MCP private. For a new phase 1 installation without supplied authentication, leave MCP authentication disabled. Complete phase 1 only after deployment health passes, detector setup completes and checks are running, and connected alerts produce completed automatic investigations with saved results and Slack delivery. Report incomplete checks and customer-selected opt-outs. Configure MCP authentication and the runner's machine login in phase 2 before sharing access, then add the shared hostname, routing, and human sign-in if requested. Merge supplied values and preserve existing choices, including authentication. Check for an existing installation and prepare required access before changing the cluster. Record any deployment-event connection that still needs follow-up.
 
 Use an authorized workstation and handle sign-ins, credentials, and administrator-only actions when the agent asks. Replace secret placeholders and run those commands locally, or use existing Kubernetes Secret references. Never paste secrets or filled commands into chat.
 
