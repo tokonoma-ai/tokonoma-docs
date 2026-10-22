@@ -5,7 +5,7 @@
 # Setup: ../references/slack-app.md
 display_information:
   name: Tokonoma
-  description: Your expertise for every agent.
+  description: Your reliability and observability teammate.
   background_color: "#140B03"
 
 features:
