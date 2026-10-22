@@ -5,7 +5,7 @@ description: Install, configure, connect, upgrade, troubleshoot, or remove a cus
 
 # Operate a Tokonoma installation
 
-Follow the same [customer guides](README.md#read-the-documentation) that people use. Resolve every documentation path from this skill's directory.
+Follow the shared customer guides in `references/`. Resolve every documentation path from this skill's directory.
 
 ## Rules for every step
 
@@ -27,11 +27,11 @@ Identify the task, authorized kubeconfig context, release name, and namespace fr
 
 Read every supplied or saved values file and supporting file, including comments, in the order they are applied. Note the configured integrations, monitoring scope, access routes, and Secret references. Settings in the public example are not evidence of the customer's choices.
 
-The runner and memory analysis are required. Follow the [README walkthrough](README.md#2-install-tokonoma) and its linked guides. Install in two phases: first get monitoring, automatic investigations, and Slack working with MCP inside the cluster; then add authentication and shared team access. Use bundled PostgreSQL and enable both automatic features for new installations, even when chart defaults are off. Preserve supplied or existing authentication and access routes. Include automatic-feature opt-outs in the batch below and preserve supplied choices unless the customer requests a change. Follow the [feature choices](references/install.md#choose-automatic-features) for those opt-outs. Enable optional additions only when selected.
+The runner and memory analysis are required. Follow the [installation approach](README.md#what-to-expect) and the guides below. Install in two phases: first get monitoring, automatic investigations, and Slack working with MCP inside the cluster; then add authentication and shared team access. Use bundled PostgreSQL and enable both automatic features for new installations, even when chart defaults are off. Preserve supplied or existing authentication and access routes. Include automatic-feature opt-outs in the batch below and preserve supplied choices unless the customer requests a change. Follow the [feature choices](references/install.md#choose-automatic-features) for those opt-outs. Enable optional additions only when selected.
 
 ## 3. Ask for what is missing
 
-Before asking, read the installation prerequisites, credential inputs, and guides for all configured or proposed connections. Collect their missing inputs and conditional requirements from supplied files and inspected configuration. Reuse known answers; do not treat example values as customer choices. The human walkthrough is progressive; prepare the agent's question batch across all selected steps before changing the cluster. Ask for shared-access inputs only when that setup is requested.
+Before asking, read the installation prerequisites, credential inputs, and guides for all configured or proposed connections. Collect their missing inputs and conditional requirements from supplied files and inspected configuration. Reuse known answers; do not treat example values as customer choices. Prepare the question batch across all selected steps before changing the cluster. Bring relevant instructions and commands into the conversation as needed so the customer can follow along without navigating the guides. Ask for shared-access inputs only when that setup is requested.
 
 Ask for all currently missing inputs, conflicts, optional selections, automatic-feature opt-outs, and approval for a source-side test alert in one batch before changing the cluster. Include the default-feature question in that batch rather than asking it separately. For actions only a person can do, such as getting a license, signing in, or approving an app, say what to do and how to check it is done. Ask a follow-up only when a later answer or inspection reveals a new requirement or conflict; explain what changed.
 
