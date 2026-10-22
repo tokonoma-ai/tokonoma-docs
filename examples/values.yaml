@@ -143,6 +143,7 @@ runner:
   # Uncomment mcpServers and only the connections you use. Keep one combined list.
   # Remote HTTP MCP: Datadog, Axiom or another compatible telemetry/code provider.
   # Get the endpoint and exact read-only tool names from the provider; no mcp__ prefix.
+  # List read-only tools only: unattended Agentic Monitoring can call every listed tool.
   # Use a unique lowercase name; reserve toko and the bundled adapter's grafana name.
   # Provider examples and credential setup: references/integrations.md#mcp-connections.
   # mcpServers:
