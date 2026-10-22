@@ -47,28 +47,35 @@ The Anthropic API receives investigation context; the [data flows guide](referen
 
 ## 2. Before you start
 
-Tokonoma runs on Kubernetes, so you need a cluster, workload and storage permissions for your cloud, and a Tokonoma license. The applications you monitor can run elsewhere; your agent should review the supported [monitoring scope](references/agentic-monitoring.md) before configuring clusters and namespaces. The AWS and Google Cloud preparation guides and [prerequisite checks](references/install.md#before-installing) help identify missing infrastructure and access.
+Use this checklist for the whole installation. Your agent first reads supplied files and existing configuration, then asks for all missing inputs, choices, and conflicts in one batch. Keep confirmed answers with your saved configuration.
 
-Prepare an Anthropic API key for memory analysis and the runner, and access to an alert source. Telemetry query access is required while Agentic Monitoring or automatic investigations are enabled. The walkthrough uses bundled PostgreSQL and a temporary local connection. If you choose an [external database](references/external-postgres.md), have the agent prepare it before installing; changing a database address does not migrate existing data.
+The standard setup includes Agentic Monitoring, automatic investigations, and Slack. Include any phased-setup choices in the same batch; preserve choices already made in supplied or existing configuration.
+
+| When needed | Item | What to prepare |
+| --- | --- | --- |
+| Required | Deployment target and owner | Cloud provider, authorized Kubernetes context, release name, installation namespace, and who will install. Confirm workload, storage, capacity, and network access using the [prerequisite checks](references/install.md#1-check-prerequisites). |
+| Required | License and Anthropic API key | Your issued Tokonoma license and an Anthropic API key for both memory analysis and the runner. If using an existing key Secret, configure it for both consumers. Review and approve the selected [external data flows](references/data-flows.md#model-and-integration-connections). |
+| Agentic Monitoring enabled | Monitoring scope | Provide the target **cluster name you want Tokonoma to monitor**, using the name recorded in your telemetry. Optionally specify a namespace restriction. Without a restriction, deliberately select all namespaces, including system ones. See [monitoring inputs](references/agentic-monitoring.md#prepare-the-inputs). |
+| Monitoring or investigations enabled | Telemetry query access | For each connected system's MCP, provide its full endpoint, region/site or organization and dataset identifiers, authentication, credentials, and exact permitted read-only tools. Include logs, metrics, traces, existing alert definitions, and Kubernetes events/entities where available. See the [provider examples](references/integrations.md#mcp-connections). For the bundled [Grafana MCP adapter](references/alert-investigations.md#install-with-oss-grafana-mcp), supply the existing Grafana URL and Viewer service-account credential with data-source access; the chart connects its MCP automatically. |
+| Standard setup | Slack | An app owner with creation/install permissions; app created from our [manifest](examples/slack-app-manifest.yaml); bot token and app-level token with `connections:write`; investigations channel with `@Tokonoma` invited. Follow [Slack setup](references/slack-app.md#create-the-app) before installing. |
+| Required | Existing alert investigations | Alert provider, where rules/routing are configured, configuration owner, existing destinations to preserve, and Tokonoma's delivery route and authentication. If no existing alerts, say **none**; the chart still requires a supported receiver token. See [Alertmanager](references/alert-investigations.md#before-you-start) or [Datadog](references/datadog-alerts.md). |
+| Required | Deployment watching | Deployment system and release-event source, such as telemetry annotations, Kubernetes events, or a webhook; relevant repository/workflow and permitted access. For Axiom annotations, include annotation read access. Confirm the supported connection with Tokonoma; GitHub MCP code access does not configure deployment-event delivery. |
+| MCP authentication enabled | Internal runner login | Dedicated machine-client ID and secret, identity-provider settings, and the runner's credential Secret reference. Human SAML sign-in alone is insufficient. Prepare these before enabling authentication using [runner credentials](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). The default private, unauthenticated setup needs no separate runner login. |
+| Optional | Shared engineer access | Coding agents in use, intended users, preferred HTTPS hostname, DNS/TLS owner, employee sign-in provider, and administrator contact. Follow [private and team access](references/private-access.md); authentication also requires the runner login above. |
+| Optional | Code access | Approved repositories, relevant directory paths, and permitted code/history access. The [GitHub guide](references/integrations.md#github-example) covers read-only access and organization approval. |
+| Optional | Existing knowledge and tuning context | Runbooks, investigation skills, past incidents, and examples of healthy or unhealthy application behavior for [onboarding](references/coding-agents.md#3-onboard-your-coding-agent). |
+| Optional | Typesafe/Jev classification | Approval to send monitoring context to Typesafe, even when Tokonoma supplies the key, and whose key to use. Otherwise use the Anthropic default. Review the [additional data flow](references/data-flows.md#model-and-integration-connections) with Tokonoma. |
+| Optional | External database or telemetry storage | Prepare [external PostgreSQL](references/external-postgres.md) connection, permissions, and network access before installation, or the selected cloud storage and identity settings from [AWS](references/cloud-providers/aws.md) or [Google Cloud](references/cloud-providers/google-cloud.md). The walkthrough uses bundled PostgreSQL; changing a database address does not migrate data. |
 
 ## 3. Give these instructions to your agent
 
 Give your agent this request, along with any values files or supporting files you have already prepared or received:
 
-> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and install Tokonoma with Agentic Monitoring and automatic investigations enabled by default. Ask whether I want to turn either off. Merge any supplied custom values with the required settings and adapt the installation to the accompanying files. Identify the intended cluster and check for an existing installation before making changes. Preserve saved integration and monitoring settings and ask me about missing inputs or conflicts. Prepare telemetry access for the enabled features. Finish when deployment health checks pass, leaving enabled monitoring setup and investigations running in the background.
+> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and complete the README's Before you start checklist using supplied files and existing configuration. Ask for all remaining inputs, conflicts, and setup choices in one batch, including whether I want a phased setup. Install with Agentic Monitoring, automatic investigations, and Slack for the standard setup. Merge supplied custom values, preserve existing choices, and resolve the internal runner's credentials when MCP authentication is enabled. Check for an existing installation and prepare required access before changing the cluster. Finish when deployment health checks pass, leaving enabled monitoring setup and investigations running in the background. Record any deployment-event integration that needs follow-up with Tokonoma.
 
 Use an authorized workstation and handle sign-ins, credentials, and administrator-only actions when the agent asks. Supply secrets through protected files or Kubernetes Secret references; never paste them into chat.
 
-### After deployment
-
-Once Tokonoma is running, ask your agent to add any of the options below using the [configuration update guide](references/upgrading.md#before-changing-configuration). If an option is already selected in your values, the agent prepares its credentials during installation. Configure authentication before sharing an endpoint.
-
-| Capability | What it adds | Setup guide |
-| --- | --- | --- |
-| Slack | Use `@Tokonoma` in invited channels and receive investigation results | [Slack setup](references/slack-app.md) |
-| GitHub | Read permitted repositories and commit history during investigations | [GitHub setup](references/integrations.md#github-example) |
-| Shared team access | A stable endpoint with network access and user authentication | [Private and team access](references/private-access.md) |
-| Telemetry storage | Store and query telemetry in your own cloud infrastructure | [AWS](references/cloud-providers/aws.md), [Google Cloud](references/cloud-providers/google-cloud.md) |
+To add a capability later, use the [configuration update guide](references/upgrading.md#before-changing-configuration) with the same checklist. Configure authentication before sharing an endpoint.
 
 ## Read the documentation
 

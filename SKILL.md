@@ -18,7 +18,7 @@ Follow the same [customer guides](README.md#read-the-documentation) that people 
 
 ## 1. Identify the target
 
-Confirm the task, the authorized kubeconfig context, the release name, and the namespace. Check for an existing release using the [prerequisite checks](references/install.md#1-check-prerequisites). A permission error does not mean the namespace is empty.
+Identify the task, authorized kubeconfig context, release name, and namespace from supplied files and inspected configuration. Check for an existing release using the [prerequisite checks](references/install.md#1-check-prerequisites) when the target is known. Carry unresolved target choices into the single question batch below. A permission error does not mean the namespace is empty.
 
 - No release: follow the new-installation path. Use the published chart and its image defaults.
 - Existing release: use its installed chart version and keep its image overrides, as described in [upgrading](references/upgrading.md#before-changing-configuration).
@@ -27,20 +27,17 @@ Confirm the task, the authorized kubeconfig context, the release name, and the n
 
 Read every supplied or saved values file and supporting file, including comments, in the order they are applied. Note the configured integrations, monitoring scope, access routes, and Secret references. Settings in the public example are not evidence of the customer's choices.
 
-The runner and memory analysis are required. For a new installation, default Agentic Monitoring and automatic investigations to enabled, even when the chart defaults are off. Ask: "Agentic Monitoring and automatic investigations are enabled by default. Would you like to turn either off for a phased setup?" If supplied or saved settings disable them, explain that choice and ask whether to keep it. Preserve it unless the customer requests a change. Follow the [feature choices](references/install.md#choose-automatic-features) for any opt-out.
-
-The default installation needs:
-
-- an Anthropic API key
-- at least one alert source: Alertmanager or Datadog
-- telemetry query access while either feature is enabled: a `kind: telemetry` entry in `runner.mcpServers`, or `grafanaMcp.enabled: true`
-- when Agentic Monitoring is enabled, the monitored cluster name and exact namespace names. An empty namespace list watches every namespace, including system namespaces.
-
-GitHub code access, Slack, shared team access, an external database, and cloud telemetry storage are optional. Summarize what is already configured, list the remaining options from the [integration guide](references/integrations.md), and ask whether the customer wants any of them. Enable an option only when the customer selects it.
+The runner and memory analysis are required. Use the [README checklist](README.md#2-before-you-start) as the single intake source. For a new installation, enable Agentic Monitoring, automatic investigations, and Slack for the standard setup, even when chart defaults are off. Include phased-setup choices in the batch below. Call out supplied or saved opt-outs and preserve them unless the customer requests a change. Follow the [feature choices](references/install.md#choose-automatic-features) for automatic-feature opt-outs. Enable optional additions only when selected.
 
 ## 3. Ask for what is missing
 
-Ask about missing required inputs, conflicts, and selected additions together, in one question where practical. For actions only a person can do, such as getting a license, signing in, or approving an app, say what to do and how to check it is done. Resolve missing inputs and conflicting targets before running anything that changes the cluster.
+Before asking, complete the [README checklist](README.md#2-before-you-start) from supplied files and inspected configuration. Read the relevant guides for the configured and proposed connections so their conditional inputs are included. Reuse known answers; do not treat example values as customer choices.
+
+Ask for all currently missing inputs, conflicts, optional selections, and phased-setup choices in one batch before changing the cluster. Include the default-feature question in that batch rather than asking it separately. For actions only a person can do, such as getting a license, signing in, or approving an app, say what to do and how to check it is done. Ask a follow-up only when a later answer or inspection reveals a new requirement or conflict; explain what changed.
+
+Check the internal runner's access explicitly. An existing Anthropic Secret must configure both `mcp.memoryLlm.apiKeySecret` and `runner.engine.apiKeySecret`; the shared `credentials.anthropicApiKey` input serves both automatically. When MCP authentication is enabled, include the dedicated [runner machine credential](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled), provider configuration, and `runner.tokoMcp.oauthClientSecretRef` in the batch. Declare the client in `mcp.auth.clients` with `client_credentials`, `toko-mcp/query`, and `client_secret_post` as described in that guide. Human SAML login and external telemetry credentials do not replace this login.
+
+Collect existing-alert and deployment-watching inputs even if there are no current alerts or deployment-event wiring needs follow-up with Tokonoma. The chart still requires at least one Alertmanager or Datadog receiver token. GitHub MCP reads code and history; it does not configure deployment-event delivery. Record unsupported wiring as a follow-up rather than claiming it is ready.
 
 If either automatic feature stays enabled, resolve missing telemetry endpoints, query tools, credentials, and access with the customer before applying changes. Alert webhooks and GitHub code access do not meet this prerequisite. Do not silently disable a feature or continue without its inputs. If the customer explicitly turns both off, record telemetry setup as a prerequisite for enabling them later.
 
