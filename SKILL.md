@@ -27,20 +27,22 @@ Confirm the task, the authorized kubeconfig context, the release name, and the n
 
 Read every supplied or saved values file and supporting file, including comments, in the order they are applied. Note the configured integrations, monitoring scope, access routes, and Secret references. Settings in the public example are not evidence of the customer's choices.
 
-The runner and memory analysis are required. The public example also enables agentic monitoring and automatic investigations. Together they need:
+The runner and memory analysis are required. For a new installation, default Agentic Monitoring and automatic investigations to enabled, even when the chart defaults are off. Ask: "Agentic Monitoring and automatic investigations are enabled by default. Would you like to turn either off for a phased setup?" If supplied or saved settings disable them, explain that choice and ask whether to keep it. Preserve it unless the customer requests a change. Follow the [feature choices](references/install.md#choose-automatic-features) for any opt-out.
+
+The default installation needs:
 
 - an Anthropic API key
 - at least one alert source: Alertmanager or Datadog
-- telemetry query access: a `kind: telemetry` entry in `runner.mcpServers`, or `grafanaMcp.enabled: true`
-- the monitored cluster name and exact namespace names. An empty namespace list watches every namespace, including system namespaces.
+- telemetry query access while either feature is enabled: a `kind: telemetry` entry in `runner.mcpServers`, or `grafanaMcp.enabled: true`
+- when Agentic Monitoring is enabled, the monitored cluster name and exact namespace names. An empty namespace list watches every namespace, including system namespaces.
 
-Slack, shared team access, an external database, and cloud telemetry storage are optional. Summarize what is already configured, list the remaining options from the [integration guide](references/integrations.md), and ask whether the customer wants any of them. Enable an option only when the customer selects it.
+GitHub code access, Slack, shared team access, an external database, and cloud telemetry storage are optional. Summarize what is already configured, list the remaining options from the [integration guide](references/integrations.md), and ask whether the customer wants any of them. Enable an option only when the customer selects it.
 
 ## 3. Ask for what is missing
 
 Ask about missing required inputs, conflicts, and selected additions together, in one question where practical. For actions only a person can do, such as getting a license, signing in, or approving an app, say what to do and how to check it is done. Resolve missing inputs and conflicting targets before running anything that changes the cluster.
 
-If the customer has no telemetry connection yet, continue with the installation and note it for the report in step 7.
+If either automatic feature stays enabled, resolve missing telemetry endpoints, query tools, credentials, and access with the customer before applying changes. Alert webhooks and GitHub code access do not meet this prerequisite. Do not silently disable a feature or continue without its inputs. If the customer explicitly turns both off, record telemetry setup as a prerequisite for enabling them later.
 
 ## 4. Build the values file
 
@@ -78,12 +80,13 @@ Use this template. Leave out credential values.
 Target:            <context> / <release> / <namespace>
 Versions:          chart <version>, application image <tag>
 Enabled features:  <list>
+Disabled features: <customer-selected opt-outs, or "none">
 Values files:      <paths, in the order applied>
 Credentials:       <file paths or Secret name and key, no values>
 Deployment health: <each check run and its result>
-Telemetry access:  <configured connections, or "none configured">; end-to-end access not yet validated
+Telemetry access:  <configured connections, or "deferred: both automatic features disabled">; end-to-end access not yet validated
 Follow-up checks:  <each optional check run and its result, or "none run">
 Remaining actions: <human or service actions, with links to the relevant guides>
 ```
 
-The telemetry line is information, not a failure. Change "not yet validated" only when a follow-up check showed telemetry data being queried, such as `@Tokonoma setup` reporting no missing access or a controlled investigation that used telemetry. Do not describe any untested feature as verified.
+Missing telemetry configuration blocks installation with either automatic feature enabled. End-to-end query checks remain optional follow-ups; change "not yet validated" only after a check actually queried telemetry. Do not describe any untested feature as verified.

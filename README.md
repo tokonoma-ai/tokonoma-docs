@@ -4,7 +4,7 @@
 
 Tokonoma monitors your services, detects significant changes, and automatically investigates findings and alerts using your observability tools. Engineers can work with it through Slack and coding agents, using saved findings and procedures to build on what the team has learned.
 
-Agentic Monitoring checks telemetry without waiting for an alert, while automatic investigations use the full alert stream from connected sources. You choose which integrations Tokonoma can access and where it posts in Slack.
+Agentic Monitoring checks telemetry without waiting for an alert, while automatic investigations use the full alert stream from connected sources. Both are enabled by default in this installation, and your agent will ask whether you want to turn either off for a phased setup. You choose which integrations Tokonoma can access and where it posts in Slack.
 
 ```mermaid
 flowchart LR
@@ -49,13 +49,13 @@ The Anthropic API receives investigation context; the [data flows guide](referen
 
 Tokonoma runs on Kubernetes, so you need a cluster, workload and storage permissions for your cloud, and a Tokonoma license. The applications you monitor can run elsewhere; your agent should review the supported [monitoring scope](references/agentic-monitoring.md) before configuring clusters and namespaces. The AWS and Google Cloud preparation guides and [prerequisite checks](references/install.md#before-installing) help identify missing infrastructure and access.
 
-Prepare an Anthropic API key for memory analysis and the runner, and access to an alert source and telemetry queries. The walkthrough uses bundled PostgreSQL and a temporary local connection. If you choose an [external database](references/external-postgres.md), have the agent prepare it before installing; changing a database address does not migrate existing data.
+Prepare an Anthropic API key for memory analysis and the runner, and access to an alert source. Telemetry query access is required while Agentic Monitoring or automatic investigations are enabled. The walkthrough uses bundled PostgreSQL and a temporary local connection. If you choose an [external database](references/external-postgres.md), have the agent prepare it before installing; changing a database address does not migrate existing data.
 
 ## 3. Give these instructions to your agent
 
 Give your agent this request, along with any values files or supporting files you have already prepared or received:
 
-> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and install Tokonoma with Agentic Monitoring and automatic investigations enabled. Merge any supplied custom values with the required settings and adapt the installation to the accompanying files. Identify the intended cluster and check for an existing installation before making changes. Preserve saved integration and monitoring settings and ask me about missing inputs or conflicts. Finish when deployment health checks pass, leaving monitoring setup and investigations running in the background.
+> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and install Tokonoma with Agentic Monitoring and automatic investigations enabled by default. Ask whether I want to turn either off. Merge any supplied custom values with the required settings and adapt the installation to the accompanying files. Identify the intended cluster and check for an existing installation before making changes. Preserve saved integration and monitoring settings and ask me about missing inputs or conflicts. Prepare telemetry access for the enabled features. Finish when deployment health checks pass, leaving enabled monitoring setup and investigations running in the background.
 
 Use an authorized workstation and handle sign-ins, credentials, and administrator-only actions when the agent asks. Supply secrets through protected files or Kubernetes Secret references; never paste them into chat.
 
@@ -66,6 +66,7 @@ Once Tokonoma is running, ask your agent to add any of the options below using t
 | Capability | What it adds | Setup guide |
 | --- | --- | --- |
 | Slack | Use `@Tokonoma` in invited channels and receive investigation results | [Slack setup](references/slack-app.md) |
+| GitHub | Read permitted repositories and commit history during investigations | [GitHub setup](references/integrations.md#github-example) |
 | Shared team access | A stable endpoint with network access and user authentication | [Private and team access](references/private-access.md) |
 | Telemetry storage | Store and query telemetry in your own cloud infrastructure | [AWS](references/cloud-providers/aws.md), [Google Cloud](references/cloud-providers/google-cloud.md) |
 

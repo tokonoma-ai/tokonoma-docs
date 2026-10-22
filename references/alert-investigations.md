@@ -77,7 +77,7 @@ runner:
 
 To query an existing Grafana, uncomment `grafanaMcp` in your saved [values file](../examples/values.yaml). Replace the Grafana URL and choose a protected Viewer token file or existing Secret reference. The private adapter requires Kubernetes 1.25+ and connects to the runner automatically.
 
-If you do not use Grafana, configure a [telemetry MCP connection](integrations.md#mcp-connections), such as Datadog or Axiom. Agentic monitoring needs query access; alert webhooks and code access alone are insufficient.
+If you do not use Grafana, configure a [telemetry MCP connection](integrations.md#mcp-connections), such as Datadog or Axiom. Automatic investigations and Agentic Monitoring require telemetry query access; alert webhooks and code access alone are insufficient.
 
 ### Apply the configuration
 
@@ -212,6 +212,14 @@ including auth, allowlists and rewrites: ensure they permit the intended
 sender and preserve its Authorization header. Chart routing does not enforce
 HTTPS or establish reachability. If using a separate ingress/relay, leave
 `runner.ingress.enabled: false` and configure that edge independently.
+
+## Pause automatic investigations
+
+If the customer opts out, set both `runner.guardrails.maxRunsPerDay` and `runner.guardrails.maxRunsPerDayCritical` to `0` in the saved values. The limits cover automatic investigations from incoming alerts and monitoring findings. Keep the runner enabled; manual investigation requests remain available. Applying this change restarts the runner and can interrupt active investigations.
+
+Agentic Monitoring still queries telemetry while `runner.detection.enabled` is true. Set it to `false` too if the customer wants both automatic features off. Follow the shared [configuration update guide](upgrading.md#before-changing-configuration) for an existing installation.
+
+To resume automatic investigations, first prepare telemetry access, then restore both previously chosen daily limits. If no prior limits were saved, read the selected chart's defaults and set both values explicitly; removing the zero overrides can preserve the installed zeros during an upgrade.
 
 ## Guardrails
 
