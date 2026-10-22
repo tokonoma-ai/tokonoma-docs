@@ -8,12 +8,12 @@ Create the Slack app and prepare its tokens before [installation](install.md#3-i
 
 You need permission to create and install a Slack app. Tokonoma does not need to be running yet. Allow outbound HTTPS to Slack's API at `slack.com:443` and secure WebSocket connections to the Socket Mode URL Slack returns. A proxy must support the WebSocket upgrade. Slack rotates that URL; do not pin one returned URL permanently. See [Slack's Socket Mode documentation](https://docs.slack.dev/apis/events-api/using-socket-mode/).
 
-Prepare a [protected token directory](credentials.md#supply-tokens-from-files) for the two tokens below.
+Follow [credential setup](credentials.md#supply-credentials-in-commands) when supplying the two tokens below.
 
 1. Open [Slack's app management page](https://api.slack.com/apps), choose **Create New App**, then **From a manifest**.
 2. Select your workspace and paste [slack-app-manifest.yaml](../examples/slack-app-manifest.yaml). Review the requested permissions and create the app.
-3. Under **Basic Information > App-Level Tokens**, generate a token with the `connections:write` scope. Save the `xapp-` token in your protected token directory as `slack-app-token.txt`.
-4. Under **Install App**, install the app to your workspace. Save the **Bot User OAuth Token** (`xoxb-`) as `slack-bot-token.txt`.
+3. Under **Basic Information > App-Level Tokens**, generate an `xapp-` token with the `connections:write` scope.
+4. Under **Install App**, install the app to your workspace and obtain the **Bot User OAuth Token** (`xoxb-`).
 
 For an existing app, update **App Manifest** with this manifest and reinstall the app to grant any added permissions. Save the current bot token; keep the app-level token unless you are rotating it.
 
@@ -21,21 +21,28 @@ The manifest enables Socket Mode, mentions, channel message events, feedback rea
 
 ## Save the connection settings
 
-In `values.yaml`, uncomment the Slack settings from the [example](../examples/values.yaml), including `runner.destinations.slackApp.enabled: true` for investigation results. Supply both token files through the complete [installation command](install.md#3-install). For existing Secrets, use `mcp.slack.tokenSecret` instead of the two Slack `--set-file` inputs.
+In `values.yaml`, uncomment the Slack settings from the [example](../examples/values.yaml), including `runner.destinations.slackApp.enabled: true` for investigation results. Supply both arguments below in the installation or configuration-change command, filling the token placeholders locally. The [installation example](install.md#3-install) already includes them:
+
+```sh
+  --set-literal 'credentials.slackBotToken=REPLACE_WITH_SLACK_BOT_TOKEN' \
+  --set-literal 'credentials.slackAppToken=REPLACE_WITH_SLACK_APP_TOKEN'
+```
+
+For existing Secrets, use `mcp.slack.tokenSecret` instead of the two Slack arguments.
 
 In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default results channel; set `mcp.slack.investigationsChannel` only for a different channel name.
 
-For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration), including any changed token files and preserving other credentials.
+For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration), including any changed token arguments and preserving other credentials.
 
 ## Verify the connection
 
-These connection checks are optional follow-ups after installation. Read the MCP logs on the administration workstation:
+When Slack is enabled, read the MCP logs on the administration workstation:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. You can test investigation delivery separately with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |

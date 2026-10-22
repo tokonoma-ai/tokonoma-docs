@@ -48,13 +48,11 @@ Use the local connection from [installation](install.md#4-verify), then open [th
 - **Coverage** shows the monitored entities, saved detector configuration, and status. Expand a row to read its purpose, query, and available evidence.
 - **Significant Findings** shows recorded findings and their associated investigations. Open the investigation record to read the result.
 
-Keep this read-only UI on the direct localhost connection. Opening a view does not start setup or activate checks.
+Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks. Submitting feedback on a finding requires [authentication](oauth.md).
 
 ## Verify monitoring
 
-These are optional follow-up checks after installation. Monitoring setup and evaluations run in the background; installation does not wait for them.
-
-A ready runner pod does not prove monitoring is working. Confirm that setup completed for the intended scope and that checks are active. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.
+A ready runner pod does not prove monitoring is working. When Agentic Monitoring is enabled, confirm that setup completed for the intended scope and detector evaluations are running. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.
 
 To check ongoing evaluations, use the runner port-forward in [runner verification](alert-investigations.md#check-the-deployment). From another terminal:
 

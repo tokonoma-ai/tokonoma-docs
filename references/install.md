@@ -2,7 +2,7 @@
 
 Install Tokonoma in an existing Kubernetes cluster using one `values.yaml`. The example includes the required MCP service, memory analysis, and runner, with agentic monitoring and automatic investigations enabled. The chart also installs PostgreSQL and Ollama.
 
-Ask whether the customer wants to turn either automatic feature off for a phased setup; follow [feature choices](#choose-automatic-features). The command below uses Anthropic and Alertmanager. Slack is optional. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
+Follow the [installation approach](../README.md#what-to-expect), including Slack. Ask whether the customer wants either automatic feature disabled; follow [feature choices](#choose-automatic-features) and preserve existing opt-outs. The command below uses Anthropic and Alertmanager. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
 Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Follow the [input conventions](#inputs-and-placeholders) before running commands.
 
@@ -11,10 +11,10 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | Decision | How to resolve it | Effect |
 | --- | --- | --- |
 | Target and existing deployment | Ask the cluster owner for the intended context; inspect the release below | New release: follow this guide. Existing release: [connect your agent](coding-agents.md), or use [upgrading](upgrading.md) for an intended deployment change. |
-| Database | Choose bundled PostgreSQL or have your database owner prepare [external PostgreSQL](external-postgres.md) | Prepare it before installing. Changing the address does not migrate data. |
-| Access | Choose a local connection for one operator, [private team access](private-access.md), or [public authenticated access](public-mcp-ingress.md) | The example starts with a local connection. Set up authentication and routing before exposing a shared endpoint. |
+| Database | Use bundled PostgreSQL for the standard installation. Prepare [external PostgreSQL](external-postgres.md) only when your organization requires it | Helm creates the bundled database credentials. Changing an existing database address does not migrate data. |
+| Access | Use a local operator connection. For shared access, follow [authentication](oauth.md) and [team access](private-access.md) | New installations keep MCP inside the cluster with authentication disabled. Preserve supplied or existing authentication. |
 | Analysis, monitoring, and investigations | Prepare an Anthropic API key; it serves both analysis and the runner. Choose the runner's alert sources and telemetry tools using [integrations](integrations.md). Set the monitored cluster and namespaces using [agentic monitoring](agentic-monitoring.md); inspect [data flows](data-flows.md) | Both automatic features require telemetry query access. Prepare access before running Helm; monitoring also needs its scope. |
-| Additional features | Choose Slack features, authentication, or cloud telemetry as needed | Follow any preparation required by the selected guide. |
+| Additional features | Choose code access or cloud telemetry storage as needed | Follow any preparation required by the selected guide. |
 
 Use one release per namespace: component names are fixed. Examples use release and namespace `tokonoma`; substitute assigned names consistently. Do not reuse an unrelated deployment's namespace.
 
@@ -26,7 +26,7 @@ Use one release per namespace: component names are fixed. Examples use release a
 | Helm 3.14 or later, `kubectl`, and `curl` | Your workstation's approved tool installation | `helm version --short`, `kubectl version --client`, and `curl --version` must run. |
 | Storage and workload permissions | Your platform team | A default StorageClass must provision PersistentVolumes; the namespace must allow the chart's workloads. |
 | Capacity and outbound network access | Your platform team | Review the released chart's resource requests and [network destinations](data-flows.md#network-destinations). |
-| Issued license | Your Tokonoma contact | Save it using [credentials and license](credentials.md#supply-tokens-from-files). |
+| Issued license | Your Tokonoma contact | Have it ready for the [installation command](#3-install). |
 
 ```sh
 kubectl config get-contexts REPLACE_WITH_KUBE_CONTEXT
@@ -52,16 +52,16 @@ If the registry reports an expired token, follow [registry troubleshooting](trou
 
 ## 2. Prepare your files
 
-Work from an existing directory outside this checkout. Save nonsecret values there and credentials in a separate protected directory, outside shared or version-controlled folders.
+Work from an existing directory outside this checkout. Save nonsecret settings in `values.yaml`; enter credentials directly in commands or use existing Kubernetes Secret references.
 
 ### Inputs and placeholders
 
-Replace every `REPLACE_WITH_...` marker, including those inside paths and URLs. Edit commands directly; do not use shell exports or wrappers. Keep quotes around paths. Agents use verified values and ask for missing decisions or credential paths, never secret contents.
+Replace every `REPLACE_WITH_...` marker, including those inside paths and URLs. Edit commands directly; do not use shell exports or wrappers. Keep quotes around paths and credential values. If an agent is helping, fill secret placeholders and run those commands locally; do not paste secrets into chat. See [credential input](credentials.md#supply-credentials-in-commands).
 
 | Input | Meaning and source | Used by |
 | --- | --- | --- |
 | `REPLACE_WITH_DOCS_DIRECTORY` | Absolute path to this downloaded repository, including `references/` and `examples/` | Copying the supplied example |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Absolute protected directory you chose in the credential guide | Helm reads the license and selected credential files from this workstation |
+| Credential placeholders | License, keys, and tokens from their providers or owners | Replace directly in the command examples on your workstation |
 | `values.yaml` | Your saved or supplied customer configuration, completed using the example and chart defaults | Every install or upgrade command |
 
 Read YAML comments for settings and each guide's tables for provider inputs. Obtain identifiers from the provider or its administrator. Use hostnames your organization controls; `example.com` is illustrative. Keep provider template variables such as Datadog's `$ID` and `$TOKONOMA_TOKEN` intact.
@@ -89,12 +89,12 @@ Only when there are no supplied or existing values files, copy the example to yo
 cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 ```
 
-Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep credentials in protected files or existing Secrets.
+Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep raw credentials out of `values.yaml`; use command inputs or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). One Anthropic API key serves both analysis and the runner.
-2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
+2. Prepare [investigation tools and alert-source credentials](alert-investigations.md#before-you-start). Identify your alert senders, or record **none configured**; the current chart still requires a receiver token in either case. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
 3. If Slack is selected, use the [Slack app guide](slack-app.md#create-the-app) to prepare any missing app, tokens, or channel access, and configure Slack delivery in `values.yaml`.
-4. Merge any [external database](external-postgres.md), [authentication](oauth.md), [routing](public-mcp-ingress.md), or cloud telemetry settings into the same file. Complete their prerequisites first. Configure authentication before sharing access.
+4. Merge any selected [external database](external-postgres.md) or cloud telemetry settings into the same file. Preserve supplied or existing authentication and its [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled).
 
 Keep the commented source files for future changes; `helm get values` does not retain comments. Merge any further snippets using the same rules above.
 
@@ -107,13 +107,15 @@ helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma \
   oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --namespace tokonoma --create-namespace \
   --values values.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt" \
-  --set-file credentials.alertmanagerToken="REPLACE_WITH_SECRET_DIRECTORY/alertmanager-token.txt" \
+  --set-literal 'mcp.license=REPLACE_WITH_LICENSE' \
+  --set-literal 'credentials.anthropicApiKey=REPLACE_WITH_ANTHROPIC_API_KEY' \
+  --set-literal 'credentials.alertmanagerToken=REPLACE_WITH_ALERTMANAGER_TOKEN' \
+  --set-literal 'credentials.slackBotToken=REPLACE_WITH_SLACK_BOT_TOKEN' \
+  --set-literal 'credentials.slackAppToken=REPLACE_WITH_SLACK_APP_TOKEN' \
   --wait --timeout 10m
 ```
 
-Use only the credential inputs for your choices. Existing Secret references replace their matching `--set-file` arguments. For Datadog-only alerts, omit the Alertmanager token and retain the Datadog Secret reference. With Slack selected, add `--set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt"` and `--set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt"`, or use the Slack Secret reference. If Grafana is enabled, add `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"` or use its existing Secret option. Keep the analysis credential in every complete installation.
+Use only the credential inputs for your choices. Existing Secret references replace their matching `--set-literal` arguments. For Datadog-only alerts, omit the Alertmanager token and retain the Datadog Secret reference. Omit both Slack arguments if Slack is disabled or uses an existing Secret. If Grafana is enabled, add `--set-literal 'grafanaMcp.grafana.apiKey=REPLACE_WITH_GRAFANA_VIEWER_TOKEN'` or use its existing Secret option. Keep the analysis credential in every complete installation.
 
 Expect status `deployed`. Diagnose timeouts before retrying; do not uninstall to bypass errors. Helm stores the license in release metadata and a Secret. Restrict access to both.
 
@@ -138,17 +140,28 @@ After it reports `Forwarding from`, run this in **terminal B**:
 curl -fsS http://127.0.0.1:8000/health
 ```
 
-Expect `ok`. Installation is complete when Helm reports `deployed`, required workloads are ready, PVCs are Bound, and this health check passes. See [troubleshooting](troubleshooting.md) for failures.
+Expect `ok`. Helm status `deployed`, ready workloads, Bound PVCs, and this response complete the deployment health checks. Continue with monitoring and integrations below. See [troubleshooting](troubleshooting.md) for failures.
 
-Monitoring setup continues in the background. Do not wait for setup, evaluation results, or a completed investigation to finish installation. Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health. Record disabled features and whether end-to-end telemetry access has been validated. The telemetry connection and its credentials must be configured when either automatic feature is enabled; an end-to-end query check remains an optional follow-up. Report it as not yet validated until a check actually queries telemetry.
+Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health. Record disabled features and evidence from the checks below. Do not describe telemetry access as verified until a check actually queries it.
 
-## After installation
+### Check monitoring and integrations
 
-Use the guides below to connect clients and alert senders when needed. Feature tests are optional follow-ups and do not block installation completion.
+Check [analysis configuration](memory-llm.md), then complete these checks for enabled features:
+
+1. Confirm [monitoring setup and coverage](agentic-monitoring.md#verify-monitoring): setup completed for the intended scope, checks are active, and evaluation counters advance. Report inactive or degraded checks as coverage gaps.
+2. Complete the [Slack connection checks](slack-app.md#verify-the-connection) if enabled.
+3. Connect each selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender after the receiver is ready. Preserve existing paging routes.
+4. Follow [investigation verification](alert-investigations.md#check-it-works) with a real alert or approved source-side test. Confirm accepted delivery, a completed automatic investigation, its saved record, and configured Slack delivery. Do not create a production anomaly to test monitoring.
+
+Report incomplete setup, unconnected senders, and unverified investigations as blockers. If no sender is configured, report **none configured**; an unused receiver token does not verify delivery. Record explicit customer opt-outs separately.
+
+## Shared engineer access
+
+Configure [MCP authentication](oauth.md), including the [runner's machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled), before sharing access. Follow [team access](private-access.md) for the shared hostname, route, and human sign-in. Verify the runner still completes investigations, then complete a real login from the chosen coding agent.
 
 ### Connect and confirm memory access
 
-Follow [Connect a coding agent](coding-agents.md), using `http://127.0.0.1:8000/mcp` for the local path. Keep terminal A open. If you configured shared access, use its authenticated endpoint and complete a real login.
+This standalone memory check is optional. Follow [Connect a coding agent](coding-agents.md) using the chosen endpoint. An operator can also use `http://127.0.0.1:8000/mcp` with terminal A open.
 
 In a new session with the connected agent, ask:
 
@@ -157,16 +170,6 @@ In a new session with the connected agent, ask:
 Require a saved record identifier and matching full body. Search results and health checks are insufficient. The agent must use Tokonoma's tool definitions, not guess arguments.
 
 Optionally run `Run Tokonoma onboard.` to prepare investigation context. Review proposed records and file or hook changes before accepting them; see [onboarding](coding-agents.md#3-onboard-your-coding-agent).
-
-### Check monitoring and integrations
-
-Check [analysis configuration](memory-llm.md) and [monitoring setup and coverage](agentic-monitoring.md#verify-monitoring), then verify the runner with your selected integrations.
-
-1. Complete the [Slack connection checks](slack-app.md#verify-the-connection) if enabled.
-2. Add the selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender configuration after the receiver is ready. Preserve existing paging routes.
-3. Complete the runner guide's [verification](alert-investigations.md#check-it-works): send one approved test alert and confirm the completed investigation, saved record, and configured result delivery.
-
-Report any follow-up checks you perform separately from deployment health. Mark untested integrations as unverified; monitoring can still be setting up while the installation is running.
 
 ## Next steps
 

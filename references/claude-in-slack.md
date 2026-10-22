@@ -6,14 +6,14 @@ Complete [OAuth](oauth.md) and [public MCP](public-mcp-ingress.md) setup first. 
 
 ## Prerequisites
 
-Run commands from your [installation working directory](install.md) with AWS CLI and `jq`. Use the protected secret directory with `umask 077` and follow [input conventions](install.md#inputs-and-placeholders). Console steps run in Claude and Slack.
+Run commands from your [installation working directory](install.md) with AWS CLI and `jq`. Follow [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands). Console steps run in Claude and Slack.
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
 | `REPLACE_WITH_MCP_HOSTNAME` | Your verified public HTTPS deployment | Token check, connector and plugin |
 | `REPLACE_WITH_COGNITO_USER_POOL_ID` and `REPLACE_WITH_AWS_REGION` | Existing `mcp.auth.cognito` settings and the Cognito console | Before creating a dedicated client |
-| AWS account access and secret directory | Your platform team and installation record | Before CLI commands |
-| Client ID and secret | Protected files produced in step 2 | Claude connector; enter secrets only in its credential form |
+| AWS account access | Your platform team and installation record | Before CLI commands |
+| Client ID and secret | Cognito client created in step 2 | Token check and Claude connector |
 | Slack workspace, pilot channel and bundle access | Claude organization Owner and Slack administrator | Before enabling the integration |
 
 | Requirement | Why |
@@ -33,7 +33,7 @@ Use this organization-managed identity only in approved channels. Personal conne
 
 ## 2. Create a machine credential
 
-Claude Tag uses the OAuth 2.0 client credentials grant. Create a dedicated client in the Cognito pool configured by `mcp.auth.cognito.userPoolId` in [OAuth](oauth.md). Check the AWS account first:
+Claude Tag uses the OAuth 2.0 client credentials grant. Keep a working dedicated client, or create one in the Cognito pool configured by `mcp.auth.cognito.userPoolId` in [OAuth](oauth.md). Before creating one, check the AWS account:
 
 ```sh
 aws sts get-caller-identity
@@ -49,10 +49,10 @@ aws cognito-idp create-user-pool-client \
   --allowed-o-auth-flows client_credentials \
   --allowed-o-auth-scopes toko-mcp/query \
   --allowed-o-auth-flows-user-pool-client \
-  --region REPLACE_WITH_AWS_REGION > "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client.json"
+  --region REPLACE_WITH_AWS_REGION
 ```
 
-Use the correct pool ID; names can repeat and credentials from another pool are rejected. Protect the output containing `ClientId` and `ClientSecret`. The pool needs a Cognito domain and `toko-mcp/query` scope; see [OAuth](oauth.md).
+Use the correct pool ID; names can repeat and credentials from another pool are rejected. Copy `UserPoolClient.ClientId` and `UserPoolClient.ClientSecret` from the output for the token check and connector. The pool needs a Cognito domain and `toko-mcp/query` scope; see [OAuth](oauth.md).
 
 In `hybrid` mode, Tokonoma can admit a verified provider client on its first grant. For `preregistered_only`, append this client to `mcp.auth.clients` in `values.yaml` before testing, preserving existing clients:
 
@@ -69,21 +69,14 @@ mcp:
         tokenEndpointAuthMethod: client_secret_post
 ```
 
-Apply the [configuration change](upgrading.md#before-changing-configuration). Extract credentials into protected files and verify them before console entry:
-
-```sh
-jq -rj '.UserPoolClient.ClientId' "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client.json" \
-  > "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client-id.txt"
-jq -rj '.UserPoolClient.ClientSecret' "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client.json" \
-  > "REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client-secret.txt"
-```
+Apply the [configuration change](upgrading.md#before-changing-configuration). Verify the credentials before console entry:
 
 ```sh
 curl -sS https://REPLACE_WITH_MCP_HOSTNAME/token \
   -d grant_type=client_credentials \
   -d scope=toko-mcp/query \
-  --data-urlencode "client_id@REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client-id.txt" \
-  --data-urlencode "client_secret@REPLACE_WITH_SECRET_DIRECTORY/claude-slack-client-secret.txt" \
+  --data-urlencode 'client_id=REPLACE_WITH_COGNITO_CLIENT_ID' \
+  --data-urlencode 'client_secret=REPLACE_WITH_COGNITO_CLIENT_SECRET' \
   | jq '{has_access_token: (.access_token | type == "string" and length > 0), token_type, expires_in, error}'
 ```
 

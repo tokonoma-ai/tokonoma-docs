@@ -6,11 +6,11 @@ Google SAML supplies memory-sharing groups at login. Tokonoma does not query or 
 
 ## Prerequisites
 
-Use Helm 3.14+ and `jq` from your working directory on a workstation with cluster access. Follow [input conventions](install.md#inputs-and-placeholders) and keep credentials in the [protected directory](credentials.md#supply-tokens-from-files).
+Use Helm 3.14+ and `jq` from your working directory on a workstation with cluster access. Follow [input conventions](install.md#inputs-and-placeholders) and the [certificate-file instructions](credentials.md#certificate-files).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| `REPLACE_WITH_KUBE_CONTEXT`, `values.yaml`, license file and secret directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
+| `REPLACE_WITH_KUBE_CONTEXT`, `values.yaml`, and certificate directory | Your [installation](install.md) record; persistent PostgreSQL is required | Before cluster commands |
 | `REPLACE_WITH_MCP_HOSTNAME` and allowed email domains | Your DNS and identity administrators | Before creating the Google app |
 | Stable NameID attribute and assigned users | Google Workspace or Cloud Identity super administrator | Before the first login |
 | Google Entity ID, SSO URL and signing certificate | Google custom SAML app, steps 3 and 4 | Before saving authentication values |

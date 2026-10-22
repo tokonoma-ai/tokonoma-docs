@@ -2,14 +2,14 @@
 
 Configure OAuth before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files). Authentication can be prepared before installation. Use Helm 3.14+, a stable HTTPS hostname, and a workstation with cluster access. Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-tokens-from-files).
+Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Preserve existing authentication and routes on upgrades. Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| `REPLACE_WITH_KUBE_CONTEXT`, `values.yaml`, license file and secret directory | Your installation record and platform team | Before cluster commands |
-| `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Before provider configuration |
-| Login method and provider values | Your identity administrator: Cognito pool ID, region and domain prefix, or Google project API key | Before saving authentication values |
-| Cognito app credentials or Google account credentials | The identity provider; keep secrets in protected files | Credential login and machine clients |
+| `REPLACE_WITH_KUBE_CONTEXT` and `values.yaml` | Your installation record and platform team | Before cluster commands |
+| `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Shared access |
+| Login method and provider values | Your identity administrator: Cognito pool ID, region and domain prefix, or Google project API key | Before enabling MCP authentication |
+| Cognito app credentials or Google account credentials | The identity provider | Credential login and machine clients |
 | Requester ID, redirect URLs, grants and secret checksum | The requesting application's configuration | Only for declared clients |
 
 Confirm the target cluster with the [installation checks](install.md#1-check-prerequisites).
@@ -26,16 +26,18 @@ Both browser and machine login verify this app client. Enter its ID as **Client 
 
 For legacy Google Identity Platform/Firebase, enable **Email/Password** sign-in and provision accounts. Tokonoma uses `signInWithPassword`: enter account email as **Client ID** and password as **Client Secret** in both browser and machine requests. Google OAuth app credentials do not work. Get that project's API key. Before creating its Secret, [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets).
 
-Save the API key in `REPLACE_WITH_SECRET_DIRECTORY/google-identity-api-key.txt` with restricted permissions and no trailing newline. Create the API key Secret:
+Use the project's API key to create the API key Secret, or keep its existing Secret reference:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic google-oauth \
-  --from-file=apiKey="REPLACE_WITH_SECRET_DIRECTORY/google-identity-api-key.txt"
+  --from-literal='apiKey=REPLACE_WITH_GOOGLE_IDENTITY_API_KEY'
 ```
 
 ## 2. Save the values
 
 Merge these settings into `values.yaml`, preserving existing `mcp` settings and any SAML configuration. Choose `cognito` or `google` and remove the unused provider block.
+
+Keep MCP private until authentication and the chosen HTTPS route are ready. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Preserve existing addresses and authentication on upgrades.
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -59,13 +61,13 @@ Set `domainPrefix` to your pool's Cognito-managed prefix in `REPLACE_WITH_COGNIT
 
 `provider: google` selects legacy credentials, not Google Workspace SAML.
 
-Prepare the [runner machine credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) before deploying authentication.
+Before deploying authentication, merge the [runner machine credentials and local UI settings](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) into the same file. They configure both the runner's OAuth reference and `mcp.extraEnv` for the local Setup/Monitoring UI.
 
 For public access, merge the [public MCP routing settings](public-mcp-ingress.md) into the same `values.yaml`. Existing private HTTPS routing needs no public Ingress settings. Set `domain` to the route's HTTPS hostname.
 
 ## 3. Deploy and verify
 
-For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). Once the deployment is healthy, check OAuth metadata:
+For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). If there is no installation yet, [install Tokonoma](install.md#3-install) with the prepared file and credentials. Once the deployment and HTTPS route are ready, check OAuth metadata:
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/.well-known/oauth-protected-resource/mcp
@@ -79,7 +81,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/mcp
 
 Expect `401` before login.
 
-[Connect your agent](coding-agents.md#use-a-public-endpoint) to `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
+[Connect your agent](coding-agents.md#use-a-public-endpoint) to the shared endpoint `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
 
 ## Choose OAuth client admission
 
@@ -97,11 +99,11 @@ Before changing modes, declare each credential client registered through `hybrid
 
 Do not change external client IDs to avoid collisions. IDs also identify credentials and memory ownership; changes require matching caller and identity provider updates and can create a new owner. Previously issued access tokens remain valid until expiry.
 
-For an interactive application, save a high-entropy secret in `REPLACE_WITH_SECRET_DIRECTORY/requester-client-secret.txt`. Create its Secret and merge these settings into `values.yaml`. Set exact redirects, grants, and a supported authentication method before redeploying:
+For an interactive application, choose a high-entropy client secret. Create its Secret or keep an existing one, then merge these settings into `values.yaml`. Set exact redirects, grants, and a supported authentication method before redeploying:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic requester-oauth-client \
-  --from-file=current="REPLACE_WITH_SECRET_DIRECTORY/requester-client-secret.txt"
+  --from-literal='current=REPLACE_WITH_REQUESTER_CLIENT_SECRET'
 ```
 
 ```yaml
@@ -157,7 +159,7 @@ Google supports group sharing. Okta supports only private and `toko:everyone` ac
 
 ### Prepare SAML signing certificates
 
-Use `jq` to turn the complete PEM certificate into the JSON array Tokonoma expects. Keep the files in your [protected credential directory](credentials.md#supply-tokens-from-files) and [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets) before creating the Secret.
+Use `jq` to turn the complete PEM certificate into the JSON array Tokonoma expects. Follow the [certificate-file instructions](credentials.md#certificate-files) and [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets) before creating the Secret.
 
 Replace the placeholders below with the values for your provider:
 

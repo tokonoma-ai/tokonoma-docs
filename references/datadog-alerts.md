@@ -4,8 +4,6 @@ The recipe below sends notifications from all Datadog monitors to `toko-runner`.
 
 Datadog needs a public HTTPS webhook. Choose a separate webhook route to keep MCP private, or share an existing authenticated MCP Ingress.
 
-Installation finishes at the [deployment health checks](install.md#4-verify). You can configure this route and Datadog notifications afterward. A completed investigation is an optional follow-up check.
-
 ## Before you start
 
 - Prepare the [runner configuration](alert-investigations.md), including its model credential, telemetry query access, and OAuth client when MCP authentication is enabled. Configure Slack if wanted. Datadog-only installations need no Alertmanager token, but at least one source token is required.
@@ -22,9 +20,9 @@ Prepare the token and settings before [installation](install.md#3-install). Use 
 | `REPLACE_WITH_WEBHOOK_HOSTNAME` | Dedicated webhook hostname, or the existing public MCP hostname | Datadog deliveries |
 | `REPLACE_WITH_ISSUED_ACM_CERTIFICATE_ARN` | Issued AWS Certificate Manager certificate covering the webhook hostname | Separate AWS ALB route below |
 | `REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY` | Existing Terraform project with your Datadog provider and credentials | Provider setup below |
-| `REPLACE_WITH_DATADOG_WEBHOOK_TOKEN` | Generated token from step 1, also copied into the protected Terraform variable file | Both ends of webhook authentication |
+| `REPLACE_WITH_DATADOG_WEBHOOK_TOKEN` | Generated token from step 1, also passed to Terraform | Both ends of webhook authentication |
 
-Step 1 creates the protected token file. Step 3 creates `tokonoma.tf` in your Terraform project and variable and plan files in your [protected credential directory](credentials.md#supply-tokens-from-files).
+Step 1 creates the token Secret. Step 3 creates `tokonoma.tf` and a saved plan in your Terraform project. Use the [credential command guidance](credentials.md#supply-credentials-in-commands) when replacing token placeholders.
 
 ## What is exposed
 
@@ -46,20 +44,19 @@ MCP Ingress authentication, allowlist, and rewrite annotations also affect Datad
 
 ## 1. Create the token
 
-The runner's Kubernetes Secret and Datadog custom variable must contain the same token. Generate it in the protected directory for first setup only. Preserve existing tokens on upgrades; use [rotation](#rotating-the-token) to change one:
+The runner's Kubernetes Secret and Datadog custom variable must contain the same token. Generate one for first setup only. Preserve existing tokens on upgrades; use [rotation](#rotating-the-token) to change one:
 
 ```sh
-umask 077
-openssl rand -hex 32 | tr -d '\n' > "REPLACE_WITH_SECRET_DIRECTORY/datadog-webhook-token.txt"
+openssl rand -hex 32
 ```
 
-Use all 32 bytes for this public route; shorter tokens cause a startup warning.
+Copy the printed value into `REPLACE_WITH_DATADOG_WEBHOOK_TOKEN` in the commands below. Use all 32 bytes for this public route; shorter tokens cause a startup warning.
 
 [Prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets), then create the token Secret:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT create secret generic toko-runner-datadog-webhook -n tokonoma \
-  --from-file=token="REPLACE_WITH_SECRET_DIRECTORY/datadog-webhook-token.txt"
+  --from-literal='token=REPLACE_WITH_DATADOG_WEBHOOK_TOKEN'
 ```
 
 Expected output: `secret/toko-runner-datadog-webhook created`. If it already exists, preserve it and confirm its owner and token through your secret-management workflow. Use [rotation](#rotating-the-token) for an intended token change.
@@ -166,7 +163,7 @@ terraform {
 
 variable "tokonoma_webhook_token" {
   type      = string
-  sensitive = true   # Use the same protected token value as the runner Secret.
+  sensitive = true   # Use the same token value as the runner Secret.
 }
 
 resource "datadog_webhook_custom_variable" "tokonoma_token" {
@@ -203,29 +200,22 @@ resource "datadog_monitor_notification_rule" "tokonoma" {
 
 Replace `REPLACE_WITH_WEBHOOK_HOSTNAME` with the hostname for your selected route. Verify a real delivery with your monitor text before using it broadly; Datadog must substitute and escape every payload value correctly.
 
-Save the following as `REPLACE_WITH_SECRET_DIRECTORY/tokonoma-datadog.tfvars`. Replace its value with the exact contents of `datadog-webhook-token.txt`. Keep the file out of source control:
-
-```hcl
-tokonoma_webhook_token = "REPLACE_WITH_DATADOG_WEBHOOK_TOKEN"
-```
-
 On the administration workstation, initialize the existing Terraform project and inspect the plan:
 
 ```sh
-chmod 600 "REPLACE_WITH_SECRET_DIRECTORY/tokonoma-datadog.tfvars"
 terraform -chdir="REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY" init
 terraform -chdir="REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY" plan \
-  -var-file="REPLACE_WITH_SECRET_DIRECTORY/tokonoma-datadog.tfvars" \
-  -out="REPLACE_WITH_SECRET_DIRECTORY/tokonoma-datadog.tfplan"
+  -var='tokonoma_webhook_token=REPLACE_WITH_DATADOG_WEBHOOK_TOKEN' \
+  -out=tokonoma-datadog.tfplan
 ```
 
 The plan should add or update the Tokonoma webhook, custom variable and notification rule. It must preserve existing alert destinations. After reviewing the changes, apply that saved plan:
 
 ```sh
-terraform -chdir="REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY" apply "REPLACE_WITH_SECRET_DIRECTORY/tokonoma-datadog.tfplan"
+terraform -chdir="REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY" apply tokonoma-datadog.tfplan
 ```
 
-Expected result: `Apply complete!`. Terraform state and saved plans contain the token. Restrict access to them as you do the Kubernetes Secret.
+Expected result: `Apply complete!`. The saved plan is `REPLACE_WITH_DATADOG_TERRAFORM_DIRECTORY/tokonoma-datadog.tfplan`. Terraform state and saved plans contain the token. Restrict access to them as you do the Kubernetes Secret and keep them out of source control.
 
 ### All-monitor coverage
 
@@ -249,7 +239,7 @@ The rule's `recipients` entry is `webhook-REPLACE_WITH_WEBHOOK_NAME`, unlike the
 
 ## 4. Verify
 
-These optional checks run after installation. Follow the [runner deployment check](alert-investigations.md#check-the-deployment) to open a port-forward and record the current metrics. Keep that connection open for the test below.
+Follow the [runner deployment check](alert-investigations.md#check-the-deployment) to open a port-forward and record the current metrics. Keep that connection open for the test below.
 
 Use one operator-approved test monitor that matches the notification rule. It must be allowed to make model calls and post to any configured destination. Keep production monitor thresholds and destinations intact.
 
@@ -265,15 +255,15 @@ Use one operator-approved test monitor that matches the notification rule. It mu
 
 The runner accepts comma-separated tokens. Keep old and new tokens active during the sender change:
 
-1. Update `datadog-webhook-token.txt` to contain the old token, a comma and the new token, with no spaces or trailing newline. Update the Secret with the command below and [restart the runner](credentials.md#renew-and-rotate).
-2. Put only the new token in `tokonoma-datadog.tfvars`. Repeat the Terraform plan and apply steps, then verify a delivery.
-3. Put only the new token in `datadog-webhook-token.txt`. Repeat the Secret update and runner restart.
+1. Update the Secret with the command below and [restart the runner](credentials.md#renew-and-rotate).
+2. Repeat the Terraform plan and apply steps with only the new token in `-var='tokonoma_webhook_token=REPLACE_WITH_NEW_TOKEN'`, then verify a delivery.
+3. Repeat the Secret update with only `REPLACE_WITH_NEW_TOKEN` and restart the runner.
 
-Run this on the administration workstation after each token-file edit:
+Run this on the administration workstation to accept both tokens during the change:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-runner-datadog-webhook \
-  --from-file=token="REPLACE_WITH_SECRET_DIRECTORY/datadog-webhook-token.txt" \
+  --from-literal='token=REPLACE_WITH_OLD_TOKEN,REPLACE_WITH_NEW_TOKEN' \
   --dry-run=client -o yaml | kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma apply -f -
 ```
 

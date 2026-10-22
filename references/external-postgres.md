@@ -10,8 +10,7 @@ Run `kubectl` from a workstation with cluster access and SQL in an administrativ
 |---|---|
 | `REPLACE_WITH_KUBE_CONTEXT` | Intended cluster context from `kubectl config get-contexts`; required for cluster commands. |
 | `REPLACE_WITH_DATABASE_HOST` | DNS name supplied by the database administrator; required in `values.yaml`. |
-| `REPLACE_WITH_POSTGRES_PASSWORD` | Password chosen through your secret-management workflow; required when creating the `tokonoma` database role. |
-| `REPLACE_WITH_SECRET_DIRECTORY/postgres-password.txt` | Protected file containing the same raw password with no trailing newline; required only when creating the Kubernetes Secret from a file. |
+| `REPLACE_WITH_POSTGRES_PASSWORD` | Password for the `tokonoma` database role and its Kubernetes Secret. |
 
 With `telemetryPlatform: true`, keep database `tokonoma`, user `tokonoma`, Secret name `toko-postgres`, and Secret key `password`. These match the bundled search backend. Use a URL-safe password containing letters, digits, `.`, `_`, `~`, or `-` because the search backend places it in a PostgreSQL URI.
 
@@ -36,11 +35,11 @@ After a PostgreSQL or pgvector upgrade, the server also tries to update the exte
 
 ## 2. Create the password Secret
 
-[Prepare the namespace](credentials.md#prepare-the-namespace-for-secrets). Save the raw database password in `REPLACE_WITH_SECRET_DIRECTORY/postgres-password.txt` using the [credential file rules](credentials.md#supply-tokens-from-files), then create the Secret:
+[Prepare the namespace](credentials.md#prepare-the-namespace-for-secrets) and follow [credential setup](credentials.md#supply-credentials-in-commands). Fill the password placeholder locally with the same password used for the database role, then create the Secret:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-postgres \
-  --from-file=password="REPLACE_WITH_SECRET_DIRECTORY/postgres-password.txt"
+  --from-literal=password='REPLACE_WITH_POSTGRES_PASSWORD'
 ```
 
 Expect `secret/toko-postgres created`. An existing secret-management workflow may create the same Secret instead. If the Secret already exists, verify its owner and password through that workflow before proceeding; do not replace it blindly.

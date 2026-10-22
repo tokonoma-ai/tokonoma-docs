@@ -5,19 +5,21 @@
 # Ask whether to turn either automatic feature off; see references/install.md.
 # Preserve supplied choices unless the customer asks to change them.
 # Uncomment only integrations you use.
-# Supply license, Anthropic and alert-source credentials through protected files
-# or existing Secret references. See references/install.md and references/credentials.md.
+# Supply credentials directly in the installation command or use existing Secret
+# references. See references/install.md and references/credentials.md.
 # Replace placeholders with verified values; agents ask for missing inputs.
 # PostgreSQL, local search embeddings and application images use chart defaults.
 mcp:
-  # Supply your issued license with --set-file mcp.license, or use this existing Secret:
+  # Supply your issued license with --set-literal 'mcp.license=...', or use this existing Secret:
   # licenseSecret:
   #   name: REPLACE_WITH_LICENSE_SECRET_NAME
   #   key: REPLACE_WITH_LICENSE_SECRET_KEY
   auth:
-    # Private local access only. Configure authentication before shared access.
-    # With false, any caller that can reach MCP can use it.
+    # Local operator access, with MCP kept inside the cluster.
+    # Before shared access, configure authentication and runner credentials using references/oauth.md.
+    # Keep supplied or existing authentication when adapting this example.
     enabled: false
+    provider: none
   ingress:
     # Use a local port-forward first. Public access needs TLS and authentication.
     enabled: false
@@ -34,13 +36,12 @@ mcp:
     # apiKeySecret:
     #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
     #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
-
-  # Slack: follow references/slack-app.md and supply both Slack token files.
+  # Slack: follow references/slack-app.md and supply both Slack tokens in the command.
   # Uncomment this section and runner.destinations.slackApp below for Slack results.
   # slack:
   #   autoRecallEnabled: false # Immediate recall replies are separate from investigations.
   #   investigationsChannel: tokonoma-investigations # Invite the app to this channel.
-  #   # Existing Secret alternative to the two token files:
+  #   # Existing Secret alternative to the two token arguments:
   #   # tokenSecret:
   #   #   name: REPLACE_WITH_SLACK_SECRET_NAME
   #   #   botTokenKey: REPLACE_WITH_SLACK_BOT_TOKEN_KEY
@@ -49,6 +50,9 @@ mcp:
 runner:
   # Required: needs the sibling, model credentials and at least one alert-source token.
   enabled: true
+  ingress:
+    # External senders can use a separate webhook route while MCP stays private.
+    enabled: false
   detection:
     # Monitoring uses the runner's model and can start investigations automatically.
     # Set false only if the customer opts out; remove unused scope placeholders.
@@ -78,7 +82,7 @@ runner:
   #     name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
   #     key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
 
-  # Alert sources: the walkthrough supplies credentials.alertmanagerToken from a file.
+  # Alert sources: the walkthrough supplies credentials.alertmanagerToken in the command.
   # Uncomment sources and only selected entries. Datadog needs no Alertmanager Secret.
   # sources:
   #   alertmanager:
@@ -93,6 +97,7 @@ runner:
   # External alerts need an HTTPS webhook route; see references/datadog-alerts.md.
   # A separate route can keep MCP private. Leave both chart ingress switches off for it.
   # The chart-managed route below shares MCP ingress and requires MCP authentication.
+  # Merge it into runner.ingress above rather than adding a second ingress key.
   # Use /webhooks/alertmanager for Alertmanager, or list both paths for both sources.
   # ingress:
   #   enabled: true
@@ -104,12 +109,8 @@ runner:
   #   slackApp:
   #     enabled: true
 
-  # Required when mcp.auth.enabled is true; see references/alert-investigations.md.
-  # tokoMcp:
-  #   oauthClientSecretRef:
-  #     name: REPLACE_WITH_RUNNER_OAUTH_SECRET_NAME
-  #     clientIdKey: REPLACE_WITH_RUNNER_CLIENT_ID_KEY
-  #     key: REPLACE_WITH_RUNNER_CLIENT_SECRET_KEY
+  # Configure the MCP login and UI credentials together; see references/oauth.md.
+  # Omit OAuth credential references while MCP authentication is disabled.
 
   # Uncomment mcpServers and only the connections you use. Keep one combined list.
   # Remote HTTP MCP: Datadog, Axiom or another compatible telemetry/code provider.
@@ -151,7 +152,7 @@ runner:
 #   enabled: true
 #   grafana:
 #     url: REPLACE_WITH_GRAFANA_URL
-#     # Supply a Viewer token through --set-file grafanaMcp.grafana.apiKey.
+#     # Supply a Viewer token with --set-literal 'grafanaMcp.grafana.apiKey=...'.
 #     # Existing Secret alternative: uncomment the next four lines together.
 #     # Empty apiKey clears any old inline token that would take precedence.
 #     # apiKey: ""
