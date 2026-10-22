@@ -5,6 +5,7 @@ Tokonoma connects to compatible remote Model Context Protocol (MCP) servers for 
 | Integration | What it does | Setup |
 |---|---|---|
 | MCP query tools | Connect Datadog, Axiom, or another compatible telemetry or code server | [MCP connections](#mcp-connections) |
+| GitHub | Read permitted source code and commit history during investigations | [GitHub example](#github-example) |
 | Existing Grafana | Private OSS Grafana MCP adapter queries permitted data sources for monitoring and investigations | [Alert investigations](alert-investigations.md#install-with-oss-grafana-mcp) |
 | Alert webhooks | Deliver alerts to the runner; separate from MCP query access | [Alertmanager or Grafana Alerting](alert-investigations.md), [Datadog alerts](datadog-alerts.md) |
 | Slack | Use the native Tokonoma app, or connect Claude to Tokonoma | [Tokonoma app](slack-app.md), [Claude in Slack](claude-in-slack.md) |
@@ -29,7 +30,7 @@ Uncomment the matching `runner.mcpServers` entries in [values.yaml](../examples/
 - Set `kind: telemetry` for monitoring sources or `kind: source-control` for code access.
 - Set `expectedTools` to exact tool names advertised by that server, without an `mcp__` prefix. Empty or missing entries permit no calls. Choose read-only tools and credentials with matching permissions.
 
-Monitoring needs query tools that can access the selected cluster and namespaces. Alert webhooks and code-only connections do not supply telemetry access. Results are sent to the Anthropic API; review [data flows](data-flows.md).
+Automatic investigations and Agentic Monitoring require telemetry query access. Monitoring tools must also cover the selected cluster and namespaces. Alert webhooks and code-only connections do not supply telemetry access. Results are sent to the Anthropic API; review [data flows](data-flows.md).
 
 ### 2. Prepare credentials
 
@@ -49,6 +50,16 @@ For a new deployment, finish the selected integrations and use the [single insta
 ### 4. Check access after installation
 
 These checks are optional follow-ups. With Slack enabled, `@Tokonoma setup` reports the runner's MCP connections and missing tools. A connected server does not prove every query is authorized: use a controlled [investigation check](alert-investigations.md#check-it-works) to confirm the intended data is accessible. Check [monitoring coverage](agentic-monitoring.md#verify-monitoring) separately. Updating the runner does not configure the MCP connections in your personal coding agent.
+
+## GitHub example
+
+GitHub adds source-code context to investigations. It is optional and does not replace telemetry access. For GitHub.com, use the commented `name: github` entry in [values.yaml](../examples/values.yaml), with `kind: source-control` and GitHub's [hosted read-only endpoint](https://github.com/github/github-mcp-server/blob/main/docs/remote-server.md): `https://api.githubcopilot.com/mcp/readonly`. No local GitHub server is needed.
+
+1. [Create a fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token). Choose the organization or account that owns the repositories, select only the repositories Tokonoma may read, and set an expiration. Grant repository **Contents: Read-only**; Metadata access is included. Obtain organization approval if required before using the token for private repositories.
+2. Save the raw token in a protected `github-token.txt` file without a final newline. Use [Prepare credentials](#2-prepare-credentials) to create or reuse the Secret: the example uses `toko-runner-github`, key `token`. Agents ask for the file path or existing Secret reference, never the token itself.
+3. Uncomment the GitHub entry in the shared `runner.mcpServers` list. Its `expectedTools` permits `get_file_contents`, `search_code`, `get_commit`, and `list_commits`. Confirm these names against the server's advertised tools; add other read-only tools and their required permissions only when needed.
+
+Use the shared [apply](#3-apply-the-configuration) and [access checks](#4-check-access-after-installation) above. For a GitHub follow-up check, read a known file from a selected private repository; connecting successfully does not prove repository access. Token expiration or loss of the owner's repository access requires [credential renewal](credentials.md#renew-and-rotate). GitHub Enterprise installations need their provider-specific endpoint and authentication; do not assume this GitHub.com example applies.
 
 ## Datadog example
 

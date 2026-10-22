@@ -2,7 +2,7 @@
 
 Install Tokonoma in an existing Kubernetes cluster using one `values.yaml`. The example includes the required MCP service, memory analysis, and runner, with agentic monitoring and automatic investigations enabled. The chart also installs PostgreSQL and Ollama.
 
-The command below uses Anthropic and Alertmanager. Slack is optional. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
+Ask whether the customer wants to turn either automatic feature off for a phased setup; follow [feature choices](#choose-automatic-features). The command below uses Anthropic and Alertmanager. Slack is optional. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
 Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Follow the [input conventions](#inputs-and-placeholders) before running commands.
 
@@ -13,7 +13,7 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | Target and existing deployment | Ask the cluster owner for the intended context; inspect the release below | New release: follow this guide. Existing release: [connect your agent](coding-agents.md), or use [upgrading](upgrading.md) for an intended deployment change. |
 | Database | Choose bundled PostgreSQL or have your database owner prepare [external PostgreSQL](external-postgres.md) | Prepare it before installing. Changing the address does not migrate data. |
 | Access | Choose a local connection for one operator, [private team access](private-access.md), or [public authenticated access](public-mcp-ingress.md) | The example starts with a local connection. Set up authentication and routing before exposing a shared endpoint. |
-| Analysis, monitoring, and investigations | Prepare an Anthropic API key; it serves both analysis and the runner. Choose the runner's alert sources and telemetry tools using [integrations](integrations.md). Set the monitored cluster and namespaces using [agentic monitoring](agentic-monitoring.md); inspect [data flows](data-flows.md) | Monitoring makes model and telemetry calls after startup. Prepare access and scope before running Helm. |
+| Analysis, monitoring, and investigations | Prepare an Anthropic API key; it serves both analysis and the runner. Choose the runner's alert sources and telemetry tools using [integrations](integrations.md). Set the monitored cluster and namespaces using [agentic monitoring](agentic-monitoring.md); inspect [data flows](data-flows.md) | Both automatic features require telemetry query access. Prepare access before running Helm; monitoring also needs its scope. |
 | Additional features | Choose Slack features, authentication, or cloud telemetry as needed | Follow any preparation required by the selected guide. |
 
 Use one release per namespace: component names are fixed. Examples use release and namespace `tokonoma`; substitute assigned names consistently. Do not reuse an unrelated deployment's namespace.
@@ -66,6 +66,15 @@ Replace every `REPLACE_WITH_...` marker, including those inside paths and URLs. 
 
 Read YAML comments for settings and each guide's tables for provider inputs. Obtain identifiers from the provider or its administrator. Use hostnames your organization controls; `example.com` is illustrative. Keep provider template variables such as Datadog's `$ID` and `$TOKONOMA_TOKEN` intact.
 
+### Choose automatic features
+
+Enable Agentic Monitoring and automatic investigations by default for new installations. Ask whether the customer wants either disabled. For supplied or existing values, call out disabled features and preserve those choices unless the customer asks to change them. Keep the runner and its dedicated MCP instance enabled.
+
+- To turn off Agentic Monitoring, set `runner.detection.enabled: false` and remove unused scope placeholders. Alert investigations can still run.
+- To pause automatic investigations, follow [pause automatic investigations](alert-investigations.md#pause-automatic-investigations). This pauses investigations from alerts and monitoring findings; monitoring checks can remain enabled.
+
+Telemetry query access is required while either feature stays enabled. Resolve missing access before installing. If the customer turns both off, telemetry setup can wait until they enable one. Alert-source credentials remain required by the chart even when automatic investigations are paused.
+
 ### Merge supplied configuration
 
 Read any supplied README and supporting files first. For an existing installation, start with its saved configuration. For a new installation with supplied customer values, add required or selected settings from the [commented example](../examples/values.yaml) only where the customer values and selected chart's defaults do not already satisfy them. Keep settings that can use chart defaults omitted; do not load the entire example as a base values layer.
@@ -83,7 +92,7 @@ cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep credentials in protected files or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). One Anthropic API key serves both analysis and the runner.
-2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source and configure [monitoring](agentic-monitoring.md) with telemetry query access and the intended cluster and namespaces. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
+2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
 3. If Slack is selected, use the [Slack app guide](slack-app.md#create-the-app) to prepare any missing app, tokens, or channel access, and configure Slack delivery in `values.yaml`.
 4. Merge any [external database](external-postgres.md), [authentication](oauth.md), [routing](public-mcp-ingress.md), or cloud telemetry settings into the same file. Complete their prerequisites first. Configure authentication before sharing access.
 
@@ -131,7 +140,7 @@ curl -fsS http://127.0.0.1:8000/health
 
 Expect `ok`. Installation is complete when Helm reports `deployed`, required workloads are ready, PVCs are Bound, and this health check passes. See [troubleshooting](troubleshooting.md) for failures.
 
-Monitoring setup continues in the background. Do not wait for setup, evaluation results, or a completed investigation to finish installation. Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health. Also record whether end-to-end telemetry access has been validated. Until a follow-up check shows it, report it as not yet validated. This is information and does not block completion.
+Monitoring setup continues in the background. Do not wait for setup, evaluation results, or a completed investigation to finish installation. Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health. Record disabled features and whether end-to-end telemetry access has been validated. The telemetry connection and its credentials must be configured when either automatic feature is enabled; an end-to-end query check remains an optional follow-up. Report it as not yet validated until a check actually queries telemetry.
 
 ## After installation
 

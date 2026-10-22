@@ -1,7 +1,10 @@
 # Without supplied or existing values, copy this file to your working directory as values.yaml.
 # With custom values, use this example to fill missing requirements; keep customer choices.
 # Existing installation: edit your saved file; do not replace it with this example.
-# Required core and agentic monitoring are active. Uncomment only integrations you use.
+# The runner, Agentic Monitoring and automatic investigations are enabled for this install.
+# Ask whether to turn either automatic feature off; see references/install.md.
+# Preserve supplied choices unless the customer asks to change them.
+# Uncomment only integrations you use.
 # Supply license, Anthropic and alert-source credentials through protected files
 # or existing Secret references. See references/install.md and references/credentials.md.
 # Replace placeholders with verified values; agents ask for missing inputs.
@@ -48,6 +51,7 @@ runner:
   enabled: true
   detection:
     # Monitoring uses the runner's model and can start investigations automatically.
+    # Set false only if the customer opts out; remove unused scope placeholders.
     # Setup and checks: references/agentic-monitoring.md.
     enabled: true
     scope:
@@ -57,8 +61,15 @@ runner:
       cluster: REPLACE_WITH_MONITORED_CLUSTER
       # Exact namespace names. Use [] only to intentionally watch all, including system ones.
       namespaces: [REPLACE_WITH_MONITORED_NAMESPACE]
-  # Monitoring needs telemetry query access, such as Grafana or a telemetry MCP connection.
+  # Both automatic features need telemetry query access, such as Grafana or telemetry MCP.
   # Alert webhooks and code-only connections do not supply that access.
+
+  # Only if the customer asks to pause all automatic investigations:
+  # guardrails:
+  #   maxRunsPerDay: 0
+  #   maxRunsPerDayCritical: 0
+  # Includes monitoring findings; manual investigations remain available.
+  # Details and resuming: references/alert-investigations.md#pause-automatic-investigations.
 
   # The runner uses the Anthropic API only; credentials.anthropicApiKey serves both.
   # For an existing Secret, configure this AND mcp.memoryLlm.apiKeySecret above:
@@ -125,13 +136,13 @@ runner:
   #     #     secretRef:
   #     #       name: REPLACE_WITH_DATADOG_APP_KEY_SECRET_NAME
   #     #       key: REPLACE_WITH_DATADOG_APP_KEY_SECRET_KEY
-  #   - name: source-control
+  #   - name: github # Optional code access; see references/integrations.md#github-example.
   #     kind: source-control
-  #     url: REPLACE_WITH_SOURCE_CONTROL_MCP_URL
-  #     expectedTools: [REPLACE_WITH_ALLOWED_TOOL_NAME]
+  #     url: https://api.githubcopilot.com/mcp/readonly
+  #     expectedTools: [get_file_contents, search_code, get_commit, list_commits]
   #     authSecretRef:
-  #       name: REPLACE_WITH_SOURCE_CONTROL_SECRET_NAME
-  #       key: REPLACE_WITH_SOURCE_CONTROL_SECRET_KEY
+  #       name: toko-runner-github
+  #       key: token
 
 # Grafana: optional query adapter, separate from Tokonoma's self-monitoring UI.
 # Uncomment this section if you use Grafana; obtain its base URL from its administrator.
