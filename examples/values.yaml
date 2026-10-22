@@ -1,4 +1,6 @@
-# Supplied or saved values: follow references/install.md#merge-supplied-configuration.
+# Without supplied or existing values, copy this file to your working directory as values.yaml.
+# With custom values, use this example to fill missing requirements; keep customer choices.
+# Existing installation: edit your saved file; do not replace it with this example.
 # Required core and agentic monitoring are active. Uncomment only integrations you use.
 # Supply license, Anthropic and alert-source credentials through protected files
 # or existing Secret references. See references/install.md and references/credentials.md.

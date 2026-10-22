@@ -72,7 +72,7 @@ Read any supplied README and supporting files first. For an existing installatio
 
 Customer choices take precedence over examples. Preserve explicit `false`, `0`, `null`, `""`, and `[]`; they are not omitted fields. Ask about missing required inputs, `REPLACE_WITH_...` markers, and conflicts, including explicitly disabled required components. Merge mappings by key without duplicating YAML keys; lists replace rather than append. For an existing installation, merge only the requested changes into its saved configuration and preserve values-file order, ensuring list replacements retain unrelated integrations.
 
-Supporting deployment files remain separate inputs. Use their configured routes, resource names, and Secret references to adapt the relevant guides and commands, preserving existing alert destinations and ownership of resources managed outside Helm. Review the resulting nonsecret values and intended changes before applying them. Supplied equivalents replace guide examples. An instruction to uncomment a setting means add or keep that configuration when it is selected. Do not enable a second webhook route or expose MCP when a separate route is already supplied.
+Supporting deployment files remain separate inputs. Use their configured routes, resource names, and Secret references to adapt the relevant guides and commands, preserving existing alert destinations and ownership of resources managed outside Helm. Review the resulting nonsecret values and intended changes before applying them.
 
 Only when there are no supplied or existing values files, copy the example to your working directory:
 

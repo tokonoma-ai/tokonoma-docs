@@ -46,6 +46,8 @@ If the customer has no telemetry connection yet, continue with the installation 
 
 Follow the [merge rules](references/install.md#merge-supplied-configuration). Read the example's comments before adapting any of it. Save confirmed choices in the customer's values files, in their working directory outside this checkout. Keep the commented source files: `helm get values` does not keep comments. Never replace existing configuration, credentials, storage, or values-file order with the example.
 
+Supplied equivalents replace the guides' examples. Where a guide says to uncomment a setting, add or keep that configuration when it is selected. Do not enable a second webhook route or expose MCP when a separate route is already supplied.
+
 ## 5. Read only the guides you need
 
 | Task | Read |
