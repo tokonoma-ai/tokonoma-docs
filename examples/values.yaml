@@ -50,7 +50,9 @@ runner:
     # Setup and checks: references/agentic-monitoring.md.
     enabled: true
     scope:
-      # Use the monitored cluster's exact name in your telemetry, not a guessed kube context.
+      # Use the monitored Kubernetes cluster's exact name in telemetry, not its context.
+      # For ECS monitoring, confirm support with Tokonoma before filling this scope.
+      # Do not substitute the Kubernetes cluster hosting Tokonoma for ECS workloads.
       cluster: REPLACE_WITH_MONITORED_CLUSTER
       # Exact namespace names. Use [] only to intentionally watch all, including system ones.
       namespaces: [REPLACE_WITH_MONITORED_NAMESPACE]
@@ -76,7 +78,9 @@ runner:
   #       name: toko-runner-datadog-webhook
   #       key: token
 
-  # External alert webhooks also need MCP ingress, TLS and authentication configured.
+  # External alerts need an HTTPS webhook route; see references/datadog-alerts.md.
+  # A separate route can keep MCP private. Leave both chart ingress switches off for it.
+  # The chart-managed route below shares MCP ingress and requires MCP authentication.
   # Use /webhooks/alertmanager for Alertmanager, or list both paths for both sources.
   # ingress:
   #   enabled: true

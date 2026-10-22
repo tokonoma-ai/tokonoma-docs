@@ -15,7 +15,9 @@ Prepare a [protected token directory](credentials.md#supply-tokens-from-files) f
 3. Under **Basic Information > App-Level Tokens**, generate a token with the `connections:write` scope. Save the `xapp-` token in your protected token directory as `slack-app-token.txt`.
 4. Under **Install App**, install the app to your workspace. Save the **Bot User OAuth Token** (`xoxb-`) as `slack-bot-token.txt`.
 
-The manifest enables Socket Mode, mentions, channel message events, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
+For an existing app, update **App Manifest** with this manifest and reinstall the app to grant any added permissions. Save the current bot token; keep the app-level token unless you are rotating it.
+
+The manifest enables Socket Mode, mentions, channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
 ## Save the connection settings
 
@@ -58,6 +60,6 @@ Automatic recall is separate from runner investigations. Investigation results u
 
 The app receives channel messages where it is invited. It can read channel history for sessions and post shared records into those channels. Its memory identity can access organization-wide records, not an individual user's private records or records shared only with named identity-provider groups. New records are shared with everyone by default; choose private sharing when needed. See [data flows](data-flows.md).
 
-The release manifest requests channel and user read scopes, `chat:write`, `reactions:write`, and `channels:join`. Tokonoma does not automatically join channels; invite it explicitly. It does not request `chat:write.public`, direct-message history, or `files:write`.
+The manifest requests channel and user read scopes, `chat:write`, `reactions:write`, and `channels:join`. It also uses `reactions:read` for monitoring feedback and `files:write` for setup reports. Tokonoma does not automatically join channels; invite it explicitly. It does not request `chat:write.public` or direct-message history.
 
 Continue with [alert investigations](alert-investigations.md), or return to [integrations](integrations.md).

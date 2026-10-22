@@ -35,7 +35,7 @@ The same direct local connection serves the customer UI at `http://localhost:800
 
 An in-cluster sender uses
 `http://toko-runner.tokonoma.svc:8080/webhooks/alertmanager`. An external sender
-uses the approved HTTPS MCP Ingress host plus its explicitly selected webhook
+uses a dedicated HTTPS webhook route or an authenticated MCP Ingress with the selected webhook
 path. Both receivers require `Authorization: Bearer REPLACE_WITH_SOURCE_TOKEN`; selecting
 an Ingress rule does not create a credential or bypass ingress-level auth.
 Verify that Grafana Cloud can reach the endpoint; a private service or Tailscale-only
