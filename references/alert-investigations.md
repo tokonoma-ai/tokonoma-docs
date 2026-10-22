@@ -28,7 +28,7 @@ Prepare the runner in your saved `values.yaml`. Follow [credential setup](creden
 |---|---|---|
 | `REPLACE_WITH_ALERTMANAGER_TOKEN` | High-entropy shared token created by the operator and also configured on the sender | Alertmanager or Grafana alerts |
 | `REPLACE_WITH_GRAFANA_URL`, `REPLACE_WITH_GRAFANA_VIEWER_TOKEN` | Existing Grafana URL and Viewer service-account token with the required data-source permissions | Grafana MCP adapter |
-| `REPLACE_WITH_RUNNER_CLIENT_ID`, `REPLACE_WITH_RUNNER_CLIENT_SECRET` | Dedicated runner credentials from the selected [identity provider](oauth.md) | Phase 2, or existing MCP authentication |
+| `REPLACE_WITH_RUNNER_CLIENT_ID`, `REPLACE_WITH_RUNNER_CLIENT_SECRET` | Dedicated runner credentials from the selected [identity provider](oauth.md) | MCP authentication enabled |
 | `REPLACE_WITH_WEBHOOK_HOSTNAME` | Approved HTTPS hostname from the platform team for the selected webhook route or relay | External alert sender |
 | `REPLACE_WITH_MCP_HOSTNAME`, `REPLACE_WITH_TLS_SECRET_NAME` | Existing MCP hostname and TLS Secret from [ingress setup](public-mcp-ingress.md) | Shared MCP Ingress example only |
 
@@ -42,11 +42,11 @@ openssl rand -hex 32
 
 Copy the printed value into `REPLACE_WITH_ALERTMANAGER_TOKEN` in the installation command and configure the same value on the sender.
 
-For externally managed Secrets or offline rendering, follow [credentials](credentials.md#use-existing-kubernetes-secrets). A new phase 1 installation keeps MCP private with authentication disabled and needs no runner OAuth credentials. Prepare the credentials below in phase 2 before enabling MCP authentication. Preserve existing authentication and credentials on upgrades.
+For externally managed Secrets or offline rendering, follow [credentials](credentials.md#use-existing-kubernetes-secrets). Prepare the credentials below only when MCP authentication is enabled. Preserve existing authentication and credentials on upgrades.
 
 ## Prepare runner credentials when MCP authentication is enabled
 
-In phase 2, use a dedicated Cognito machine-to-machine app client and its ID and secret. Follow [OAuth](oauth.md) to configure its domain, resource-server scope and client-credentials flow. Keep [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) alongside Cognito for individual human sign-in.
+Use a dedicated Cognito machine-to-machine app client and its ID and secret. Follow [OAuth](oauth.md) to configure its domain, resource-server scope and client-credentials flow. Keep [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) alongside Cognito for individual human sign-in.
 
 For the legacy Google Identity Platform/Firebase verifier, enable Email/Password and create a dedicated runner account. Its email is the runner's client ID and its password is the client secret. Google OAuth app credentials do not work.
 
@@ -60,7 +60,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic to
   --from-literal='clientSecret=REPLACE_WITH_RUNNER_CLIENT_SECRET'
 ```
 
-Expected output: `secret/toko-runner-oauth created`. Merge this phase 2 configuration into `values.yaml`, retaining the full identity-provider settings and other `mcp.extraEnv` entries. It supplies the runner's login and lets the local Setup/Monitoring UI use the same identity for authenticated actions. If using a different Secret, update every reference:
+Expected output: `secret/toko-runner-oauth created`. Merge this configuration into `values.yaml`, retaining the full identity-provider settings and other `mcp.extraEnv` entries. It supplies the runner's login and lets the local Setup/Monitoring UI use the same identity for authenticated actions. If using a different Secret, update every reference:
 
 ```yaml
 mcp:
@@ -104,7 +104,7 @@ If you do not use Grafana, configure a [telemetry MCP connection](integrations.m
 
 For a new installation, prepare the selected credentials and use [Install](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). For a chart-managed Alertmanager token, include `--set-literal 'credentials.alertmanagerToken=REPLACE_WITH_ALERTMANAGER_TOKEN'`. If you enabled Grafana without an existing Secret, include `--set-literal 'grafanaMcp.grafana.apiKey=REPLACE_WITH_GRAFANA_VIEWER_TOKEN'`. Preserve existing Secret references instead of adding inline overrides.
 
-Retain authentication and the runner credential when MCP authentication is enabled. Complete the shared installation health checks and, when automatic investigations are enabled, the [investigation checks](#check-it-works) before phase 1 is complete.
+Retain authentication and the runner credential when MCP authentication is enabled. Complete the shared installation health checks and, when automatic investigations are enabled, the [investigation checks](#check-it-works).
 
 Default Secret names and keys are:
 
@@ -188,13 +188,13 @@ Expected result: `alertmanagerconfig.monitoring.coreos.com/toko-runner` is creat
 
 In-cluster Alertmanager uses the private URL without Ingress. External senders, including Grafana Cloud, need an approved HTTPS ingress or relay. Grafana Cloud cannot reach ClusterIP or Tailscale-only addresses.
 
-#### Phase 1: separate webhook route
+#### Separate webhook route
 
 Keep `mcp.ingress.enabled: false` and `runner.ingress.enabled: false`. Have the platform team route only `/webhooks/alertmanager` from the approved HTTPS edge or relay to `toko-runner:8080`. Preserve the sender's bearer token and configure the edge independently. This connects alerts without exposing MCP. See [webhook access](private-access.md#slack-and-webhooks).
 
 #### Existing shared MCP route
 
-Use this alternative only when preserving an existing shared route or adding team access in phase 2. Merge these settings into your existing `values.yaml`, retaining other fields under `mcp` and `runner`. They reference an existing TLS Secret and keep the configured Alertmanager token:
+Use this alternative only when preserving or adding shared access. Merge these settings into your existing `values.yaml`, retaining other fields under `mcp` and `runner`. They reference an existing TLS Secret and keep the configured Alertmanager token:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -268,7 +268,7 @@ Accepted alerts survive runner restarts. Check skipped or failed outcomes in the
 
 ## Check it works
 
-When automatic investigations are enabled, complete these checks during phase 1. Connect each selected alert source and confirm a completed automatic investigation, saved record, and configured result delivery before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete.
+When automatic investigations are enabled, connect each selected alert source and confirm a completed automatic investigation, saved record, and configured result delivery with these checks.
 
 ### Check the deployment
 

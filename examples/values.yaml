@@ -15,8 +15,8 @@ mcp:
   #   name: REPLACE_WITH_LICENSE_SECRET_NAME
   #   key: REPLACE_WITH_LICENSE_SECRET_KEY
   auth:
-    # Phase 1: local operator access, with MCP kept inside the cluster.
-    # Phase 2: configure authentication and runner credentials using references/oauth.md.
+    # Local operator access, with MCP kept inside the cluster.
+    # Before shared access, configure authentication and runner credentials using references/oauth.md.
     # Keep supplied or existing authentication when adapting this example.
     enabled: false
     provider: none
@@ -51,7 +51,7 @@ runner:
   # Required: needs the sibling, model credentials and at least one alert-source token.
   enabled: true
   ingress:
-    # External senders use a separately approved webhook route during phase 1.
+    # External senders can use a separate webhook route while MCP stays private.
     enabled: false
   detection:
     # Monitoring uses the runner's model and can start investigations automatically.
@@ -109,7 +109,7 @@ runner:
   #   slackApp:
   #     enabled: true
 
-  # Phase 2 adds the MCP login and UI credentials together; see references/oauth.md.
+  # Configure the MCP login and UI credentials together; see references/oauth.md.
   # Omit OAuth credential references while MCP authentication is disabled.
 
   # Uncomment mcpServers and only the connections you use. Keep one combined list.

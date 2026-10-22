@@ -4,7 +4,7 @@
 
 Tokonoma monitors your services, detects significant changes, and automatically investigates findings and alerts using your observability tools. Engineers can work with it through Slack and coding agents, using saved findings and procedures to build on what the team has learned.
 
-Agentic Monitoring checks telemetry without waiting for an alert, while automatic investigations use the full alert stream from connected sources. Both are enabled by default in this installation, and your agent will ask whether you want to turn either off for a phased setup. You choose which integrations Tokonoma can access and where it posts in Slack.
+Agentic Monitoring checks telemetry without waiting for an alert, while automatic investigations use the full alert stream from connected sources. Both are enabled by default in this installation, and your agent will ask whether you want to turn either off. You choose which integrations Tokonoma can access and where it posts in Slack.
 
 ```mermaid
 flowchart LR
@@ -51,7 +51,7 @@ Follow these steps yourself, or [give the instructions below to your agent](#3-g
 
 ### Phase 1: installation
 
-MCP stays inside your cluster during this phase. Use a local port-forward for operator access. Authentication and the runner's machine login come in phase 2.
+MCP stays inside your cluster. Use a local port-forward for operator access.
 
 #### 1. Choose the cluster and prepare your keys
 
@@ -93,7 +93,7 @@ Choose the engineers and coding agents that will connect. Follow [team access](r
 
 Give your agent this request, along with any values files or supporting files you have already prepared or received:
 
-> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and the guides linked from the README's installation walkthrough. Reuse supplied files and existing configuration, then ask for all remaining phase 1 inputs, conflicts, setup choices, and test-alert approval in one batch. Install the standard setup with Agentic Monitoring, automatic investigations, and Slack. Keep MCP private. For a new phase 1 installation without supplied authentication, leave MCP authentication disabled. Complete phase 1 only after deployment health passes, detector setup completes and checks are running, and connected alerts produce completed automatic investigations with saved results and Slack delivery. Report incomplete checks and customer-selected opt-outs. Configure MCP authentication and the runner's machine login in phase 2 before sharing access, then add the shared hostname, routing, and human sign-in if requested. Merge supplied values and preserve existing choices, including authentication. Check for an existing installation and prepare required access before changing the cluster. Record any deployment-event connection that still needs follow-up.
+> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and the guides linked from the README's installation walkthrough. Reuse supplied files and existing configuration, then ask for all remaining inputs, conflicts, setup choices, and test-alert approval in one batch. Install the standard setup with Agentic Monitoring, automatic investigations, and Slack. Keep MCP private. For a new installation without supplied authentication, leave MCP authentication disabled. Complete installation only after deployment health passes, detector setup completes and checks are running, and connected alerts produce completed automatic investigations with saved results and Slack delivery. Report incomplete checks and customer-selected opt-outs. Configure MCP authentication and the runner's machine login before sharing access, then add the shared hostname, routing, and human sign-in if requested. Merge supplied values and preserve existing choices, including authentication. Check for an existing installation and prepare required access before changing the cluster. Record any deployment-event connection that still needs follow-up.
 
 Use an authorized workstation and handle sign-ins, credentials, and administrator-only actions when the agent asks. Replace secret placeholders and run those commands locally, or use existing Kubernetes Secret references. Never paste secrets or filled commands into chat.
 

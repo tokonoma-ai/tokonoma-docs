@@ -82,7 +82,7 @@ prometheus:    { enabled: true }
 grafana:       { enabled: true }
 ```
 
-For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file. Keep MCP private during verification; configure [OAuth](../oauth.md) before shared or public access.
+For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file.
 
 For an existing release, [apply the configuration change](../upgrading.md#before-changing-configuration), preserving existing settings and Secret references.
 
@@ -94,7 +94,7 @@ Check workloads, persistent storage, and index creation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc,jobs
 ```
 
-Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access. Complete the [installation health checks](../install.md#4-verify) and [monitoring and integration checks](../install.md#check-monitoring-and-integrations) for enabled features before phase 1 is complete.
+Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access.
 
 For dashboards, [open the self-monitoring Grafana UI](../endpoints.md#self-monitoring-grafana-ui).
 

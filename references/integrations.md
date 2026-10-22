@@ -49,7 +49,7 @@ For a new deployment, finish the selected integrations and use the [single insta
 
 ### 4. Check access
 
-Verify telemetry access during phase 1 when either automatic feature is enabled. With Slack enabled, `@Tokonoma setup` reports the runner's MCP connections and missing tools. A connected server does not prove every query is authorized: use the applicable [investigation](alert-investigations.md#check-it-works) and [monitoring checks](agentic-monitoring.md#verify-monitoring) to confirm the intended data is accessible before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete. Updating the runner does not configure the MCP connections in your personal coding agent.
+With Slack enabled, `@Tokonoma setup` reports the runner's MCP connections and missing tools. A connected server does not prove every query is authorized. When automatic investigations or monitoring are enabled, use the applicable [investigation](alert-investigations.md#check-it-works) and [monitoring checks](agentic-monitoring.md#verify-monitoring) to confirm the intended telemetry is accessible. Updating the runner does not configure the MCP connections in your personal coding agent.
 
 ## GitHub example
 

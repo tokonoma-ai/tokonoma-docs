@@ -41,8 +41,6 @@ If setup stopped, correct the reported configuration or access problem. To reque
 @Tokonoma detectors setup
 ```
 
-Automatic setup and these Slack commands work without MCP OAuth in a new phase 1 installation. The local monitoring views remain readable; finding feedback in the UI requires the phase 2 authentication settings.
-
 ## Read the monitoring views
 
 Use the local connection from [installation](install.md#4-verify), then open [the local UI](http://localhost:8000/ui/) and choose **Agentic Monitoring**:
@@ -50,13 +48,11 @@ Use the local connection from [installation](install.md#4-verify), then open [th
 - **Coverage** shows the monitored entities, saved detector configuration, and status. Expand a row to read its purpose, query, and available evidence.
 - **Significant Findings** shows recorded findings and their associated investigations. Open the investigation record to read the result.
 
-Keep this read-only UI on the direct localhost connection. Opening a view does not start setup or activate checks.
+Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks. Submitting feedback on a finding requires [authentication](oauth.md).
 
 ## Verify monitoring
 
-Complete these checks during phase 1 when Agentic Monitoring is enabled. Setup must finish for the intended scope and detector evaluations must be running before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete.
-
-A ready runner pod does not prove monitoring is working. Confirm that setup completed for the intended scope and that checks are active. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.
+A ready runner pod does not prove monitoring is working. When Agentic Monitoring is enabled, confirm that setup completed for the intended scope and detector evaluations are running. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.
 
 To check ongoing evaluations, use the runner port-forward in [runner verification](alert-investigations.md#check-the-deployment). From another terminal:
 

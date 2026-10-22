@@ -2,14 +2,14 @@
 
 Configure OAuth before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Configure MCP authentication, the runner's machine login, and shared access in phase 2, after the [installation checkpoint](install.md#check-monitoring-and-integrations). A new phase 1 installation keeps MCP private without OAuth credentials. Preserve existing authentication and routes on upgrades. Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
+Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Preserve existing authentication and routes on upgrades. Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
 | `REPLACE_WITH_KUBE_CONTEXT` and `values.yaml` | Your installation record and platform team | Before cluster commands |
-| `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Phase 2 shared access |
-| Login method and provider values | Your identity administrator: Cognito pool ID, region and domain prefix, or Google project API key | Phase 2 authentication |
-| Cognito app credentials or Google account credentials | The identity provider | Phase 2 credential login and machine clients |
+| `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Shared access |
+| Login method and provider values | Your identity administrator: Cognito pool ID, region and domain prefix, or Google project API key | Before enabling MCP authentication |
+| Cognito app credentials or Google account credentials | The identity provider | Credential login and machine clients |
 | Requester ID, redirect URLs, grants and secret checksum | The requesting application's configuration | Only for declared clients |
 
 Confirm the target cluster with the [installation checks](install.md#1-check-prerequisites).
@@ -37,7 +37,7 @@ kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic 
 
 Merge these settings into `values.yaml`, preserving existing `mcp` settings and any SAML configuration. Choose `cognito` or `google` and remove the unused provider block.
 
-Apply these settings in phase 2. Keep MCP private until authentication and the chosen HTTPS route are ready. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Preserve existing addresses and authentication on upgrades.
+Keep MCP private until authentication and the chosen HTTPS route are ready. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Preserve existing addresses and authentication on upgrades.
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -67,7 +67,7 @@ For public access, merge the [public MCP routing settings](public-mcp-ingress.md
 
 ## 3. Deploy and verify
 
-For an existing phase 1 release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). If there is no installation yet, [install Tokonoma](install.md#3-install) with the prepared file and credentials. Once the deployment and HTTPS route are ready, check OAuth metadata:
+For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). If there is no installation yet, [install Tokonoma](install.md#3-install) with the prepared file and credentials. Once the deployment and HTTPS route are ready, check OAuth metadata:
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/.well-known/oauth-protected-resource/mcp
@@ -81,7 +81,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/mcp
 
 Expect `401` before login.
 
-In phase 2, [connect your agent](coding-agents.md#use-a-public-endpoint) to the shared endpoint `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
+[Connect your agent](coding-agents.md#use-a-public-endpoint) to the shared endpoint `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
 
 ## Choose OAuth client admission
 
