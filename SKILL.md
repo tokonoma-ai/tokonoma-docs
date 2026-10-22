@@ -5,52 +5,83 @@ description: Install, configure, connect, upgrade, troubleshoot, or remove a cus
 
 # Operate a Tokonoma installation
 
-Follow the same [customer guides](README.md#read-the-documentation) humans use. New installations use the published chart and its image defaults. For configuration changes, use the installed chart version and preserve existing image overrides as described in [upgrading](references/upgrading.md#before-changing-configuration). Explain that restarting a mutable image tag such as `latest` can fetch newer application code; agree any version change before proceeding.
+Follow the same [customer guides](README.md#read-the-documentation) that people use. Resolve every documentation path from this skill's directory.
 
-## Establish the requested task
+## Rules for every step
 
-Identify the task, authorized cluster context, release, namespace, features, and access model.
+- Use the guides' own `helm` and `kubectl` commands. Do not wrap them in scripts or use shell exports.
+- Replace every `REPLACE_WITH_...` marker with a verified value. Never invent identifiers or credentials.
+- Ask for credential file paths or Secret names and keys. Never ask for, print, or log secret contents. Leave provider template variables, such as Datadog's `$ID`, intact.
+- Memory analysis and the runner use the Anthropic API only, and one Anthropic API key serves both. The chart's defaults mention Bedrock, Vertex, and Foundry through `runner.extraEnv`. These are not supported, so do not offer or configure them.
+- The customer's request authorizes the installation or change it describes. Ask first before anything outside it: destructive changes, wider network access, or sending data to a new destination. Check [data flows](references/data-flows.md) before changing access or data destinations.
+- Restarting a workload that uses a mutable image tag such as `latest` can pull newer application code. Get the customer's approval before changing the chart version or an image tag.
 
-The runner and memory analysis are required. The public example enables agentic monitoring and automatic investigations. Prepare an Anthropic credential for analysis even if the runner uses another provider. Configure at least one alert source, telemetry query access, and selected tools in the same file. Confirm the monitored cluster and exact namespaces; an empty namespace list includes all namespaces, including system workloads.
+## 1. Identify the target
 
-Check the installed release and read saved values files, including comments, in application order. Inspect nonsecret settings and Secret references. Example defaults are not evidence of the customer's choices. Ask only about missing settings, conflicts, or additions, then save confirmed choices in the customer's values files.
+Confirm the task, the authorized kubeconfig context, the release name, and the namespace. Check for an existing release using the [prerequisite checks](references/install.md#1-check-prerequisites). A permission error does not mean the namespace is empty.
 
-Group missing inputs into one question where practical. Explain human-only actions, such as obtaining a license, signing in, or approving an app, and how to check completion.
+- No release: follow the new-installation path. Use the published chart and its image defaults.
+- Existing release: use its installed chart version and keep its image overrides, as described in [upgrading](references/upgrading.md#before-changing-configuration).
 
-## Prepare the configuration
+## 2. Read the existing configuration
 
-Read any supplied values and supporting files before choosing guides. Identify the configured integrations, model provider, monitoring scope, access routes, and credential references from those files and any existing installation. Summarize what is already configured, list the remaining supported options from the [integration guide](references/integrations.md), and ask whether the customer would like to add anything. Enable optional additions only when selected.
+Read every supplied or saved values file and supporting file, including comments, in the order they are applied. Note the configured integrations, monitoring scope, access routes, and Secret references. Settings in the public example are not evidence of the customer's choices.
 
-For a new installation, if customer values are supplied, follow the [merge rules](references/install.md#merge-supplied-configuration) to add missing requirements while preserving customer choices. If no customer values are supplied, start from the [public example](examples/values.yaml) and configure the selected integrations. For an existing installation, merge only the requested changes, including any supplied values, into its saved configuration. Preserve explicit empty or disabled values and leave settings that can use chart defaults omitted; resolve missing required inputs and conflicts before installing.
+The runner and memory analysis are required. The public example also enables agentic monitoring and automatic investigations. Together they need:
 
-Adapt commands to the configured release, namespace, integrations, routes, and Secret references. Keep supporting deployment files separate from Helm values, and preserve resources they manage. Supplied equivalents replace guide examples; an instruction to uncomment a setting means add or retain that configuration if selected. Do not enable a second webhook route or expose MCP when a separate route is already supplied.
+- an Anthropic API key
+- at least one alert source: Alertmanager or Datadog
+- telemetry query access: a `kind: telemetry` entry in `runner.mcpServers`, or `grafanaMcp.enabled: true`
+- the monitored cluster name and exact namespace names. An empty namespace list watches every namespace, including system namespaces.
 
-## Read only the relevant guides
+Slack, shared team access, an external database, and cloud telemetry storage are optional. Summarize what is already configured, list the remaining options from the [integration guide](references/integrations.md), and ask whether the customer wants any of them. Enable an option only when the customer selects it.
+
+## 3. Ask for what is missing
+
+Ask about missing required inputs, conflicts, and selected additions together, in one question where practical. For actions only a person can do, such as getting a license, signing in, or approving an app, say what to do and how to check it is done. Resolve missing inputs and conflicting targets before running anything that changes the cluster.
+
+If the customer has no telemetry connection yet, continue with the installation and note it for the report in step 7.
+
+## 4. Build the values file
+
+Follow the [merge rules](references/install.md#merge-supplied-configuration). Read the example's comments before adapting any of it. Save confirmed choices in the customer's values files, in their working directory outside this checkout. Keep the commented source files: `helm get values` does not keep comments. Never replace existing configuration, credentials, storage, or values-file order with the example.
+
+## 5. Read only the guides you need
 
 | Task | Read |
 | --- | --- |
 | New installation | [Install](references/install.md), [credentials](references/credentials.md), [integrations](references/integrations.md), [agentic monitoring](references/agentic-monitoring.md), then the selected integration guides |
 | Cloud provider or database preparation | Applicable [AWS](references/cloud-providers/aws.md), [Google Cloud](references/cloud-providers/google-cloud.md), or [external PostgreSQL](references/external-postgres.md) guide |
-| Monitoring, investigations, Slack, or model features | [Agentic monitoring](references/agentic-monitoring.md) or [integrations](references/integrations.md), then the selected guide; [memory model](references/memory-llm.md) when needed |
+| Monitoring, investigations, Slack, or model settings | [Agentic monitoring](references/agentic-monitoring.md) or [integrations](references/integrations.md), then the selected guide; [memory analysis](references/memory-llm.md) when needed |
 | Shared access or login | [Private access](references/private-access.md), [OAuth](references/oauth.md), chosen [Google](references/google-saml.md) or [Okta](references/okta-saml.md) provider; [public routing](references/public-mcp-ingress.md) only when selected |
 | Existing installation | [Configuration preservation](references/upgrading.md), then the feature, [troubleshooting](references/troubleshooting.md), or [uninstall](references/uninstall.md) guide |
 
-Check [data flows](references/data-flows.md) before changing exposure or data destinations. Use the commented [values.yaml](examples/values.yaml) example for field guidance, and [endpoints](references/endpoints.md) and [input conventions](references/install.md#inputs-and-placeholders) for lookups. Cloud hosting does not require optional telemetry.
+Use the commented [values.yaml](examples/values.yaml) for field guidance, and [endpoints](references/endpoints.md) and [input conventions](references/install.md#inputs-and-placeholders) for lookups. Cloud hosting does not require optional telemetry storage.
 
-## Prepare and execute
+## 6. Install or apply, then verify
 
-Use the guides' native commands. Do not create wrappers or shell exports. Replace every `REPLACE_WITH_...` input; never invent identifiers or credentials.
+Run the guide's commands, adapted to the configured release, namespace, integrations, routes, and Secret references. Run each port-forward in its own terminal or background shell, and run checks from another.
 
-Resolve documentation paths from this skill directory. Read the comments before adapting an example and keep the source YAML in the customer's working directory; `helm get values` does not retain comments. Preserve existing configuration, credentials, storage, and values-file order; never overwrite them with an example.
+The installation is complete when Helm reports `deployed`, the required workloads are ready, persistent-volume claims are `Bound`, and the MCP `/health` check returns `ok`. Monitoring setup continues in the background. Do not wait for setup, evaluation results, or a completed investigation.
 
-Ask for protected credential paths or Secret names and keys. Never request or print secret contents in chat. Leave provider template variables such as Datadog notification fields intact.
+If something fails, keep the error and follow [troubleshooting](references/troubleshooting.md). Do not weaken authentication, uninstall, or delete data to get past it.
 
-Explain the changes and proceed within the customer's authorization. Resolve missing inputs and conflicting targets before acting. Ask before destructive changes or broader access or data sharing.
+Memory read and write tests, Slack replies, controlled test alerts, and monitoring checks are optional follow-ups. Run them only when the customer asks. Do not create a production anomaly to test monitoring.
 
-## Verify and hand off
+## 7. Report
 
-Finish installation when Helm reports `deployed`, the required workloads are ready, persistent-volume claims are Bound, and the MCP health check passes. Monitoring setup continues in the background. Do not wait for setup, evaluation results, or a completed investigation.
+Use this template. Leave out credential values.
 
-Memory write/read tests, Slack replies, controlled alerts, and monitoring checks are optional follow-ups when requested. Report them separately from deployment health and do not claim untested features are verified. Do not create a production anomaly to test monitoring. Run port-forwards separately from checks. Preserve errors and troubleshoot without weakening authentication or deleting data.
+```text
+Target:            <context> / <release> / <namespace>
+Versions:          chart <version>, application image <tag>
+Enabled features:  <list>
+Values files:      <paths, in the order applied>
+Credentials:       <file paths or Secret name and key, no values>
+Deployment health: <each check run and its result>
+Telemetry access:  <configured connections, or "none configured">; end-to-end access not yet validated
+Follow-up checks:  <each optional check run and its result, or "none run">
+Remaining actions: <human or service actions, with links to the relevant guides>
+```
 
-Report the target, versions, enabled features, configuration files and order, credential references without values, and observed checks. Identify remaining human or service actions and link the relevant operation guides.
+The telemetry line is information, not a failure. Change "not yet validated" only when a follow-up check showed telemetry data being queried, such as `@Tokonoma setup` reporting no missing access or a controlled investigation that used telemetry. Do not describe any untested feature as verified.

@@ -4,7 +4,7 @@
 
 The [installation example](../examples/values.yaml) enables the required runner with `runner.enabled: true`. [Agentic monitoring](agentic-monitoring.md) can also start investigations from its findings. This guide configures external alert delivery and investigation tools.
 
-Investigations send alert content, retrieved telemetry, memory content, and tool results to the configured model provider. Configured Slack destinations receive summaries and links. Review source permissions before enabling unattended work.
+Investigations send alert content, retrieved telemetry, memory content, and tool results to the Anthropic API. Configured Slack destinations receive summaries and links. Review source permissions before enabling unattended work.
 
 Use Alertmanager, [Datadog](datadog-alerts.md), or both. At least one source token is required. Datadog-only installations omit the Alertmanager token input.
 

@@ -9,7 +9,7 @@ Agentic Monitoring checks telemetry without waiting for an alert, while automati
 ```mermaid
 flowchart LR
   accTitle: Tokonoma in your environment
-  accDescr: Coding agents connect to Tokonoma. All customer alerts from connected sources reach the required Tokonoma runner for automatic investigations. The runner also queries integrations for Agentic Monitoring independently of incoming alerts. Tokonoma runs on Kubernetes; monitored services can run elsewhere. Tokonoma connects to Slack and its model provider. The runner connects to model providers and permitted integrations. Arrows show who opens each external connection.
+  accDescr: Coding agents connect to Tokonoma. All customer alerts from connected sources reach the required Tokonoma runner for automatic investigations. The runner also queries integrations for Agentic Monitoring independently of incoming alerts. Tokonoma runs on Kubernetes; monitored services can run elsewhere. Tokonoma connects to Slack and the Anthropic API. The runner connects to the Anthropic API and permitted integrations. Arrows show who opens each external connection.
   subgraph Inputs["Incoming connections"]
     Agents["Coding agents"]
     Alerts["Incoming alerts<br/>All customer alerts"]
@@ -20,7 +20,7 @@ flowchart LR
   end
   subgraph Connections["Services you configure"]
     Slack["Slack"]
-    Models["Model providers"]
+    Models["Anthropic API"]
     Tools["Integrations<br/>(Telemetry, Alerting, Code)"]
   end
   Agents --> Tokonoma
@@ -43,13 +43,13 @@ The installation includes Tokonoma's Model Context Protocol (MCP) service, the r
 
 Your agent follows the [installation guide](references/install.md) to configure these services and your [selected integrations](references/integrations.md) through the published Helm chart and one `values.yaml`. Compatible MCP tools provide telemetry and code access, while the chart supplies application image defaults without requiring a specific release version or access to the application source.
 
-Model providers can receive investigation context; the [data flows guide](references/data-flows.md) explains which services make external calls, where they connect, and what network access they need.
+The Anthropic API receives investigation context; the [data flows guide](references/data-flows.md) explains which services make external calls, where they connect, and what network access they need.
 
 ## 2. Before you start
 
 Tokonoma runs on Kubernetes, so you need a cluster, workload and storage permissions for your cloud, and a Tokonoma license. The applications you monitor can run elsewhere; your agent should review the supported [monitoring scope](references/agentic-monitoring.md) before configuring clusters and namespaces. The AWS and Google Cloud preparation guides and [prerequisite checks](references/install.md#before-installing) help identify missing infrastructure and access.
 
-Prepare an Anthropic credential for memory analysis, model credentials for the runner, and access to an alert source and telemetry queries. The walkthrough uses bundled PostgreSQL and a temporary local connection. If you choose an [external database](references/external-postgres.md), have the agent prepare it before installing; changing a database address does not migrate existing data.
+Prepare an Anthropic API key for memory analysis and the runner, and access to an alert source and telemetry queries. The walkthrough uses bundled PostgreSQL and a temporary local connection. If you choose an [external database](references/external-postgres.md), have the agent prepare it before installing; changing a database address does not migrate existing data.
 
 ## 3. Give these instructions to your agent
 

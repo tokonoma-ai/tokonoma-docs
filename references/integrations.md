@@ -14,7 +14,7 @@ The bundled `grafanaMcp` adapter queries an existing Grafana. The separate `graf
 
 There is no bundled CloudWatch adapter. A separately supplied MCP server must meet the connection requirements below; enabling telemetry storage does not connect it.
 
-Memory analysis uses the Anthropic API. The runner has its own provider configuration; verify credentials and model identifiers before changing it. See [memory analysis](memory-llm.md) and [data flows](data-flows.md).
+Memory analysis and the runner both use the Anthropic API. Verify model identifiers before changing them. See [memory analysis](memory-llm.md) and [data flows](data-flows.md).
 
 ## MCP connections
 
@@ -29,7 +29,7 @@ Uncomment the matching `runner.mcpServers` entries in [values.yaml](../examples/
 - Set `kind: telemetry` for monitoring sources or `kind: source-control` for code access.
 - Set `expectedTools` to exact tool names advertised by that server, without an `mcp__` prefix. Empty or missing entries permit no calls. Choose read-only tools and credentials with matching permissions.
 
-Monitoring needs query tools that can access the selected cluster and namespaces. Alert webhooks and code-only connections do not supply telemetry access. Results can be sent to the runner's model provider; review [data flows](data-flows.md).
+Monitoring needs query tools that can access the selected cluster and namespaces. Alert webhooks and code-only connections do not supply telemetry access. Results are sent to the Anthropic API; review [data flows](data-flows.md).
 
 ### 2. Prepare credentials
 

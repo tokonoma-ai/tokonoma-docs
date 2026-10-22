@@ -1,6 +1,4 @@
-# Without supplied or existing values, copy this file to your working directory as values.yaml.
-# With custom values, use this example to fill missing requirements; keep customer choices.
-# Existing installation: edit your saved file; do not replace it with this example.
+# Supplied or saved values: follow references/install.md#merge-supplied-configuration.
 # Required core and agentic monitoring are active. Uncomment only integrations you use.
 # Supply license, Anthropic and alert-source credentials through protected files
 # or existing Secret references. See references/install.md and references/credentials.md.
@@ -25,7 +23,7 @@ mcp:
     # Required: the runner's dedicated MCP instance, sharing your database.
     enabled: true
   memoryLlm:
-    # Required Anthropic analysis, even when the runner uses another provider.
+    # Required. Uses the Anthropic API; the same key also serves the runner.
     enabled: true
     # Alternative to credentials.anthropicApiKey: an existing Anthropic key Secret.
     # apiKeySecret:
@@ -60,7 +58,7 @@ runner:
   # Monitoring needs telemetry query access, such as Grafana or a telemetry MCP connection.
   # Alert webhooks and code-only connections do not supply that access.
 
-  # Anthropic is the walkthrough provider; credentials.anthropicApiKey serves both callers.
+  # The runner uses the Anthropic API only; credentials.anthropicApiKey serves both.
   # For an existing Secret, configure this AND mcp.memoryLlm.apiKeySecret above:
   # engine:
   #   apiKeySecret:

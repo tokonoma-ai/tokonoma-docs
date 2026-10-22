@@ -4,7 +4,7 @@ The integrations you enable and where your agent runs determine where data goes.
 
 ## Installed services
 
-Tokonoma runs the MCP service, its required runner and dedicated MCP instance, PostgreSQL, and Ollama. The runner monitors selected telemetry and automatically investigates findings and alerts using your configured tools and model provider. Your coding agent calls MCP over HTTP. PostgreSQL stores records, monitoring state, and search data. Ollama creates search embeddings locally; keyword search is available when embeddings are not.
+Tokonoma runs the MCP service, its required runner and dedicated MCP instance, PostgreSQL, and Ollama. The runner monitors selected telemetry and automatically investigates findings and alerts using your configured tools and the Anthropic API. Your coding agent calls MCP over HTTP. PostgreSQL stores records, monitoring state, and search data. Ollama creates search embeddings locally; keyword search is available when embeddings are not.
 
 The server returns requested records and tool results to your agent. If that agent uses a hosted model, its provider receives the content the agent sends to it. This path exists independently of Tokonoma's own Anthropic API key.
 
@@ -30,25 +30,25 @@ License checks run locally, and usage is recorded in your database. No external 
 
 ## Model and integration connections
 
-The coding agent, MCP services, and runner have separate model configurations. Allow the connections required by the features you enable:
+Your coding agent uses its own model provider. Tokonoma's MCP services and runner use the Anthropic API. Allow the connections required by the features you enable:
 
 | Caller or feature | Destination | Data and purpose |
 | --- | --- | --- |
 | Tokonoma MCP services: memory analysis | Anthropic API when `credentials.anthropicApiKey` or `mcp.memoryLlm.apiKeySecret` is supplied and `mcp.memoryLlm.enabled` is true | Relevant saved record content to check for duplicates |
 | Native `@Tokonoma` Slack app | Slack API and Socket Mode; the interactive MCP service opens outbound connections | Invited-channel messages and history come in; requested records, session updates, and investigation results go to Slack |
 | Tokonoma MCP services: model-backed Slack features | Anthropic API through the memory model configuration | Relevant channel messages, session evidence, and memory content for questions, relevance checks, and timelines |
-| Runner: monitoring and automatic investigations | Its configured model provider | Service metadata, selected telemetry, alerts, retrieved records, and tool results used to configure monitoring, assess findings, and investigate; results are saved in Tokonoma and sent to configured Slack destinations |
+| Runner: monitoring and automatic investigations | Anthropic API | Service metadata, selected telemetry, alerts, retrieved records, and tool results used to configure monitoring, assess findings, and investigate; results are saved in Tokonoma and sent to configured Slack destinations |
 | Runner: external MCP connections | Configured Datadog, Axiom, or other compatible MCP endpoints | Permitted queries and returned telemetry or code context; query access is separate from incoming alert webhooks |
 | Grafana MCP adapter | Your existing Grafana, which can be private or externally hosted | Read-only queries and telemetry allowed by the Grafana service account; the runner connects to the adapter inside your cluster, and the agent and model receive the results |
 | Optional telemetry backend | Your S3 or GCS bucket | Store and query ingested logs, traces, and configured Kubernetes telemetry; disabled by default |
 | Operational telemetry | Configured Prometheus scrape targets or OpenTelemetry (OTLP) endpoint | Process metrics and traces; an external endpoint receives operational data |
 | Authentication | The identity provider you configure | Login and identity information; Tokonoma holds OAuth tokens and related state |
 
-Changing the runner's model provider does not change MCP's Anthropic calls. See [analysis configuration](memory-llm.md) for setup and maintenance controls.
+See [analysis configuration](memory-llm.md) for setup and maintenance controls.
 
 Agentic monitoring is enabled in the example. It can query telemetry, make model calls, and start investigations without an incoming alert. Review [monitoring scope and access](agentic-monitoring.md) before installing.
 
-Monitoring uses the runner's model provider by default. If you configure the optional `runner.detection.judge.apiKeySecretRef`, the runner also sends monitoring context to `https://api.typesafe.ai`; allow that destination only when using this credential.
+Monitoring uses the Anthropic API by default. If you configure the optional `runner.detection.judge.apiKeySecretRef`, the runner also sends monitoring context to `https://api.typesafe.ai`; allow that destination only when using this credential.
 
 Alertmanager and Datadog are supported webhook sources. There is no CloudWatch adapter. Other MCP connections need an endpoint, authentication, and a list of tools the runner may call.
 
@@ -64,7 +64,7 @@ For direct Google Workspace or Okta SAML login, the user's browser visits the id
 
 The installation pulls images from public ECR and Docker Hub and the embedding model from `registry.ollama.ai`. Optional self-monitoring components can also pull from `quay.io` and `registry.k8s.io`; Grafana downloads its configured data-source plugin from GitHub at startup.
 
-Allow the Anthropic API for analysis and the runner's configured model provider. Add only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, Grafana and configured MCP endpoints, your identity provider, and object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
+Allow the Anthropic API for analysis and the runner. Add only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, Grafana and configured MCP endpoints, your identity provider, and object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
 
 Image and model downloads need network access during startup unless you have supplied compatible mirrors and preloaded assets. A fully disconnected installation is not validated by this guide.
 
