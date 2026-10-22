@@ -4,7 +4,7 @@ Agentic Monitoring checks connected telemetry and starts automatic investigation
 
 The [values example](../examples/values.yaml) enables `runner.detection.enabled: true` and the required runner. Automatic investigation of monitoring findings has no separate enable switch. Detectors are saved monitoring checks. Setup activates checks that pass validation. Inactive or degraded checks leave gaps in coverage.
 
-Monitoring scope currently uses Kubernetes clusters and namespaces. The cluster hosting Tokonoma and the cluster being monitored can differ. For ECS workloads, confirm monitoring support with Tokonoma before installing; an ECS cluster name or an empty namespace list does not establish compatible monitoring scope. [Datadog alert investigations](datadog-alerts.md) support ECS separately.
+Monitoring discovery currently uses Kubernetes clusters and namespaces. Choose a Kubernetes scope; it can differ from the cluster hosting Tokonoma. In a mixed Kubernetes and ECS environment, ECS workloads may be absent from discovery and monitoring coverage. Treat that as a known coverage gap, not evidence that those workloads are healthy. [Datadog alert investigations](datadog-alerts.md) can still receive alerts from both environments.
 
 ## Prepare the inputs
 
