@@ -60,24 +60,32 @@ Replace every `REPLACE_WITH_...` marker, including those inside paths and URLs. 
 | --- | --- | --- |
 | `REPLACE_WITH_DOCS_DIRECTORY` | Absolute path to this downloaded repository, including `references/` and `examples/` | Copying the supplied example |
 | `REPLACE_WITH_SECRET_DIRECTORY` | Absolute protected directory you chose in the credential guide | Helm reads the license and selected credential files from this workstation |
-| `values.yaml` | Your copy of the commented example, edited for your installation | Every install or upgrade command |
+| `values.yaml` | Your saved or supplied customer configuration, completed using the example and chart defaults | Every install or upgrade command |
 
 Read YAML comments for settings and each guide's tables for provider inputs. Obtain identifiers from the provider or its administrator. Use hostnames your organization controls; `example.com` is illustrative. Keep provider template variables such as Datadog's `$ID` and `$TOKONOMA_TOKEN` intact.
 
-Copy the [commented values file](../examples/values.yaml) once. For an existing installation, edit its saved file instead of replacing it:
+### Merge supplied configuration
+
+Read any supplied customer README and additional files first, then use the custom values as your starting point. Add required or selected settings from the [commented example](../examples/values.yaml) only where the customer values and selected chart's defaults do not already satisfy them. Keep settings that can use chart defaults omitted; do not load the entire example as a base values layer.
+
+Customer choices take precedence over examples. Preserve explicit `false`, `0`, `null`, `""`, and `[]`; they are not omitted fields. Ask about missing required inputs, `REPLACE_WITH_...` markers, and conflicts, including explicitly disabled required components. Merge mappings by key without duplicating YAML keys; lists replace rather than append. For an existing installation, merge only the requested changes into its saved configuration and preserve values-file order, ensuring list replacements retain unrelated integrations.
+
+Kubernetes manifests and Terraform files remain separate inputs. Use their configured routes, resource names, and Secret references to adapt the relevant guides and commands, preserving existing alert destinations and ownership of resources managed outside Helm. Review the resulting nonsecret values and intended changes before applying them.
+
+Only when there are no supplied or existing values files, copy the example to your working directory:
 
 ```sh
 cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 ```
 
-Read the comments in `values.yaml`, fill in the monitoring scope, and uncomment your selected integrations. Keep credentials in protected files or existing Secrets.
+Read the comments in the resulting `values.yaml`, fill any missing monitoring inputs, and configure the integrations selected in the customer files or confirmed with the customer. Keep credentials in protected files or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). Analysis always needs an Anthropic credential, even when the runner uses another model provider.
 2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source and configure [monitoring](agentic-monitoring.md) with telemetry query access and the intended cluster and namespaces. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
-3. For setup reports and investigation results in Slack, [create the Slack app](slack-app.md#create-the-app), save both tokens, invite it to the results channel, and uncomment Slack delivery in `values.yaml`.
+3. For setup reports and investigation results in Slack, use the [Slack app guide](slack-app.md#create-the-app) to prepare any missing app, tokens, or channel access, and configure Slack delivery in `values.yaml`.
 4. Merge any [external database](external-postgres.md), [authentication](oauth.md), [routing](public-mcp-ingress.md), or cloud telemetry settings into the same file. Complete their prerequisites first. Configure authentication before sharing access.
 
-Keep this commented source file for future changes; `helm get values` does not retain comments. Merge snippets into the matching YAML sections without duplicating top-level keys. Preserve existing settings; lists replace rather than append. If an existing installation already uses multiple files, retain their order until you deliberately consolidate them.
+Keep the commented source files for future changes; `helm get values` does not retain comments. Merge any further snippets using the same rules above.
 
 ## 3. Install
 

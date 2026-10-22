@@ -11,11 +11,19 @@ Follow the same [customer guides](README.md#read-the-documentation) humans use. 
 
 Identify the task, authorized cluster context, release, namespace, features, and access model.
 
-The runner and memory analysis are required. The supplied `values.yaml` enables agentic monitoring and automatic investigations. Prepare an Anthropic credential for analysis even if the runner uses another provider. Configure at least one alert source, telemetry query access, and selected tools in the same file. Confirm the monitored cluster and exact namespaces; an empty namespace list includes all namespaces, including system workloads.
+The runner and memory analysis are required. The public example enables agentic monitoring and automatic investigations. Prepare an Anthropic credential for analysis even if the runner uses another provider. Configure at least one alert source, telemetry query access, and selected tools in the same file. Confirm the monitored cluster and exact namespaces; an empty namespace list includes all namespaces, including system workloads.
 
 Check the installed release and read saved values files, including comments, in application order. Inspect nonsecret settings and Secret references. Example defaults are not evidence of the customer's choices. Ask only about missing settings, conflicts, or additions, then save confirmed choices in the customer's values files.
 
 Group missing inputs into one question where practical. Explain human-only actions, such as obtaining a license, signing in, or approving an app, and how to check completion.
+
+## Merge supplied customer configuration
+
+Read any supplied customer README, values files, Kubernetes manifests, and Terraform files before choosing guides. Identify the configured integrations, model provider, monitoring scope, access routes, and credential references from those files and any existing installation; do not ask the customer to choose them again.
+
+Start with the supplied customer values and follow the [merge rules](references/install.md#merge-supplied-configuration) to add missing requirements from the public example. Customer choices take precedence over examples; leave settings that can use chart defaults omitted. Preserve explicit empty or disabled values, and resolve missing required inputs, placeholders, or disabled required components before installing. For an existing installation, merge only the requested changes into its saved configuration.
+
+Adapt commands to the supplied release, namespace, integrations, routes, and Secret references. Keep manifests and Terraform separate from Helm values, and preserve resources they manage. Supplied equivalents replace guide examples; an instruction to uncomment a setting means add or retain that configuration if selected. Do not enable a second webhook route or expose MCP when a separate route is already supplied.
 
 ## Read only the relevant guides
 
