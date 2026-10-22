@@ -92,7 +92,7 @@ cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep raw credentials out of `values.yaml`; use command inputs or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). One Anthropic API key serves both analysis and the runner.
-2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start), including the provider settings and external runner client used by the example. Identify your alert senders, or record **none configured**; the current chart still requires a receiver token in either case. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
+2. Prepare [investigation tools](alert-investigations.md#before-you-start). The installer provisions the runner and local UI's private machine login. GitOps and existing-credential overrides use the [explicit setup](alert-investigations.md#gitops-or-an-existing-native-machine-secret). Identify your alert senders, or record **none configured**; the chart still requires a receiver token in either case. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
 3. If Slack is selected, use the [Slack app guide](slack-app.md#create-the-app) to prepare any missing app, tokens, or channel access, and configure Slack delivery in `values.yaml`.
 4. Merge any [external database](external-postgres.md), [authentication](oauth.md), [routing](public-mcp-ingress.md), or cloud telemetry settings into the same file. Complete their prerequisites first. Configure authentication before sharing access.
 
@@ -100,7 +100,7 @@ Keep the commented source files for future changes; `helm get values` does not r
 
 ## 3. Install
 
-Install after the required credentials and selected integrations are ready. Without `--version`, Helm selects the latest stable chart; the chart currently defaults to the application image tag `latest`:
+Install after the required credentials and selected integrations are ready. First check the [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite); these settings do not work with earlier releases. Without `--version`, Helm selects the latest stable chart; the chart currently defaults to the application image tag `latest`:
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma \
@@ -161,7 +161,7 @@ After the phase 1 checkpoint, configure [team access](private-access.md), the sh
 
 ### Connect and confirm memory access
 
-This standalone memory check is optional. Follow [Connect a coding agent](coding-agents.md) using the chosen endpoint. An operator can also use `http://127.0.0.1:8000/mcp` with terminal A open.
+This standalone memory check is optional. After human login is configured, follow [Connect a coding agent](coding-agents.md) using the chosen endpoint. An operator can also use `http://127.0.0.1:8000/mcp` with terminal A open and a supported login. Do not reuse the internal runner credential for this check.
 
 In a new session with the connected agent, ask:
 

@@ -1,5 +1,7 @@
 # Install and use Tokonoma
 
+This revision requires the application and chart releases described in [native machine authentication](references/upgrading.md#native-machine-authentication-release-prerequisite). Keep using the released installation guide until those releases are available.
+
 ## 1. Overview
 
 Tokonoma monitors your services, detects significant changes, and automatically investigates findings and alerts using your observability tools. Engineers can work with it through Slack and coding agents, using saved findings and procedures to build on what the team has learned.
@@ -61,7 +63,7 @@ Get your Tokonoma license and Anthropic API key using the [credential guide](ref
 
 #### 2. Connect the runner and Slack
 
-Prepare the [runner's machine login](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled), including its dedicated client ID and secret and [provider settings](references/oauth.md#1-prepare-the-provider). This login is needed now, while MCP is still private. Human sign-in comes in phase 2.
+The installer creates and connects the [runner's private machine login](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled), also used by the local UI. You do not need a Cognito pool or a separate client ID and secret for this step. Human sign-in comes in phase 2.
 
 Create the [Slack app](references/slack-app.md#create-the-app) from our [manifest](examples/slack-app-manifest.yaml). Obtain its bot token and app-level token with `connections:write`, then invite `@Tokonoma` to your investigations channel.
 

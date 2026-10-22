@@ -10,7 +10,6 @@ Prepare these credentials before [installation](install.md#2-prepare-your-files)
 | Anthropic API key | Your Anthropic account | `credentials.anthropicApiKey` | Server-side memory analysis, Slack questions and timelines, and the runner |
 | Slack bot token (`xoxb-`) | Your Slack app's **Install App** page | `credentials.slackBotToken` | Reading invited channels and posting as `@Tokonoma` |
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
-| Runner client ID and secret | Dedicated machine client from your [identity provider](oauth.md#1-prepare-the-provider) | `mcp.auth.clients`, `runner.tokoMcp.oauthClientSecretRef`, and the example's `mcp.extraEnv` references | Authenticated runner and local Setup/Monitoring UI access during phase 1 |
 
 Add only the credentials required by your selected [telemetry connection](integrations.md#mcp-connections), such as a Grafana Viewer token or a provider's API credentials. Telemetry query access is required while either automatic feature is enabled. Reuse existing working connections and Secrets.
 
@@ -24,7 +23,11 @@ A valid Tokonoma license is required for full-body recalls, but not search, savi
 
 ## What Helm creates
 
-Normal Helm installs generate the bundled PostgreSQL password and, when the Grafana adapter is enabled, its private caller token. You do not need to create either for the standard installation. Helm reuses their existing Secrets on upgrades; these Secrets survive uninstall. Delete them only when intentionally resetting the installation.
+Normal Helm installs generate the bundled PostgreSQL password, the runner and local UI's machine login, and, when the Grafana adapter is enabled, its private caller token. You do not need to create these for the standard installation. Helm reuses their existing Secrets on upgrades; these Secrets survive uninstall. Preserve them when disabling components or upgrading.
+
+With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. Credentials stay the same and tokens remain valid. See the [upgrade notes](upgrading.md#native-machine-authentication-release-prerequisite).
+
+The default machine Secret is `toko-runner-oauth`, with keys `clientId` and `clientSecret`. It authenticates the runner and local UI to Tokonoma; it is not an employee login or an integration credential. Do not distribute it to coding agents. Changing its client ID changes the identity that owns private investigation records.
 
 The Grafana caller token authenticates the runner to the adapter. It does not replace the customer-supplied Grafana Viewer token. [Offline rendering](#offline-rendering) needs stable credentials supplied separately.
 
@@ -70,13 +73,15 @@ Use your assigned namespace if it differs. Permission errors need the cluster ow
 
 ## Offline rendering
 
-Client-only `helm template` and GitOps rendering cannot look up the [generated Secrets](#what-helm-creates). Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
+Client-only `helm template` and GitOps rendering cannot look up the [generated Secrets](#what-helm-creates). Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Use the [explicit native machine credential](alert-investigations.md#gitops-or-an-existing-native-machine-secret) for the runner and UI. Repeatedly generating new passwords can break an existing installation.
 
 For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [values example](../examples/values.yaml). For token changes, follow [credential rotation](#renew-and-rotate). Rendering does not check third-party token permissions; verify the integration after deployment.
 
 ## Renew and rotate
 
 For direct inputs, [apply the configuration change](upgrading.md#before-changing-configuration) with a `--set-literal` argument for each changed credential. Changed `credentials.anthropicApiKey`, `credentials.slackBotToken`, `credentials.slackAppToken`, and `credentials.alertmanagerToken` values trigger their consumers' rollouts automatically. Externally managed Secrets require explicit restarts.
+
+To rotate the generated machine login, keep its Secret name and `clientId`, replace only `clientSecret` through your secret-management workflow, then [apply the configuration change](upgrading.md#before-changing-configuration). Use a nonempty secret without leading or trailing whitespace. Helm reads the retained Secret and rolls both MCP instances and the runner. Do not delete the Secret to rotate it. For an explicit native client, update its `secretRef.checksum` and follow [configured-client rotation](oauth.md#choose-oauth-client-admission).
 
 Use this table for changes that need a manual restart. Names shown are the defaults; substitute any configured overrides.
 
@@ -85,7 +90,8 @@ Use this table for changes that need a manual restart. Names shown are the defau
 | License, including direct `mcp.license` | `toko-mcp`, `toko-mcp-unattended` |
 | External Anthropic key | `toko-mcp`, `toko-mcp-unattended`; also `toko-runner` if it uses that Secret |
 | External Slack tokens | `toko-mcp` |
-| External runner model, MCP, or alert-source credential | `toko-runner` |
+| External runner model, remote-MCP, or alert-source credential | `toko-runner` |
+| Local runner MCP credential, changed without a Helm rollout | `toko-mcp`, `toko-mcp-unattended`, and `toko-runner` |
 | Grafana Viewer token, including direct `grafanaMcp.grafana.apiKey` | `toko-grafana-mcp-server` |
 | Grafana adapter caller token | `toko-grafana-mcp-server`, `toko-runner` |
 

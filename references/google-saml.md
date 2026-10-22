@@ -109,9 +109,9 @@ For public access, merge the [HTTPS Ingress settings](public-mcp-ingress.md) int
 
 Follow [SAML certificate preparation](oauth.md#prepare-saml-signing-certificates) using `google-signing.crt` and Secret `toko-mcp-google-saml`. Keep the resulting JSON-file checksum for the values below.
 
-Configure or preserve a Cognito or legacy Google [credential provider](oauth.md#1-prepare-the-provider) alongside SAML and prepare the [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). The required runner needs machine access.
+Keep the [runner's native machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). A new standard installation uses `mcp.auth.provider: none`; Google Workspace SAML does not require a separate credential provider. Preserve any existing provider and explicit runner credentials that are still in use.
 
-Merge these SAML settings into `values.yaml`, preserving the credential provider, runner configuration, and other `mcp` settings. Copy the printed checksum into `checksum`:
+Merge these SAML settings into `values.yaml`, preserving the machine-login configuration and other `mcp` settings. Copy the printed checksum into `checksum`:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -119,7 +119,8 @@ domain: REPLACE_WITH_MCP_HOSTNAME
 mcp:
   auth:
     enabled: true
-    # Keep the configured credential provider for the runner.
+    baseUrl: https://REPLACE_WITH_MCP_HOSTNAME
+    # Keep provider: none for the generated native machine login, or the existing provider.
     saml:
       enabled: true
       provider: google

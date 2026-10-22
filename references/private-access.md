@@ -20,7 +20,7 @@ Use the [installation port-forward and health check](install.md#4-verify). It bi
 
 ## Team access
 
-Configure this in phase 2, after the [installation checkpoint](install.md#check-monitoring-and-integrations). Keep the runner's machine credentials from phase 1.
+Configure this in phase 2, after the [installation checkpoint](install.md#check-monitoring-and-integrations). Preserve the runner's machine identity from phase 1; adding human sign-in does not require replacing it.
 
 1. Agree on a private route with your platform team, such as an existing VPN or internal Ingress. Choose its stable HTTPS hostname without opening shared access yet.
 2. Configure [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Set `mcp.auth.enabled: true` explicitly in `values.yaml`. Use the same hostname for the auth base URL and identity-provider redirect configuration.
