@@ -71,7 +71,7 @@ For each connected system's MCP, configure its endpoint, authentication, source 
 
 Choose the **cluster name you want Tokonoma to monitor**, using its name in your telemetry. Optionally restrict monitoring to a namespace; otherwise confirm all namespaces, including system ones. Follow [monitoring setup](references/agentic-monitoring.md#prepare-the-inputs).
 
-Prepare the receiver token for [Alertmanager](references/alert-investigations.md#before-you-start) or [Datadog](references/datadog-alerts.md) before installing. Identify the alert-routing owner and existing destinations to preserve. If there are no existing alerts, say **none**; the chart still needs a receiver token.
+Prepare the receiver token for [Alertmanager](references/alert-investigations.md#before-you-start) or [Datadog](references/datadog-alerts.md) before installing. Identify the alert-routing owner and existing destinations to preserve. If there is no alert sender, record **none configured**; the current chart still needs an unused receiver token. Report this separately from a selected sender whose connection is pending.
 
 Confirm your deployment system, event source, repository/workflow, and read access with Tokonoma. Axiom annotations need annotation read access. Code access alone does not deliver deployment events.
 

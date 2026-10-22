@@ -15,9 +15,21 @@ mcp:
   #   name: REPLACE_WITH_LICENSE_SECRET_NAME
   #   key: REPLACE_WITH_LICENSE_SECRET_KEY
   auth:
-    # Private local access only. Configure authentication before shared access.
-    # With false, any caller that can reach MCP can use it.
-    enabled: false
+    # Phase 1: authenticated local access; prepare the provider and runner login first.
+    # Use references/oauth.md for the Google alternative or existing settings.
+    enabled: true
+    baseUrl: http://localhost:8000
+    provider: cognito
+    cognito:
+      region: REPLACE_WITH_AWS_REGION
+      userPoolId: REPLACE_WITH_COGNITO_USER_POOL_ID
+      domainPrefix: REPLACE_WITH_COGNITO_DOMAIN_PREFIX
+    clients:
+      - id: REPLACE_WITH_RUNNER_CLIENT_ID
+        origin: external
+        grantTypes: [client_credentials]
+        scopes: [toko-mcp/query]
+        tokenEndpointAuthMethod: client_secret_post
   ingress:
     # Use a local port-forward first. Public access needs TLS and authentication.
     enabled: false
@@ -34,6 +46,18 @@ mcp:
     # apiKeySecret:
     #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
     #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
+  # The local Setup/Monitoring UI uses the same machine login as the runner.
+  extraEnv:
+    - name: TOKO_RUNNER_OAUTH_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: toko-runner-oauth
+          key: clientId
+    - name: TOKO_RUNNER_OAUTH_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: toko-runner-oauth
+          key: clientSecret
 
   # Slack: follow references/slack-app.md and supply both Slack tokens in the command.
   # Uncomment this section and runner.destinations.slackApp below for Slack results.
@@ -49,6 +73,9 @@ mcp:
 runner:
   # Required: needs the sibling, model credentials and at least one alert-source token.
   enabled: true
+  ingress:
+    # External senders use a separately approved webhook route during phase 1.
+    enabled: false
   detection:
     # Monitoring uses the runner's model and can start investigations automatically.
     # Set false only if the customer opts out; remove unused scope placeholders.
@@ -93,6 +120,7 @@ runner:
   # External alerts need an HTTPS webhook route; see references/datadog-alerts.md.
   # A separate route can keep MCP private. Leave both chart ingress switches off for it.
   # The chart-managed route below shares MCP ingress and requires MCP authentication.
+  # Merge it into runner.ingress above rather than adding a second ingress key.
   # Use /webhooks/alertmanager for Alertmanager, or list both paths for both sources.
   # ingress:
   #   enabled: true
@@ -104,12 +132,13 @@ runner:
   #   slackApp:
   #     enabled: true
 
-  # Required when mcp.auth.enabled is true; see references/alert-investigations.md.
-  # tokoMcp:
-  #   oauthClientSecretRef:
-  #     name: REPLACE_WITH_RUNNER_OAUTH_SECRET_NAME
-  #     clientIdKey: REPLACE_WITH_RUNNER_CLIENT_ID_KEY
-  #     key: REPLACE_WITH_RUNNER_CLIENT_SECRET_KEY
+  # Create this Secret using references/alert-investigations.md before installing.
+  # Its client ID must match mcp.auth.clients above. Keep an existing working reference.
+  tokoMcp:
+    oauthClientSecretRef:
+      name: toko-runner-oauth
+      clientIdKey: clientId
+      key: clientSecret
 
   # Uncomment mcpServers and only the connections you use. Keep one combined list.
   # Remote HTTP MCP: Datadog, Axiom or another compatible telemetry/code provider.

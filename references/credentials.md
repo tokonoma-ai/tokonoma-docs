@@ -10,11 +10,23 @@ Prepare these credentials before [installation](install.md#2-prepare-your-files)
 | Anthropic API key | Your Anthropic account | `credentials.anthropicApiKey` | Server-side memory analysis, Slack questions and timelines, and the runner |
 | Slack bot token (`xoxb-`) | Your Slack app's **Install App** page | `credentials.slackBotToken` | Reading invited channels and posting as `@Tokonoma` |
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
-| Alertmanager bearer token | Generate a random token and configure the same value in Alertmanager | `credentials.alertmanagerToken` | Authenticating Alertmanager deliveries to the runner |
+| Runner client ID and secret | Dedicated machine client from your [identity provider](oauth.md#1-prepare-the-provider) | `mcp.auth.clients`, `runner.tokoMcp.oauthClientSecretRef`, and the example's `mcp.extraEnv` references | Authenticated runner and local Setup/Monitoring UI access during phase 1 |
+
+Add only the credentials required by your selected [telemetry connection](integrations.md#mcp-connections), such as a Grafana Viewer token or a provider's API credentials. Telemetry query access is required while either automatic feature is enabled. Reuse existing working connections and Secrets.
+
+For alert delivery, generate an [Alertmanager receiver token](alert-investigations.md#before-you-start) or prepare the [Datadog token](datadog-alerts.md). The current chart requires at least one receiver token even when no alert sender is configured. In that case, retain the Alertmanager token argument in the installation command and record the sender as **none configured**. A configured receiver does not prove that any sender is connected.
+
+Cluster names, endpoints, provider IDs and scopes are configuration, not additional secrets. Obtain them from the selected service's owner; keep nonsecret settings in `values.yaml`.
 
 The MCP server and runner share the Anthropic key unless you configure separate Secret references. Keep analysis enabled for normal operation. See [analysis maintenance](memory-llm.md#temporarily-stop-analysis) for temporary controls and [data flows](data-flows.md) for what reaches the provider.
 
 A valid Tokonoma license is required for full-body recalls, but not search, saving, or skill discovery. An API key cannot replace it and does not enable the runner.
+
+## What Helm creates
+
+Normal Helm installs generate the bundled PostgreSQL password and, when the Grafana adapter is enabled, its private caller token. You do not need to create either for the standard installation. Helm reuses their existing Secrets on upgrades; these Secrets survive uninstall. Delete them only when intentionally resetting the installation.
+
+The Grafana caller token authenticates the runner to the adapter. It does not replace the customer-supplied Grafana Viewer token. [Offline rendering](#offline-rendering) needs stable credentials supplied separately.
 
 ## Supply credentials in commands
 
@@ -58,7 +70,7 @@ Use your assigned namespace if it differs. Permission errors need the cluster ow
 
 ## Offline rendering
 
-Normal Helm installs generate the bundled PostgreSQL password and Grafana adapter caller token, then reuse their existing Secrets on upgrades. These Secrets survive uninstall; delete them only when intentionally resetting the installation. Client-only `helm template` and GitOps rendering cannot look up those Secrets. Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
+Client-only `helm template` and GitOps rendering cannot look up the [generated Secrets](#what-helm-creates). Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
 
 For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [values example](../examples/values.yaml). For token changes, follow [credential rotation](#renew-and-rotate). Rendering does not check third-party token permissions; verify the integration after deployment.
 

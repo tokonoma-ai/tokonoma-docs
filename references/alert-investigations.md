@@ -60,7 +60,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic to
   --from-literal='clientSecret=REPLACE_WITH_RUNNER_CLIENT_SECRET'
 ```
 
-Expected output: `secret/toko-runner-oauth created`. Merge this into `values.yaml`, retaining the full identity-provider settings in that file:
+Expected output: `secret/toko-runner-oauth created`. The [values example](../examples/values.yaml) references it for both the runner and the local Setup/Monitoring UI. If using a different Secret, update both references. Merge this into `values.yaml`, retaining the full identity-provider settings in that file:
 
 ```yaml
 runner:
