@@ -34,11 +34,11 @@ Automatic investigations and Agentic Monitoring require telemetry query access. 
 
 ### 2. Prepare credentials
 
-Follow [credential handling](credentials.md#supply-tokens-from-files) and [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets). Use an existing Secret or save each issued credential in its own protected file without a final newline. Its owner supplies the Secret name and key; replace `REPLACE_WITH_CREDENTIAL_FILE` with the matching file name:
+Follow [credential setup](credentials.md#supply-credentials-in-commands) and [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets). Use an existing Secret or create one with the issued credential. Its owner supplies the Secret name and key. Replace the credential placeholder locally before running:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic REPLACE_WITH_MCP_SECRET_NAME \
-  --from-file=REPLACE_WITH_MCP_SECRET_KEY="REPLACE_WITH_SECRET_DIRECTORY/REPLACE_WITH_CREDENTIAL_FILE"
+  --from-literal=REPLACE_WITH_MCP_SECRET_KEY='REPLACE_WITH_MCP_CREDENTIAL'
 ```
 
 For bearer authentication, store the raw token without `Bearer ` and fill `authSecretRef`. For named-header authentication, use the commented `headers` alternative and remove `authSecretRef`; headers take precedence. Repeat for each credential using distinct Secret names, or use your secret manager. Preserve existing Secrets on upgrades.
@@ -56,7 +56,7 @@ Verify telemetry access during phase 1 when either automatic feature is enabled.
 GitHub adds source-code context to investigations. It is optional and does not replace telemetry access. For GitHub.com, use the commented `name: github` entry in [values.yaml](../examples/values.yaml), with `kind: source-control` and GitHub's [hosted read-only endpoint](https://github.com/github/github-mcp-server/blob/main/docs/remote-server.md): `https://api.githubcopilot.com/mcp/readonly`. No local GitHub server is needed.
 
 1. [Create a fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token). Choose the organization or account that owns the repositories, select only the repositories Tokonoma may read, and set an expiration. Grant repository **Contents: Read-only**; Metadata access is included. Obtain organization approval if required before using the token for private repositories.
-2. Save the raw token in a protected `github-token.txt` file without a final newline. Use [Prepare credentials](#2-prepare-credentials) to create or reuse the Secret: the example uses `toko-runner-github`, key `token`. Agents ask for the file path or existing Secret reference, never the token itself.
+2. Use [Prepare credentials](#2-prepare-credentials) to create or reuse the Secret with the raw token: the example uses `toko-runner-github`, key `token`. Fill the credential placeholder locally; never paste the token into chat.
 3. Uncomment the GitHub entry in the shared `runner.mcpServers` list. Its `expectedTools` permits `get_file_contents`, `search_code`, `get_commit`, and `list_commits`. Confirm these names against the server's advertised tools; add other read-only tools and their required permissions only when needed.
 
 Use the shared [apply](#3-apply-the-configuration) and [access checks](#4-check-access) above. For a GitHub follow-up check, read a known file from a selected private repository; connecting successfully does not prove repository access. Token expiration or loss of the owner's repository access requires [credential renewal](credentials.md#renew-and-rotate). GitHub Enterprise installations need their provider-specific endpoint and authentication; do not assume this GitHub.com example applies.

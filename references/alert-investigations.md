@@ -22,26 +22,25 @@ Bundled PostgreSQL needs no additional setup. For external PostgreSQL (`postgres
 
 ## Before you start
 
-Prepare the runner in your saved `values.yaml`. Follow [credential setup](credentials.md) for the license, model key, and protected files. Complete [Slack app setup](slack-app.md) if you want Slack results. Use the installation's [input conventions](install.md#inputs-and-placeholders).
+Prepare the runner in your saved `values.yaml`. Follow [credential setup](credentials.md#supply-credentials-in-commands) for the license and model key. Complete [Slack app setup](slack-app.md) if you want Slack results. Use the installation's [input conventions](install.md#inputs-and-placeholders).
 
 | Input | Meaning and source | Required when |
 |---|---|---|
-| `alertmanager-token.txt` | High-entropy shared token created by the operator and also configured on the sender | Alertmanager or Grafana alerts |
-| `REPLACE_WITH_GRAFANA_URL`, `grafana-viewer-token.txt` | Existing Grafana URL and Viewer service-account token with the required data-source permissions | Grafana MCP adapter |
-| `runner-client-id.txt`, `runner-client-secret.txt` | Dedicated runner credentials from the selected [identity provider](oauth.md) | MCP authentication enabled |
+| `REPLACE_WITH_ALERTMANAGER_TOKEN` | High-entropy shared token created by the operator and also configured on the sender | Alertmanager or Grafana alerts |
+| `REPLACE_WITH_GRAFANA_URL`, `REPLACE_WITH_GRAFANA_VIEWER_TOKEN` | Existing Grafana URL and Viewer service-account token with the required data-source permissions | Grafana MCP adapter |
+| `REPLACE_WITH_RUNNER_CLIENT_ID`, `REPLACE_WITH_RUNNER_CLIENT_SECRET` | Dedicated runner credentials from the selected [identity provider](oauth.md) | MCP authentication enabled |
 | `REPLACE_WITH_WEBHOOK_HOSTNAME` | Approved HTTPS hostname from the platform team for the selected webhook route or relay | External alert sender |
 | `REPLACE_WITH_MCP_HOSTNAME`, `REPLACE_WITH_TLS_SECRET_NAME` | Existing MCP hostname and TLS Secret from [ingress setup](public-mcp-ingress.md) | Shared MCP Ingress example only |
 
 Keep `alertmanagerconfig-tokonoma.yaml`, if used, beside `values.yaml`. Merge any [Datadog settings](datadog-alerts.md) into the same values file.
 
-Generate `alertmanager-token.txt` only if no receiver token exists. Preserve existing tokens when adding a source or upgrading:
+Generate a token only if no receiver token exists. Preserve existing tokens when adding a source or upgrading:
 
 ```sh
-umask 077
-openssl rand -hex 32 | tr -d '\n' > "REPLACE_WITH_SECRET_DIRECTORY/alertmanager-token.txt"
+openssl rand -hex 32
 ```
 
-This writes without printing the token. Configure the same value on the sender.
+Copy the printed value into `REPLACE_WITH_ALERTMANAGER_TOKEN` in the installation command and configure the same value on the sender.
 
 For externally managed Secrets or offline rendering, follow [credentials](credentials.md#use-existing-kubernetes-secrets). If `mcp.auth` is enabled, configure the runner credential below.
 
@@ -53,12 +52,12 @@ For the legacy Google Identity Platform/Firebase verifier, enable Email/Password
 
 Declare the Cognito app client ID or Google account email in `mcp.auth.clients` with `origin: external`, grant `client_credentials`, scope `toko-mcp/query`, and `tokenEndpointAuthMethod: client_secret_post`. SAML-only login cannot issue a machine credential: keep the selected credential provider alongside SAML for the runner.
 
-Keep an existing runner credential Secret if it works. Otherwise, save the raw credentials as `runner-client-id.txt` and `runner-client-secret.txt` in the protected directory. [Prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets), then create the runner credential Secret:
+Keep an existing runner credential Secret if it works. Otherwise, [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets), then create the runner credential Secret with the provider's client ID and secret:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-runner-oauth \
-  --from-file=clientId="REPLACE_WITH_SECRET_DIRECTORY/runner-client-id.txt" \
-  --from-file=clientSecret="REPLACE_WITH_SECRET_DIRECTORY/runner-client-secret.txt"
+  --from-literal='clientId=REPLACE_WITH_RUNNER_CLIENT_ID' \
+  --from-literal='clientSecret=REPLACE_WITH_RUNNER_CLIENT_SECRET'
 ```
 
 Expected output: `secret/toko-runner-oauth created`. Merge this into `values.yaml`, retaining the full identity-provider settings in that file:
@@ -76,13 +75,13 @@ runner:
 
 ### Install with OSS Grafana MCP
 
-To query an existing Grafana, uncomment `grafanaMcp` in your saved [values file](../examples/values.yaml). Replace the Grafana URL and choose a protected Viewer token file or existing Secret reference. The private adapter requires Kubernetes 1.25+ and connects to the runner automatically.
+To query an existing Grafana, uncomment `grafanaMcp` in your saved [values file](../examples/values.yaml). Replace the Grafana URL and prepare its Viewer token or an existing Secret reference. The private adapter requires Kubernetes 1.25+ and connects to the runner automatically.
 
 If you do not use Grafana, configure a [telemetry MCP connection](integrations.md#mcp-connections), such as Datadog or Axiom. Automatic investigations and Agentic Monitoring require telemetry query access; alert webhooks and code access alone are insufficient.
 
 ### Apply the configuration
 
-For a new installation, prepare the selected credentials and use [Install](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). If you enabled Grafana with a token file, include `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"`.
+For a new installation, prepare the selected credentials and use [Install](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). For a chart-managed Alertmanager token, include `--set-literal 'credentials.alertmanagerToken=REPLACE_WITH_ALERTMANAGER_TOKEN'`. If you enabled Grafana without an existing Secret, include `--set-literal 'grafanaMcp.grafana.apiKey=REPLACE_WITH_GRAFANA_VIEWER_TOKEN'`. Preserve existing Secret references instead of adding inline overrides.
 
 Retain authentication and the runner credential when MCP authentication is enabled. Complete the shared installation health checks and, when automatic investigations are enabled, the [investigation checks](#check-it-works) before phase 1 is complete.
 
@@ -294,7 +293,17 @@ Stop the port-forward with Ctrl-C when finished. If the test creates a temporary
 
 Follow [credential rotation](credentials.md#renew-and-rotate) for model, Slack, and Grafana credentials and the required restarts.
 
-For an Alertmanager token, save old and new tokens comma-separated in `alertmanager-token.txt`. [Apply the configuration change](upgrading.md#before-changing-configuration) with the updated `credentials.alertmanagerToken` file. Update the sender and verify delivery before removing the old token and applying again. With an external Secret, update it and restart the runner at each step. For Datadog, use its [token rotation procedure](datadog-alerts.md#rotating-the-token). Webhook credentials do not grant MCP query access.
+For a chart-managed Alertmanager token, [apply the configuration change](upgrading.md#before-changing-configuration) with `--set-literal 'credentials.alertmanagerToken=REPLACE_WITH_OLD_TOKEN,REPLACE_WITH_NEW_TOKEN'`. Update the sender and verify delivery. Apply again with `--set-literal 'credentials.alertmanagerToken=REPLACE_WITH_NEW_TOKEN'` to remove the old token.
+
+For an external Secret, update its configured name and key with both tokens, then [restart the runner](credentials.md#renew-and-rotate):
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic REPLACE_WITH_ALERTMANAGER_SECRET_NAME \
+  --from-literal='REPLACE_WITH_ALERTMANAGER_SECRET_KEY=REPLACE_WITH_OLD_TOKEN,REPLACE_WITH_NEW_TOKEN' \
+  --dry-run=client -o yaml | kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma apply -f -
+```
+
+After the sender uses the new token and delivery is verified, repeat the Secret update with only `REPLACE_WITH_NEW_TOKEN` and restart the runner again. For Datadog, use its [token rotation procedure](datadog-alerts.md#rotating-the-token). Webhook credentials do not grant MCP query access.
 
 ## Adding your own MCP servers
 

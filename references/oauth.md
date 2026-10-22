@@ -2,14 +2,14 @@
 
 Configure OAuth before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Prepare runner machine authentication in phase 1. A stable HTTPS hostname and human sign-in belong to phase 2, after the [installation checkpoint](install.md#check-monitoring-and-integrations). Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-tokens-from-files).
+Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Prepare runner machine authentication in phase 1. A stable HTTPS hostname and human sign-in belong to phase 2, after the [installation checkpoint](install.md#check-monitoring-and-integrations). Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
-| `REPLACE_WITH_KUBE_CONTEXT`, `values.yaml`, license file and secret directory | Your installation record and platform team | Before cluster commands |
+| `REPLACE_WITH_KUBE_CONTEXT` and `values.yaml` | Your installation record and platform team | Before cluster commands |
 | `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Phase 2 shared access |
 | Login method and provider values | Your identity administrator: Cognito pool ID, region and domain prefix, or Google project API key | Before saving authentication values |
-| Cognito app credentials or Google account credentials | The identity provider; keep secrets in protected files | Credential login and machine clients |
+| Cognito app credentials or Google account credentials | The identity provider | Credential login and machine clients |
 | Requester ID, redirect URLs, grants and secret checksum | The requesting application's configuration | Only for declared clients |
 
 Confirm the target cluster with the [installation checks](install.md#1-check-prerequisites).
@@ -26,11 +26,11 @@ Both browser and machine login verify this app client. Enter its ID as **Client 
 
 For legacy Google Identity Platform/Firebase, enable **Email/Password** sign-in and provision accounts. Tokonoma uses `signInWithPassword`: enter account email as **Client ID** and password as **Client Secret** in both browser and machine requests. Google OAuth app credentials do not work. Get that project's API key. Before creating its Secret, [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets).
 
-Save the API key in `REPLACE_WITH_SECRET_DIRECTORY/google-identity-api-key.txt` with restricted permissions and no trailing newline. Create the API key Secret:
+Use the project's API key to create the API key Secret, or keep its existing Secret reference:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic google-oauth \
-  --from-file=apiKey="REPLACE_WITH_SECRET_DIRECTORY/google-identity-api-key.txt"
+  --from-literal='apiKey=REPLACE_WITH_GOOGLE_IDENTITY_API_KEY'
 ```
 
 ## 2. Save the values
@@ -99,11 +99,11 @@ Before changing modes, declare each credential client registered through `hybrid
 
 Do not change external client IDs to avoid collisions. IDs also identify credentials and memory ownership; changes require matching caller and identity provider updates and can create a new owner. Previously issued access tokens remain valid until expiry.
 
-For an interactive application, save a high-entropy secret in `REPLACE_WITH_SECRET_DIRECTORY/requester-client-secret.txt`. Create its Secret and merge these settings into `values.yaml`. Set exact redirects, grants, and a supported authentication method before redeploying:
+For an interactive application, choose a high-entropy client secret. Create its Secret or keep an existing one, then merge these settings into `values.yaml`. Set exact redirects, grants, and a supported authentication method before redeploying:
 
 ```sh
 kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic requester-oauth-client \
-  --from-file=current="REPLACE_WITH_SECRET_DIRECTORY/requester-client-secret.txt"
+  --from-literal='current=REPLACE_WITH_REQUESTER_CLIENT_SECRET'
 ```
 
 ```yaml
@@ -159,7 +159,7 @@ Google supports group sharing. Okta supports only private and `toko:everyone` ac
 
 ### Prepare SAML signing certificates
 
-Use `jq` to turn the complete PEM certificate into the JSON array Tokonoma expects. Keep the files in your [protected credential directory](credentials.md#supply-tokens-from-files) and [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets) before creating the Secret.
+Use `jq` to turn the complete PEM certificate into the JSON array Tokonoma expects. Follow the [certificate-file instructions](credentials.md#certificate-files) and [prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets) before creating the Secret.
 
 Replace the placeholders below with the values for your provider:
 

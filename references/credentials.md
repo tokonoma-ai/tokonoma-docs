@@ -1,6 +1,6 @@
 # Credentials and license
 
-Prepare these credentials before [installation](install.md#2-prepare-your-files). Use protected files or existing Kubernetes Secrets.
+Prepare these credentials before [installation](install.md#2-prepare-your-files). Enter their values directly in the command examples, or reuse existing Kubernetes Secrets.
 
 ## What you need
 
@@ -16,37 +16,23 @@ The MCP server and runner share the Anthropic key unless you configure separate 
 
 A valid Tokonoma license is required for full-body recalls, but not search, saving, or skill discovery. An API key cannot replace it and does not enable the runner.
 
-## Supply tokens from files
+## Supply credentials in commands
 
-Save each raw token in a protected file outside this repository, with no quotes, whitespace, or final newline. Use a secret manager or local editor; keep values out of shell commands.
+Replace credential placeholders directly in the commands on your workstation. Keep the surrounding single quotes. Helm examples use `--set-literal` to preserve each value as an exact string, including commas and backslashes. Kubernetes Secret examples use `--from-literal`. Use one flag per value; follow your shell's quoting rules if a credential contains a single quote.
 
-On the Helm workstation, replace `REPLACE_WITH_SECRET_DIRECTORY` with an approved absolute path. Use it consistently:
+These commands contain secrets. They can remain in shell history and may be visible in process arguments. Helm also stores direct inputs in release records and Kubernetes Secrets. Use existing Secret references or your organization's secret-management workflow when direct input is unsuitable. Never commit filled commands or log rendered Secrets.
+
+When using an installation agent, replace secret placeholders and run those commands yourself locally. Do not paste secret values or filled commands into chat. The agent can verify the resulting deployment and Secret references without seeing their contents.
+
+Keep credentials in your secret manager and record Secret names and keys with the installation configuration. Existing credential files remain usable with Helm's `--set-file` if that is already your workflow; they are not required by these examples.
+
+## Certificate files
+
+SAML signing certificates and their JSON representation remain files. Choose a directory outside this repository, replace `REPLACE_WITH_SECRET_DIRECTORY` in those examples with its absolute path, and prepare it on your workstation:
 
 ```sh
 install -d -m 700 "REPLACE_WITH_SECRET_DIRECTORY"
 ```
-
-Save the issued license as `license.txt`, then restrict that file to your account:
-
-```sh
-chmod 600 "REPLACE_WITH_SECRET_DIRECTORY/license.txt"
-```
-
-Create the files required by your runner configuration and other selected features:
-
-| File | Content and source | Needed when |
-| --- | --- | --- |
-| `anthropic-api-key.txt` | Issued API key from your Anthropic account | Required analysis, unless you use an existing Secret |
-| `slack-bot-token.txt`, `slack-app-token.txt` | Tokens from your Slack app | Following [Slack setup](slack-app.md) |
-| `alertmanager-token.txt` | Token shared with your alert sender | Following [Alertmanager setup](alert-investigations.md) |
-| `datadog-webhook-token.txt` | Token shared with Datadog | Following [Datadog setup](datadog-alerts.md) |
-| `grafana-viewer-token.txt` | Your existing Grafana service-account credential | Enabling the Grafana query adapter |
-
-Apply `chmod 600` to each created file. Agents ask you to save issued credentials and supply their paths, never their contents in chat.
-
-Keep the protected files, Secret references, and saved configuration for future upgrades.
-
-`--set-file` keeps tokens out of commands but stores them in Helm release records and Kubernetes Secrets. Restrict access to both. Never commit token files or log rendered Secrets.
 
 ## Use existing Kubernetes Secrets
 
@@ -72,13 +58,13 @@ Use your assigned namespace if it differs. Permission errors need the cluster ow
 
 ## Offline rendering
 
-Normal Helm installs generate the bundled PostgreSQL password and Grafana adapter caller token, then reuse their existing Secrets on upgrades. These Secrets survive uninstall; delete them only when intentionally resetting the installation. Client-only `helm template` and GitOps rendering cannot look up those Secrets. Use stable `postgres.auth.password` and `grafanaMcp.auth.token` inputs from protected files, or externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
+Normal Helm installs generate the bundled PostgreSQL password and Grafana adapter caller token, then reuse their existing Secrets on upgrades. These Secrets survive uninstall; delete them only when intentionally resetting the installation. Client-only `helm template` and GitOps rendering cannot look up those Secrets. Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
 
 For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [values example](../examples/values.yaml). For token changes, follow [credential rotation](#renew-and-rotate). Rendering does not check third-party token permissions; verify the integration after deployment.
 
 ## Renew and rotate
 
-For direct file inputs, update the protected file and [apply the configuration change](upgrading.md#before-changing-configuration), including its `--set-file` argument. Changed `credentials.anthropicApiKey`, `credentials.slackBotToken`, `credentials.slackAppToken`, and `credentials.alertmanagerToken` values trigger their consumers' rollouts automatically. Externally managed Secrets require explicit restarts.
+For direct inputs, [apply the configuration change](upgrading.md#before-changing-configuration) with a `--set-literal` argument for each changed credential. Changed `credentials.anthropicApiKey`, `credentials.slackBotToken`, `credentials.slackAppToken`, and `credentials.alertmanagerToken` values trigger their consumers' rollouts automatically. Externally managed Secrets require explicit restarts.
 
 Use this table for changes that need a manual restart. Names shown are the defaults; substitute any configured overrides.
 
@@ -100,6 +86,6 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deploymen
 
 Expect a successful rollout, then repeat the integration's connection check. Keep the old credential valid until its replacement works where the provider allows overlap. For incoming alert tokens, follow the [Alertmanager](alert-investigations.md#rotate-credentials) or [Datadog](datadog-alerts.md#rotating-the-token) overlap procedure.
 
-The generated Grafana caller token stays unchanged on ordinary upgrades. To rotate it, supply `--set-file grafanaMcp.auth.token="REPLACE_WITH_SECRET_DIRECTORY/grafana-caller-token.txt"` on the configuration change, then restart both consumers above. The adapter also needs a restart after its inline Viewer token changes.
+The generated Grafana caller token stays unchanged on ordinary upgrades. To rotate it, supply `--set-literal 'grafanaMcp.auth.token=REPLACE_WITH_GRAFANA_CALLER_TOKEN'` on the configuration change, then restart both consumers above. The adapter also needs a restart after its inline Viewer token changes.
 
 Check license status in the local UI's **Setup** page, or `/usage-stats` through your existing connection. `/usage-stats` requires a token with `toko-mcp/query` when authentication is enabled. It reports usage and reasons such as `absent`, `invalid_signature`, or `expired`. Expiry grace and quota enforcement follow the issued license; refused recalls do not consume usage. Contact [support@tokonoma.ai](mailto:support@tokonoma.ai) to renew.

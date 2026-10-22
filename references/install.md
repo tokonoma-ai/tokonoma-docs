@@ -26,7 +26,7 @@ Use one release per namespace: component names are fixed. Examples use release a
 | Helm 3.14 or later, `kubectl`, and `curl` | Your workstation's approved tool installation | `helm version --short`, `kubectl version --client`, and `curl --version` must run. |
 | Storage and workload permissions | Your platform team | A default StorageClass must provision PersistentVolumes; the namespace must allow the chart's workloads. |
 | Capacity and outbound network access | Your platform team | Review the released chart's resource requests and [network destinations](data-flows.md#network-destinations). |
-| Issued license | Your Tokonoma contact | Save it using [credentials and license](credentials.md#supply-tokens-from-files). |
+| Issued license | Your Tokonoma contact | Have it ready for the [installation command](#3-install). |
 
 ```sh
 kubectl config get-contexts REPLACE_WITH_KUBE_CONTEXT
@@ -52,16 +52,16 @@ If the registry reports an expired token, follow [registry troubleshooting](trou
 
 ## 2. Prepare your files
 
-Work from an existing directory outside this checkout. Save nonsecret values there and credentials in a separate protected directory, outside shared or version-controlled folders.
+Work from an existing directory outside this checkout. Save nonsecret settings in `values.yaml`; enter credentials directly in commands or use existing Kubernetes Secret references.
 
 ### Inputs and placeholders
 
-Replace every `REPLACE_WITH_...` marker, including those inside paths and URLs. Edit commands directly; do not use shell exports or wrappers. Keep quotes around paths. Agents use verified values and ask for missing decisions or credential paths, never secret contents.
+Replace every `REPLACE_WITH_...` marker, including those inside paths and URLs. Edit commands directly; do not use shell exports or wrappers. Keep quotes around paths and credential values. If an agent is helping, fill secret placeholders and run those commands locally; do not paste secrets into chat. See [credential input](credentials.md#supply-credentials-in-commands).
 
 | Input | Meaning and source | Used by |
 | --- | --- | --- |
 | `REPLACE_WITH_DOCS_DIRECTORY` | Absolute path to this downloaded repository, including `references/` and `examples/` | Copying the supplied example |
-| `REPLACE_WITH_SECRET_DIRECTORY` | Absolute protected directory you chose in the credential guide | Helm reads the license and selected credential files from this workstation |
+| Credential placeholders | License, keys, and tokens from their providers or owners | Replace directly in the command examples on your workstation |
 | `values.yaml` | Your saved or supplied customer configuration, completed using the example and chart defaults | Every install or upgrade command |
 
 Read YAML comments for settings and each guide's tables for provider inputs. Obtain identifiers from the provider or its administrator. Use hostnames your organization controls; `example.com` is illustrative. Keep provider template variables such as Datadog's `$ID` and `$TOKONOMA_TOKEN` intact.
@@ -89,7 +89,7 @@ Only when there are no supplied or existing values files, copy the example to yo
 cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 ```
 
-Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep credentials in protected files or existing Secrets.
+Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep raw credentials out of `values.yaml`; use command inputs or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). One Anthropic API key serves both analysis and the runner.
 2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
@@ -107,13 +107,15 @@ helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma \
   oci://public.ecr.aws/tokonoma/charts/tokonoma \
   --namespace tokonoma --create-namespace \
   --values values.yaml \
-  --set-file mcp.license="REPLACE_WITH_SECRET_DIRECTORY/license.txt" \
-  --set-file credentials.anthropicApiKey="REPLACE_WITH_SECRET_DIRECTORY/anthropic-api-key.txt" \
-  --set-file credentials.alertmanagerToken="REPLACE_WITH_SECRET_DIRECTORY/alertmanager-token.txt" \
+  --set-literal 'mcp.license=REPLACE_WITH_LICENSE' \
+  --set-literal 'credentials.anthropicApiKey=REPLACE_WITH_ANTHROPIC_API_KEY' \
+  --set-literal 'credentials.alertmanagerToken=REPLACE_WITH_ALERTMANAGER_TOKEN' \
+  --set-literal 'credentials.slackBotToken=REPLACE_WITH_SLACK_BOT_TOKEN' \
+  --set-literal 'credentials.slackAppToken=REPLACE_WITH_SLACK_APP_TOKEN' \
   --wait --timeout 10m
 ```
 
-Use only the credential inputs for your choices. Existing Secret references replace their matching `--set-file` arguments. For Datadog-only alerts, omit the Alertmanager token and retain the Datadog Secret reference. With Slack selected, add `--set-file credentials.slackBotToken="REPLACE_WITH_SECRET_DIRECTORY/slack-bot-token.txt"` and `--set-file credentials.slackAppToken="REPLACE_WITH_SECRET_DIRECTORY/slack-app-token.txt"`, or use the Slack Secret reference. If Grafana is enabled, add `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"` or use its existing Secret option. Keep the analysis credential in every complete installation.
+Use only the credential inputs for your choices. Existing Secret references replace their matching `--set-literal` arguments. For Datadog-only alerts, omit the Alertmanager token and retain the Datadog Secret reference. Omit both Slack arguments if Slack is disabled or uses an existing Secret. If Grafana is enabled, add `--set-literal 'grafanaMcp.grafana.apiKey=REPLACE_WITH_GRAFANA_VIEWER_TOKEN'` or use its existing Secret option. Keep the analysis credential in every complete installation.
 
 Expect status `deployed`. Diagnose timeouts before retrying; do not uninstall to bypass errors. Helm stores the license in release metadata and a Secret. Restrict access to both.
 

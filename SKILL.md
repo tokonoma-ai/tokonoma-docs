@@ -11,7 +11,7 @@ Follow the same [customer guides](README.md#read-the-documentation) that people 
 
 - Use the guides' own `helm` and `kubectl` commands. Do not wrap them in scripts or use shell exports.
 - Replace every `REPLACE_WITH_...` marker with a verified value. Never invent identifiers or credentials.
-- Ask for credential file paths or Secret names and keys. Never ask for, print, or log secret contents. Leave provider template variables, such as Datadog's `$ID`, intact.
+- Prepare credential commands with placeholders for the customer to fill and run locally. Reuse existing Secret references or supplied credential files when available. Never ask for secret contents or filled commands in chat, and never print or log secrets. Leave provider template variables, such as Datadog's `$ID`, intact.
 - Memory analysis and the runner use the Anthropic API only, and one Anthropic API key serves both. The chart's defaults mention Bedrock, Vertex, and Foundry through `runner.extraEnv`. These are not supported, so do not offer or configure them.
 - The customer's request authorizes the installation or change it describes. Ask first before anything outside it: destructive changes, wider network access, or sending data to a new destination. Check [data flows](references/data-flows.md) before changing access or data destinations.
 - Restarting a workload that uses a mutable image tag such as `latest` can pull newer application code. Get the customer's approval before changing the chart version or an image tag.
@@ -63,7 +63,7 @@ Use the commented [values.yaml](examples/values.yaml) for field guidance, and [e
 
 ## 6. Install or apply, then verify
 
-Run the guide's commands, adapted to the configured release, namespace, integrations, routes, and Secret references. Run each port-forward in its own terminal or background shell, and run checks from another.
+Run the guide's commands, adapted to the configured release, namespace, integrations, routes, and Secret references. Have the customer run credential commands whose input or output contains secrets; continue verification without asking to see them. Run each port-forward in its own terminal or background shell, and run checks from another.
 
 Complete the phase 1 checkpoint before shared team access:
 
@@ -87,7 +87,7 @@ Versions:          chart <version>, application image <tag>
 Enabled features:  <list>
 Disabled features: <customer-selected opt-outs, or "none">
 Values files:      <paths, in the order applied>
-Credentials:       <file paths or Secret name and key, no values>
+Credentials:       <Secret names and keys, or supplied file paths; no values>
 Deployment health: <each check run and its result>
 Telemetry access:  <configured connections and query evidence, or customer opt-out>
 Monitoring:        <setup status, scope, active checks, evaluation evidence, coverage gaps, or customer opt-out>

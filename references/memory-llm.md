@@ -13,7 +13,7 @@ Search can still collapse identical re-saves, but model-based duplicate review a
 
 ## Configure analysis
 
-Keep `mcp.memoryLlm.enabled: true` in `values.yaml`. Save your Anthropic key as `anthropic-api-key.txt` using [credential setup](credentials.md#supply-tokens-from-files), then use the [installation command](install.md#3-install) or [apply the configuration change](upgrading.md#before-changing-configuration).
+Keep `mcp.memoryLlm.enabled: true` in `values.yaml`. Follow [credential setup](credentials.md#supply-credentials-in-commands) and supply `--set-literal 'credentials.anthropicApiKey=REPLACE_WITH_ANTHROPIC_API_KEY'` through the [installation command](install.md#3-install) or [configuration change](upgrading.md#before-changing-configuration). Fill the key placeholder locally, not in chat.
 
 For an externally managed Secret, use `mcp.memoryLlm.apiKeySecret` as shown in [values.yaml](../examples/values.yaml). Set `runner.engine.apiKeySecret` too if the runner should share that key; see [existing Secret setup](credentials.md#use-existing-kubernetes-secrets).
 
