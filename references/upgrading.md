@@ -128,7 +128,7 @@ The unattended MCP shares authentication configuration. An authenticated runner 
 
 - Chart 0.32.0 introduced durable intake settings, including `runner.guardrails.maxWaitSeconds`; the application must support them. Review the saved runner configuration when upgrading an older pinned image.
 - Chart 0.30.0 changed the alert delay default from 300 to 60 seconds. Set the relevant source's `delaySeconds` explicitly if you want to retain the old delay.
-- Chart 0.28.0 centralized model selection in `llm.model`, with per-consumer overrides. Use model identifiers supported by your provider; memory analysis uses the Anthropic API independently of the runner provider.
+- Chart 0.28.0 centralized model selection in `llm.model`, with per-consumer overrides. Use Anthropic model identifiers supported by your account; memory analysis and the runner both use the Anthropic API.
 - Chart 0.8.0 pinned `nomic-embed-text:v1.5`. External or offline Ollama must provide that exact model and a compatible embedding version. A missing model can leave keyword search working while semantic search is unavailable.
 
 For installations predating these changes, review the complete target values with your Tokonoma contact before applying an upgrade. Do not run old database repair commands simply because they appear in a historical guide.

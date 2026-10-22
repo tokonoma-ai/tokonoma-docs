@@ -25,7 +25,7 @@ mcp:
     # Required: the runner's dedicated MCP instance, sharing your database.
     enabled: true
   memoryLlm:
-    # Required Anthropic analysis, even when the runner uses another provider.
+    # Required. Uses the Anthropic API; the same key also serves the runner.
     enabled: true
     # Alternative to credentials.anthropicApiKey: an existing Anthropic key Secret.
     # apiKeySecret:
@@ -60,7 +60,7 @@ runner:
   # Monitoring needs telemetry query access, such as Grafana or a telemetry MCP connection.
   # Alert webhooks and code-only connections do not supply that access.
 
-  # Anthropic is the walkthrough provider; credentials.anthropicApiKey serves both callers.
+  # The runner uses the Anthropic API only; credentials.anthropicApiKey serves both.
   # For an existing Secret, configure this AND mcp.memoryLlm.apiKeySecret above:
   # engine:
   #   apiKeySecret:

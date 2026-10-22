@@ -5,7 +5,7 @@ Memory analysis is required for a complete Tokonoma installation. The [values ex
 - Duplicate review: search groups redundant records and warns when records disagree.
 - Slack features: interpreting `@Tokonoma` questions and, when automatic recall is enabled, deciding which memories to post in response to alerts.
 
-Both send relevant content to Anthropic and share this switch. Only Anthropic API credentials are supported, regardless of the runner's model provider.
+Both send relevant content to Anthropic and share this switch. Only Anthropic API credentials are supported.
 
 ## If analysis is disabled
 
@@ -42,7 +42,7 @@ Analysis and the runner default to the chart-wide `llm.model`. Set it in `values
 
 ## What it costs
 
-Usage depends on the selected model, record activity, and Slack features. Check your provider's current pricing and usage dashboard before installation.
+Usage depends on the selected model, record activity, and Slack features. Check Anthropic's current pricing and usage dashboard before installation.
 
 ## Data handling
 
