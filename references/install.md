@@ -66,11 +66,11 @@ Read YAML comments for settings and each guide's tables for provider inputs. Obt
 
 ### Merge supplied configuration
 
-Read any supplied customer README and additional files first, then use the custom values as your starting point. Add required or selected settings from the [commented example](../examples/values.yaml) only where the customer values and selected chart's defaults do not already satisfy them. Keep settings that can use chart defaults omitted; do not load the entire example as a base values layer.
+Read any supplied README and supporting files first. For an existing installation, start with its saved configuration. For a new installation with supplied customer values, add required or selected settings from the [commented example](../examples/values.yaml) only where the customer values and selected chart's defaults do not already satisfy them. Keep settings that can use chart defaults omitted; do not load the entire example as a base values layer.
 
 Customer choices take precedence over examples. Preserve explicit `false`, `0`, `null`, `""`, and `[]`; they are not omitted fields. Ask about missing required inputs, `REPLACE_WITH_...` markers, and conflicts, including explicitly disabled required components. Merge mappings by key without duplicating YAML keys; lists replace rather than append. For an existing installation, merge only the requested changes into its saved configuration and preserve values-file order, ensuring list replacements retain unrelated integrations.
 
-Kubernetes manifests and Terraform files remain separate inputs. Use their configured routes, resource names, and Secret references to adapt the relevant guides and commands, preserving existing alert destinations and ownership of resources managed outside Helm. Review the resulting nonsecret values and intended changes before applying them.
+Supporting deployment files remain separate inputs. Use their configured routes, resource names, and Secret references to adapt the relevant guides and commands, preserving existing alert destinations and ownership of resources managed outside Helm. Review the resulting nonsecret values and intended changes before applying them.
 
 Only when there are no supplied or existing values files, copy the example to your working directory:
 
@@ -78,7 +78,7 @@ Only when there are no supplied or existing values files, copy the example to yo
 cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 ```
 
-Read the comments in the resulting `values.yaml`, fill any missing monitoring inputs, and configure the integrations selected in the customer files or confirmed with the customer. Keep credentials in protected files or existing Secrets.
+Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep credentials in protected files or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). Analysis always needs an Anthropic credential, even when the runner uses another model provider.
 2. Prepare [runner credentials and investigation tools](alert-investigations.md#before-you-start). Select at least one alert source and configure [monitoring](agentic-monitoring.md) with telemetry query access and the intended cluster and namespaces. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.

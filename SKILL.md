@@ -17,13 +17,13 @@ Check the installed release and read saved values files, including comments, in 
 
 Group missing inputs into one question where practical. Explain human-only actions, such as obtaining a license, signing in, or approving an app, and how to check completion.
 
-## Merge supplied customer configuration
+## Prepare the configuration
 
-Read any supplied customer README, values files, Kubernetes manifests, and Terraform files before choosing guides. Identify the configured integrations, model provider, monitoring scope, access routes, and credential references from those files and any existing installation; do not ask the customer to choose them again.
+Read any supplied values and supporting files before choosing guides. Identify the configured integrations, model provider, monitoring scope, access routes, and credential references from those files and any existing installation. Summarize what is already configured, list the remaining supported options from the [integration guide](references/integrations.md), and ask whether the customer would like to add anything. Enable optional additions only when selected.
 
-Start with the supplied customer values and follow the [merge rules](references/install.md#merge-supplied-configuration) to add missing requirements from the public example. Customer choices take precedence over examples; leave settings that can use chart defaults omitted. Preserve explicit empty or disabled values, and resolve missing required inputs, placeholders, or disabled required components before installing. For an existing installation, merge only the requested changes into its saved configuration.
+For a new installation, if customer values are supplied, follow the [merge rules](references/install.md#merge-supplied-configuration) to add missing requirements while preserving customer choices. If no customer values are supplied, start from the [public example](examples/values.yaml) and configure the selected integrations. For an existing installation, merge only the requested changes, including any supplied values, into its saved configuration. Preserve explicit empty or disabled values and leave settings that can use chart defaults omitted; resolve missing required inputs and conflicts before installing.
 
-Adapt commands to the supplied release, namespace, integrations, routes, and Secret references. Keep manifests and Terraform separate from Helm values, and preserve resources they manage. Supplied equivalents replace guide examples; an instruction to uncomment a setting means add or retain that configuration if selected. Do not enable a second webhook route or expose MCP when a separate route is already supplied.
+Adapt commands to the configured release, namespace, integrations, routes, and Secret references. Keep supporting deployment files separate from Helm values, and preserve resources they manage. Supplied equivalents replace guide examples; an instruction to uncomment a setting means add or retain that configuration if selected. Do not enable a second webhook route or expose MCP when a separate route is already supplied.
 
 ## Read only the relevant guides
 
