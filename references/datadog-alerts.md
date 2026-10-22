@@ -4,7 +4,7 @@ The recipe below sends notifications from all Datadog monitors to `toko-runner`.
 
 Datadog needs a public HTTPS webhook. Choose a separate webhook route to keep MCP private, or share an existing authenticated MCP Ingress.
 
-Installation finishes at the [deployment health checks](install.md#4-verify). You can configure this route and Datadog notifications afterward. A completed investigation is an optional follow-up check.
+When Datadog alert investigations are enabled, connect this route and Datadog notifications during phase 1. Verify a completed automatic investigation, saved record, and configured result delivery before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete.
 
 ## Before you start
 
@@ -249,7 +249,7 @@ The rule's `recipients` entry is `webhook-REPLACE_WITH_WEBHOOK_NAME`, unlike the
 
 ## 4. Verify
 
-These optional checks run after installation. Follow the [runner deployment check](alert-investigations.md#check-the-deployment) to open a port-forward and record the current metrics. Keep that connection open for the test below.
+Complete these checks during phase 1 when Datadog alert investigations are enabled. Follow the [runner deployment check](alert-investigations.md#check-the-deployment) to open a port-forward and record the current metrics. Keep that connection open for the test below.
 
 Use one operator-approved test monitor that matches the notification rule. It must be allowed to make model calls and post to any configured destination. Keep production monitor thresholds and destinations intact.
 

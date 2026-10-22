@@ -29,7 +29,8 @@ Prepare the runner in your saved `values.yaml`. Follow [credential setup](creden
 | `alertmanager-token.txt` | High-entropy shared token created by the operator and also configured on the sender | Alertmanager or Grafana alerts |
 | `REPLACE_WITH_GRAFANA_URL`, `grafana-viewer-token.txt` | Existing Grafana URL and Viewer service-account token with the required data-source permissions | Grafana MCP adapter |
 | `runner-client-id.txt`, `runner-client-secret.txt` | Dedicated runner credentials from the selected [identity provider](oauth.md) | MCP authentication enabled |
-| `REPLACE_WITH_MCP_HOSTNAME`, `REPLACE_WITH_TLS_SECRET_NAME` | Public host and existing TLS Secret from [ingress setup](public-mcp-ingress.md) | External alert sender |
+| `REPLACE_WITH_WEBHOOK_HOSTNAME` | Approved HTTPS hostname from the platform team for the selected webhook route or relay | External alert sender |
+| `REPLACE_WITH_MCP_HOSTNAME`, `REPLACE_WITH_TLS_SECRET_NAME` | Existing MCP hostname and TLS Secret from [ingress setup](public-mcp-ingress.md) | Shared MCP Ingress example only |
 
 Keep `alertmanagerconfig-tokonoma.yaml`, if used, beside `values.yaml`. Merge any [Datadog settings](datadog-alerts.md) into the same values file.
 
@@ -83,7 +84,7 @@ If you do not use Grafana, configure a [telemetry MCP connection](integrations.m
 
 For a new installation, prepare the selected credentials and use [Install](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). If you enabled Grafana with a token file, include `--set-file grafanaMcp.grafana.apiKey="REPLACE_WITH_SECRET_DIRECTORY/grafana-viewer-token.txt"`.
 
-Retain authentication and the runner credential when MCP authentication is enabled. Complete the shared installation health checks; [investigation checks](#check-it-works) are optional follow-ups.
+Retain authentication and the runner credential when MCP authentication is enabled. Complete the shared installation health checks and, when automatic investigations are enabled, the [investigation checks](#check-it-works) before phase 1 is complete.
 
 Default Secret names and keys are:
 
@@ -167,7 +168,13 @@ Expected result: `alertmanagerconfig.monitoring.coreos.com/toko-runner` is creat
 
 In-cluster Alertmanager uses the private URL without Ingress. External senders, including Grafana Cloud, need an approved HTTPS ingress or relay. Grafana Cloud cannot reach ClusterIP or Tailscale-only addresses.
 
-Merge these settings into your existing `values.yaml`, retaining other fields under `mcp` and `runner`. They reference an existing TLS Secret and keep the configured Alertmanager token:
+#### Phase 1: separate webhook route
+
+Keep `mcp.ingress.enabled: false` and `runner.ingress.enabled: false`. Have the platform team route only `/webhooks/alertmanager` from the approved HTTPS edge or relay to `toko-runner:8080`. Preserve the sender's bearer token and configure the edge independently. This connects alerts without exposing MCP. See [webhook access](private-access.md#slack-and-webhooks).
+
+#### Existing shared MCP route
+
+Use this alternative only when preserving an existing shared route or adding team access in phase 2. Merge these settings into your existing `values.yaml`, retaining other fields under `mcp` and `runner`. They reference an existing TLS Secret and keep the configured Alertmanager token:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -196,8 +203,10 @@ To expose both receivers, set `runner.ingress.webhookPaths: [/webhooks/datadog, 
 
 `webhookPaths` defaults to `[]`, exposing no webhooks. Helm replaces the whole list. Use absolute paths served by the runner with `Exact` matching. Routing requires the runner, runner ingress, and MCP Ingress to be enabled; it does not create receivers or change token authentication. Health and metrics stay private.
 
-For a Grafana webhook contact point, use **POST** to
-`https://REPLACE_WITH_MCP_HOSTNAME/webhooks/alertmanager`, keep its default JSON payload,
+#### Configure the Grafana contact point
+
+Set `REPLACE_WITH_WEBHOOK_HOSTNAME` to the hostname of your selected route, using the MCP hostname only for the shared alternative. For a Grafana webhook contact point, use **POST** to
+`https://REPLACE_WITH_WEBHOOK_HOSTNAME/webhooks/alertmanager`, keep its default JSON payload,
 and set authorization scheme **Bearer** with the raw source token in the
 protected credential field. Do not place the token in the URL or values file,
 and do not configure Basic auth. The receiver parses Alertmanager-compatible
@@ -239,7 +248,7 @@ Accepted alerts survive runner restarts. Check skipped or failed outcomes in the
 
 ## Check it works
 
-Use these optional checks to verify alert delivery and investigation results after installation. A completed test investigation is not an installation requirement.
+When automatic investigations are enabled, complete these checks during phase 1. Connect each selected alert source and confirm a completed automatic investigation, saved record, and configured result delivery before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete.
 
 ### Check the deployment
 

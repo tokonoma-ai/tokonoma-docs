@@ -49,22 +49,24 @@ The Anthropic API receives investigation context; the [data flows guide](referen
 
 Start with phase 1. Your agent reads supplied files and existing configuration, then asks for all missing inputs and choices in one batch. Keep confirmed answers with your saved configuration. Preserve existing choices and include any monitoring or investigation opt-outs in that batch.
 
-### Phase 1: private installation
+### Phase 1: installation
 
 Install the bundled services, monitoring, automatic investigations, Slack, and the runner's machine login. MCP stays inside the cluster, with a local port-forward for operator access. The shared hostname and human sign-in can wait until phase 2.
+
+**Checkpoint:** Tokonoma is healthy, detector setup is complete and checks are running, and connected alerts trigger automatic investigations with saved results and Slack delivery. Complete the [monitoring and integration checks](references/install.md#check-monitoring-and-integrations) before phase 2. Report any incomplete checks or customer-selected opt-outs.
 
 #### Required: deployment and access
 
 - [ ] **Installation target:** cloud provider, authorized Kubernetes context, release name, installation namespace, and installer. Confirm workload, storage, capacity, and network access with the [prerequisite checks](references/install.md#1-check-prerequisites).
 - [ ] **License and model API key:** issued Tokonoma license and Anthropic API key for both memory analysis and the runner. Configure an existing key Secret for both consumers. Approve the selected [external data flows](references/data-flows.md#model-and-integration-connections).
-- [ ] **Runner machine login:** identity administrator and provider settings, typically Cognito; dedicated client ID and secret with `toko-mcp/query` access; runner credential Secret reference. Prepare [runner credentials](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) for access to the private MCP service. Human sign-in does not replace this login.
+- [ ] **Runner machine login:** identity administrator, provider settings, and dedicated credentials: a Cognito machine-to-machine client ID and secret, or legacy Google Identity Platform/Firebase runner account credentials. Include `toko-mcp/query` access and the runner credential Secret reference. See [runner credentials](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) for private MCP access. Human sign-in does not replace this login.
 - [ ] **Slack:** app owner with creation/install permissions; app created from our [manifest](examples/slack-app-manifest.yaml); bot token; app-level token with `connections:write`; investigations channel with `@Tokonoma` invited. Follow [Slack setup](references/slack-app.md#create-the-app).
 
 #### Required: monitoring and investigations
 
 - [ ] **Monitoring scope:** provide the target **cluster name you want Tokonoma to monitor**, using the name recorded in your telemetry. Optionally restrict it to a namespace. Otherwise, confirm all namespaces, including system ones. See [monitoring inputs](references/agentic-monitoring.md#prepare-the-inputs).
 - [ ] **Telemetry access:** for each connected system's MCP, provide its full endpoint, any applicable region/site, organization, or dataset identifiers, authentication and credentials, and exact permitted read-only tools. Include logs, metrics, traces, alert definitions, and Kubernetes events/entities where available. See the [provider examples](references/integrations.md#mcp-connections). For the bundled [Grafana MCP adapter](references/alert-investigations.md#install-with-oss-grafana-mcp), provide the Grafana URL and Viewer service-account credential with data-source access; the chart connects its MCP automatically.
-- [ ] **Existing alert investigations:** alert provider, rules/routing location and owner, existing destinations to preserve, and Tokonoma's delivery route and authentication. Say **none** if there are no existing alerts; the chart still needs a supported receiver token. In-cluster senders use the private runner service. External senders need a [separate webhook route](references/private-access.md#slack-and-webhooks) that keeps MCP private. See [Alertmanager](references/alert-investigations.md#before-you-start) or [Datadog](references/datadog-alerts.md).
+- [ ] **Existing alert investigations:** alert provider, rules/routing location and owner, existing destinations to preserve, and Tokonoma's delivery route and authentication. Include approval for a source-side test alert to verify an investigation and result delivery. Say **none** if there are no existing alerts; the chart still needs a supported receiver token. In-cluster senders use the private runner service. External senders need a [separate webhook route](references/private-access.md#slack-and-webhooks) that keeps MCP private. See [Alertmanager](references/alert-investigations.md#before-you-start) or [Datadog](references/datadog-alerts.md).
 - [ ] **Deployment watching:** deployment system, release-event source, relevant repository/workflow, and permitted access. Sources can include telemetry annotations, Kubernetes events, or a webhook. Axiom annotations need annotation read access. Confirm the supported connection with Tokonoma; GitHub MCP code access does not deliver deployment events.
 
 #### Optional additions
@@ -76,7 +78,7 @@ Install the bundled services, monitoring, automatic investigations, Slack, and t
 
 ### Phase 2: shared engineer access
 
-Prepare these when you want engineers to connect their coding agents. Reuse the runner's phase 1 login. Follow [private and team access](references/private-access.md).
+After the phase 1 checkpoint, prepare these when you want engineers to connect their coding agents. Reuse the runner's phase 1 login. Follow [private and team access](references/private-access.md).
 
 - [ ] **Users and clients:** intended users and coding agents in use.
 - [ ] **Shared endpoint:** preferred HTTPS hostname, routing, and owner for DNS and TLS certificates.
@@ -86,7 +88,7 @@ Prepare these when you want engineers to connect their coding agents. Reuse the 
 
 Give your agent this request, along with any values files or supporting files you have already prepared or received:
 
-> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and complete the README's Before you start checklist for phase 1 using supplied files and existing configuration. Ask for all remaining inputs, conflicts, and setup choices in one batch. Install the standard private setup with Agentic Monitoring, automatic investigations, Slack, and the runner's machine login. Keep MCP private and defer shared hostname, routing, and human sign-in to phase 2 unless I request them now. Merge supplied values and preserve existing choices, including authentication. Check for an existing installation and prepare required access before changing the cluster. Finish when deployment health checks pass, leaving enabled monitoring setup and investigations running in the background. Record any alert-delivery or deployment-event connection that still needs follow-up.
+> Fetch the complete repository from https://github.com/tokonoma-ai/tokonoma-docs into your workspace, keeping SKILL.md, references/, and examples/ together. Read SKILL.md and complete the README's Before you start checklist for phase 1 using supplied files and existing configuration. Ask for all remaining inputs, conflicts, setup choices, and test-alert approval in one batch. Install the standard setup with Agentic Monitoring, automatic investigations, Slack, and the runner's machine login. Keep MCP private. Complete phase 1 only after deployment health passes, detector setup completes and checks are running, and connected alerts produce completed automatic investigations with saved results and Slack delivery. Report incomplete checks and customer-selected opt-outs. Then configure shared hostname, routing, and human sign-in for phase 2 if requested. Merge supplied values and preserve existing choices, including authentication. Check for an existing installation and prepare required access before changing the cluster. Record any deployment-event connection that still needs follow-up.
 
 Use an authorized workstation and handle sign-ins, credentials, and administrator-only actions when the agent asks. Supply secrets through protected files or Kubernetes Secret references; never paste them into chat.
 

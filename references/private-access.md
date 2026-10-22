@@ -8,7 +8,7 @@ The default `toko-mcp` Service is `ClusterIP`; the chart creates no public Ingre
 | --- | --- | --- |
 | Cluster context and installed release | Your [installation](install.md) record | Local port-forward access |
 | Approved private route and intended users | Your platform and identity administrators | Before shared access |
-| Stable HTTPS hostname, DNS and certificate | Your platform team | Before authentication setup |
+| Stable HTTPS hostname, DNS and certificate | Your platform team | Before shared team access |
 | Login provider and its settings | [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md) | Before opening the team route |
 | Client or webhook sender location | The team operating that client or sender | Before choosing private or public reachability |
 
@@ -20,9 +20,11 @@ Use the [installation port-forward and health check](install.md#4-verify). It bi
 
 ## Team access
 
+Configure this in phase 2, after the [installation checkpoint](install.md#check-monitoring-and-integrations). Keep the runner's machine credentials from phase 1.
+
 1. Agree on a private route with your platform team, such as an existing VPN or internal Ingress. Choose its stable HTTPS hostname without opening shared access yet.
 2. Configure [OAuth](oauth.md), [Google SAML](google-saml.md), or [Okta SAML](okta-saml.md). Set `mcp.auth.enabled: true` explicitly in `values.yaml`. Use the same hostname for the auth base URL and identity-provider redirect configuration.
-3. [Install Tokonoma](install.md#3-install) or [apply the configuration change](upgrading.md#before-changing-configuration) with the authentication settings and private route. The hostname must be reachable by the MCP client and the user's browser.
+3. [Apply the configuration change](upgrading.md#before-changing-configuration) with the authentication settings and private route. The hostname must be reachable by the MCP client and the user's browser.
 4. From a user's device, request `https://REPLACE_WITH_MCP_HOSTNAME/mcp` without credentials and expect `401`. Complete login through a [coding agent](coding-agents.md) and confirm it can list Tokonoma tools.
 
 Your platform team manages private connectivity, DNS, certificates, and network policy. The chart does not install Tailscale, a VPN, PrivateLink, or a NetworkPolicy. Keep user authentication enabled on shared routes.

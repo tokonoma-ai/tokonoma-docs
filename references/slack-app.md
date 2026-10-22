@@ -29,13 +29,13 @@ For an existing deployment, [apply the configuration change](upgrading.md#before
 
 ## Verify the connection
 
-These connection checks are optional follow-ups after installation. Read the MCP logs on the administration workstation:
+Complete these connection checks during phase 1 when Slack is enabled. Read the MCP logs on the administration workstation:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. You can test investigation delivery separately with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |

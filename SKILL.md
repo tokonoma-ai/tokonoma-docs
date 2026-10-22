@@ -33,7 +33,7 @@ The runner and memory analysis are required. Use the [README checklist](README.m
 
 Before asking, complete the [README checklist](README.md#2-before-you-start) for the requested phase from supplied files and inspected configuration. Read the relevant guides for the configured and proposed connections so their conditional inputs are included. Reuse known answers; do not treat example values as customer choices. Phase 2 inputs do not block phase 1 unless the customer requests both together.
 
-Ask for all currently missing inputs, conflicts, optional selections, and automatic-feature opt-outs in one batch before changing the cluster. Include the default-feature question in that batch rather than asking it separately. For actions only a person can do, such as getting a license, signing in, or approving an app, say what to do and how to check it is done. Ask a follow-up only when a later answer or inspection reveals a new requirement or conflict; explain what changed.
+Ask for all currently missing inputs, conflicts, optional selections, automatic-feature opt-outs, and approval for a source-side test alert in one batch before changing the cluster. Include the default-feature question in that batch rather than asking it separately. For actions only a person can do, such as getting a license, signing in, or approving an app, say what to do and how to check it is done. Ask a follow-up only when a later answer or inspection reveals a new requirement or conflict; explain what changed.
 
 Prepare the internal runner's access in phase 1. An existing Anthropic Secret must configure both `mcp.memoryLlm.apiKeySecret` and `runner.engine.apiKeySecret`; the shared `credentials.anthropicApiKey` input serves both automatically. Include the dedicated [runner machine credential](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled), [credential-provider settings](references/oauth.md#1-prepare-the-provider), and `runner.tokoMcp.oauthClientSecretRef` in the initial batch. Declare the client in `mcp.auth.clients` with `origin: external`, `client_credentials`, `toko-mcp/query`, and `client_secret_post` as described in that guide. Human SAML login and external telemetry credentials do not replace this login.
 
@@ -65,11 +65,17 @@ Use the commented [values.yaml](examples/values.yaml) for field guidance, and [e
 
 Run the guide's commands, adapted to the configured release, namespace, integrations, routes, and Secret references. Run each port-forward in its own terminal or background shell, and run checks from another.
 
-The installation is complete when Helm reports `deployed`, the required workloads are ready, persistent-volume claims are `Bound`, and the MCP `/health` check returns `ok`. Monitoring setup continues in the background. Do not wait for setup, evaluation results, or a completed investigation.
+Complete the phase 1 checkpoint before shared team access:
+
+1. Confirm Helm reports `deployed`, required workloads are ready, persistent-volume claims are `Bound`, and MCP `/health` returns `ok`.
+2. Follow [monitoring verification](references/agentic-monitoring.md#verify-monitoring). Confirm setup completed for the intended scope, checks are active, and evaluation counters advance. Report inactive or degraded checks as coverage gaps.
+3. Connect each selected alert sender and follow [investigation verification](references/alert-investigations.md#check-it-works) using a real alert or approved source-side test. Require accepted delivery, a completed automatic investigation, a saved result, and configured Slack delivery.
+
+Apply feature checks only to enabled features and report explicit customer opt-outs. Pending setup, an unconnected sender, or an unverified investigation leaves phase 1 incomplete. Report the blocker and resume when resolved. Configure phase 2 access only after this checkpoint, if requested.
 
 If something fails, keep the error and follow [troubleshooting](references/troubleshooting.md). Do not weaken authentication, uninstall, or delete data to get past it.
 
-Memory read and write tests, Slack replies, controlled test alerts, and monitoring checks are optional follow-ups. Run them only when the customer asks. Do not create a production anomaly to test monitoring.
+Standalone memory read/write tests and onboarding remain optional. Use only approved alert tests and preserve existing paging routes. Do not create a production anomaly to test monitoring.
 
 ## 7. Report
 
@@ -83,9 +89,12 @@ Disabled features: <customer-selected opt-outs, or "none">
 Values files:      <paths, in the order applied>
 Credentials:       <file paths or Secret name and key, no values>
 Deployment health: <each check run and its result>
-Telemetry access:  <configured connections, or "deferred: both automatic features disabled">; end-to-end access not yet validated
-Follow-up checks:  <each optional check run and its result, or "none run">
+Telemetry access:  <configured connections and query evidence, or customer opt-out>
+Monitoring:        <setup status, scope, active checks, evaluation evidence, coverage gaps, or customer opt-out>
+Alert checks:      <each sender, accepted delivery, completed investigation, saved result, and Slack delivery, or customer opt-out>
+Phase 1:           <complete, or incomplete with blockers>
+Optional checks:   <each optional check run and its result, or "none run">
 Remaining actions: <human or service actions, with links to the relevant guides>
 ```
 
-Missing telemetry configuration blocks installation with either automatic feature enabled. End-to-end query checks remain optional follow-ups; change "not yet validated" only after a check actually queried telemetry. Do not describe any untested feature as verified.
+Missing telemetry configuration blocks installation with either automatic feature enabled. Report evidence from the monitoring and alert checks separately from deployment health. Do not describe any untested feature as verified.

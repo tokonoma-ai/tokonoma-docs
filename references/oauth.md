@@ -2,12 +2,12 @@
 
 Configure OAuth before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files). Authentication can be prepared before installation. Use Helm 3.14+, a stable HTTPS hostname, and a workstation with cluster access. Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-tokens-from-files).
+Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Prepare runner machine authentication in phase 1. A stable HTTPS hostname and human sign-in belong to phase 2, after the [installation checkpoint](install.md#check-monitoring-and-integrations). Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-tokens-from-files).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
 | `REPLACE_WITH_KUBE_CONTEXT`, `values.yaml`, license file and secret directory | Your installation record and platform team | Before cluster commands |
-| `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Before provider configuration |
+| `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Phase 2 shared access |
 | Login method and provider values | Your identity administrator: Cognito pool ID, region and domain prefix, or Google project API key | Before saving authentication values |
 | Cognito app credentials or Google account credentials | The identity provider; keep secrets in protected files | Credential login and machine clients |
 | Requester ID, redirect URLs, grants and secret checksum | The requesting application's configuration | Only for declared clients |
@@ -37,6 +37,8 @@ kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic 
 
 Merge these settings into `values.yaml`, preserving existing `mcp` settings and any SAML configuration. Choose `cognito` or `google` and remove the unused provider block.
 
+For a new phase 1 installation, omit the `domain` field below, set `mcp.auth.baseUrl: http://localhost:8000`, and keep `mcp.ingress.enabled` and `runner.ingress.enabled` false. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Prepare provider settings and runner credentials now; add the shared HTTPS hostname, routing, and human sign-in in phase 2. Preserve existing addresses and authentication on upgrades.
+
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
 region: REPLACE_WITH_AWS_REGION
@@ -65,7 +67,7 @@ For public access, merge the [public MCP routing settings](public-mcp-ingress.md
 
 ## 3. Deploy and verify
 
-For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). Once the deployment is healthy, check OAuth metadata:
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). In phase 1, use the installation's local port-forward and replace the HTTPS base URL in the checks below with `http://localhost:8000`. Once the deployment is healthy, check OAuth metadata:
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/.well-known/oauth-protected-resource/mcp
@@ -79,7 +81,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/mcp
 
 Expect `401` before login.
 
-[Connect your agent](coding-agents.md#use-a-public-endpoint) to `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
+In phase 2, [connect your agent](coding-agents.md#use-a-public-endpoint) to the shared endpoint `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
 
 ## Choose OAuth client admission
 

@@ -2,7 +2,7 @@
 
 Install Tokonoma in an existing Kubernetes cluster using one `values.yaml`. The example includes the required MCP service, memory analysis, and runner, with agentic monitoring and automatic investigations enabled. The chart also installs PostgreSQL and Ollama.
 
-Ask whether the customer wants to turn either automatic feature off for a phased setup; follow [feature choices](#choose-automatic-features). The command below uses Anthropic and Alertmanager. Slack is optional. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
+Start with the [phase 1 checklist](../README.md#2-before-you-start), including Slack and the runner's machine login. Ask whether the customer wants either automatic feature disabled; follow [feature choices](#choose-automatic-features) and preserve existing opt-outs. The command below uses Anthropic and Alertmanager. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
 Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Follow the [input conventions](#inputs-and-placeholders) before running commands.
 
@@ -12,9 +12,9 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | --- | --- | --- |
 | Target and existing deployment | Ask the cluster owner for the intended context; inspect the release below | New release: follow this guide. Existing release: [connect your agent](coding-agents.md), or use [upgrading](upgrading.md) for an intended deployment change. |
 | Database | Choose bundled PostgreSQL or have your database owner prepare [external PostgreSQL](external-postgres.md) | Prepare it before installing. Changing the address does not migrate data. |
-| Access | Choose a local connection for one operator, [private team access](private-access.md), or [public authenticated access](public-mcp-ingress.md) | The example starts with a local connection. Set up authentication and routing before exposing a shared endpoint. |
+| Access | Start with a local operator connection and the [runner's machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). Add [team access](private-access.md) or [public authenticated access](public-mcp-ingress.md) in phase 2 when requested | Keep MCP inside the cluster during phase 1. Configure shared routing and human sign-in after its checkpoint. |
 | Analysis, monitoring, and investigations | Prepare an Anthropic API key; it serves both analysis and the runner. Choose the runner's alert sources and telemetry tools using [integrations](integrations.md). Set the monitored cluster and namespaces using [agentic monitoring](agentic-monitoring.md); inspect [data flows](data-flows.md) | Both automatic features require telemetry query access. Prepare access before running Helm; monitoring also needs its scope. |
-| Additional features | Choose Slack features, authentication, or cloud telemetry as needed | Follow any preparation required by the selected guide. |
+| Additional features | Choose code access or cloud telemetry storage as needed | Follow any preparation required by the selected guide. |
 
 Use one release per namespace: component names are fixed. Examples use release and namespace `tokonoma`; substitute assigned names consistently. Do not reuse an unrelated deployment's namespace.
 
@@ -138,17 +138,28 @@ After it reports `Forwarding from`, run this in **terminal B**:
 curl -fsS http://127.0.0.1:8000/health
 ```
 
-Expect `ok`. Installation is complete when Helm reports `deployed`, required workloads are ready, PVCs are Bound, and this health check passes. See [troubleshooting](troubleshooting.md) for failures.
+Expect `ok`. Helm status `deployed`, ready workloads, Bound PVCs, and this response complete the deployment health checks. Continue with monitoring and integrations below before declaring phase 1 complete. See [troubleshooting](troubleshooting.md) for failures.
 
-Monitoring setup continues in the background. Do not wait for setup, evaluation results, or a completed investigation to finish installation. Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health. Record disabled features and whether end-to-end telemetry access has been validated. The telemetry connection and its credentials must be configured when either automatic feature is enabled; an end-to-end query check remains an optional follow-up. Report it as not yet validated until a check actually queries telemetry.
+Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health. Record disabled features and evidence from the checks below. Do not describe telemetry access as verified until a check actually queries it.
 
-## After installation
+### Check monitoring and integrations
 
-Use the guides below to connect clients and alert senders when needed. Feature tests are optional follow-ups and do not block installation completion.
+Check [analysis configuration](memory-llm.md), then complete these checks for enabled features:
+
+1. Confirm [monitoring setup and coverage](agentic-monitoring.md#verify-monitoring): setup completed for the intended scope, checks are active, and evaluation counters advance. Report inactive or degraded checks as coverage gaps.
+2. Complete the [Slack connection checks](slack-app.md#verify-the-connection) if enabled.
+3. Connect each selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender after the receiver is ready. Preserve existing paging routes.
+4. Follow [investigation verification](alert-investigations.md#check-it-works) with a real alert or approved source-side test. Confirm accepted delivery, a completed automatic investigation, its saved record, and configured Slack delivery. Do not create a production anomaly to test monitoring.
+
+**Phase 1 checkpoint:** deployment health passes, detectors are running, and connected alerts are being investigated automatically with saved results and configured delivery. Pending setup, an unconnected sender, or an unverified investigation leaves phase 1 incomplete. Report the blocker and resume when resolved. Record explicit customer opt-outs instead of treating disabled features as verified.
+
+## Phase 2: shared engineer access
+
+After the phase 1 checkpoint, configure [team access](private-access.md), the shared hostname and route, and [human authentication](oauth.md) when requested. Reuse the runner's phase 1 credentials. Complete a real login from the chosen coding agent.
 
 ### Connect and confirm memory access
 
-Follow [Connect a coding agent](coding-agents.md), using `http://127.0.0.1:8000/mcp` for the local path. Keep terminal A open. If you configured shared access, use its authenticated endpoint and complete a real login.
+This standalone memory check is optional. Follow [Connect a coding agent](coding-agents.md) using the chosen endpoint. An operator can also use `http://127.0.0.1:8000/mcp` with terminal A open.
 
 In a new session with the connected agent, ask:
 
@@ -157,16 +168,6 @@ In a new session with the connected agent, ask:
 Require a saved record identifier and matching full body. Search results and health checks are insufficient. The agent must use Tokonoma's tool definitions, not guess arguments.
 
 Optionally run `Run Tokonoma onboard.` to prepare investigation context. Review proposed records and file or hook changes before accepting them; see [onboarding](coding-agents.md#3-onboard-your-coding-agent).
-
-### Check monitoring and integrations
-
-Check [analysis configuration](memory-llm.md) and [monitoring setup and coverage](agentic-monitoring.md#verify-monitoring), then verify the runner with your selected integrations.
-
-1. Complete the [Slack connection checks](slack-app.md#verify-the-connection) if enabled.
-2. Add the selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender configuration after the receiver is ready. Preserve existing paging routes.
-3. Complete the runner guide's [verification](alert-investigations.md#check-it-works): send one approved test alert and confirm the completed investigation, saved record, and configured result delivery.
-
-Report any follow-up checks you perform separately from deployment health. Mark untested integrations as unverified; monitoring can still be setting up while the installation is running.
 
 ## Next steps
 

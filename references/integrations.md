@@ -47,9 +47,9 @@ For bearer authentication, store the raw token without `Bearer ` and fill `authS
 
 For a new deployment, finish the selected integrations and use the [single installation command](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). Do not create a separate values file for each provider.
 
-### 4. Check access after installation
+### 4. Check access
 
-These checks are optional follow-ups. With Slack enabled, `@Tokonoma setup` reports the runner's MCP connections and missing tools. A connected server does not prove every query is authorized: use a controlled [investigation check](alert-investigations.md#check-it-works) to confirm the intended data is accessible. Check [monitoring coverage](agentic-monitoring.md#verify-monitoring) separately. Updating the runner does not configure the MCP connections in your personal coding agent.
+Verify telemetry access during phase 1 when either automatic feature is enabled. With Slack enabled, `@Tokonoma setup` reports the runner's MCP connections and missing tools. A connected server does not prove every query is authorized: use the applicable [investigation](alert-investigations.md#check-it-works) and [monitoring checks](agentic-monitoring.md#verify-monitoring) to confirm the intended data is accessible before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete. Updating the runner does not configure the MCP connections in your personal coding agent.
 
 ## GitHub example
 
@@ -59,7 +59,7 @@ GitHub adds source-code context to investigations. It is optional and does not r
 2. Save the raw token in a protected `github-token.txt` file without a final newline. Use [Prepare credentials](#2-prepare-credentials) to create or reuse the Secret: the example uses `toko-runner-github`, key `token`. Agents ask for the file path or existing Secret reference, never the token itself.
 3. Uncomment the GitHub entry in the shared `runner.mcpServers` list. Its `expectedTools` permits `get_file_contents`, `search_code`, `get_commit`, and `list_commits`. Confirm these names against the server's advertised tools; add other read-only tools and their required permissions only when needed.
 
-Use the shared [apply](#3-apply-the-configuration) and [access checks](#4-check-access-after-installation) above. For a GitHub follow-up check, read a known file from a selected private repository; connecting successfully does not prove repository access. Token expiration or loss of the owner's repository access requires [credential renewal](credentials.md#renew-and-rotate). GitHub Enterprise installations need their provider-specific endpoint and authentication; do not assume this GitHub.com example applies.
+Use the shared [apply](#3-apply-the-configuration) and [access checks](#4-check-access) above. For a GitHub follow-up check, read a known file from a selected private repository; connecting successfully does not prove repository access. Token expiration or loss of the owner's repository access requires [credential renewal](credentials.md#renew-and-rotate). GitHub Enterprise installations need their provider-specific endpoint and authentication; do not assume this GitHub.com example applies.
 
 ## Datadog example
 

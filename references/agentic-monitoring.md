@@ -52,7 +52,7 @@ Keep this read-only UI on the direct localhost connection. Opening a view does n
 
 ## Verify monitoring
 
-These are optional follow-up checks after installation. Monitoring setup and evaluations run in the background; installation does not wait for them.
+Complete these checks during phase 1 when Agentic Monitoring is enabled. Setup must finish for the intended scope and detector evaluations must be running before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete.
 
 A ready runner pod does not prove monitoring is working. Confirm that setup completed for the intended scope and that checks are active. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.
 
