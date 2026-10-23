@@ -58,7 +58,7 @@ For the recommended Slack setup, the runner hands results to the native Slack ap
 
 Incoming alert webhooks are separate connections: Alertmanager, Grafana Alerting, or Datadog sends alerts to the runner. External senders need a reachable endpoint; an Alertmanager in the cluster can use a private one. Slack Socket Mode needs only outbound access.
 
-The generated runner and local UI login is verified inside Tokonoma and needs no external identity service. For direct Google Workspace or Okta SAML login, the user's browser visits the identity provider and returns a login assertion to Tokonoma. Selected server-side credential-login providers have their own verification connections. Follow the chosen [authentication setup](oauth.md) when planning network access.
+The generated runner login is verified inside Tokonoma and needs no external identity service. For direct Google Workspace or Okta SAML login, the user's browser visits the identity provider and returns a login assertion to Tokonoma. Selected server-side credential-login providers have their own verification connections. Follow the chosen [authentication setup](oauth.md) when planning network access.
 
 ## Network destinations
 
@@ -72,7 +72,7 @@ Image and model downloads need network access during startup unless you have sup
 
 Keep MCP private and authenticated during initial setup, as configured in the installation example. Kubernetes `ClusterIP` is a routing choice, not a user-authentication boundary: workloads that can reach an open service share its access. Use network controls to restrict callers. The [installation port-forward](install.md#4-verify) lets an authorized cluster operator connect without publishing an ingress.
 
-The [local UI](endpoints.md) uses the same port-forward. It has no browser sign-in and accepts only direct localhost connections with a local hostname; it rejects forwarded and cross-origin requests. Read views use the local `internal-user` identity and record visibility rules; authenticated detector actions use the backend machine login shared with the runner. Do not expose it through a reverse proxy.
+The [local UI](endpoints.md) uses the same port-forward. It has no browser sign-in and accepts only direct localhost connections with a local hostname; it rejects forwarded and cross-origin requests. Read views use the local `internal-user` identity and record visibility rules. Use Slack for finding feedback. Do not expose it through a reverse proxy.
 
 For access beyond this local path, configure TLS, explicit MCP authentication, an identity provider or approved client credentials, and network access appropriate to the clients. Private DNS/VPN access works only for clients that can actually reach that network. Cloud-hosted connectors, including Claude's remote connector used separately from `@Tokonoma`, cannot reach your laptop's localhost or an inaccessible private cluster.
 

@@ -12,7 +12,7 @@ Use the same `values.yaml` as the rest of the installation. For an existing depl
 
 | Input | What to configure |
 | --- | --- |
-| Telemetry access | Connect [Datadog, Axiom, or another compatible MCP server](integrations.md#mcp-connections), or the [Grafana adapter](alert-investigations.md#install-with-oss-grafana-mcp). Use `kind: telemetry` for external monitoring connections and permit the required read-only query tools. Alert webhooks alone do not provide query access. |
+| Telemetry access | Connect [Datadog, Axiom, or another compatible MCP server](integrations.md#mcp-connections), or the [Grafana adapter](alert-investigations.md#install-with-oss-grafana-mcp). Use `kind: telemetry` for external monitoring connections and permit the required read-only query tools. Monitoring runs unattended and can call every tool a connection lists, so [list read-only tools only](integrations.md#1-choose-the-connection-and-tools). Alert webhooks alone do not provide query access. |
 | Model credentials | Keep the Anthropic API key from [installation](install.md#2-prepare-your-files). It serves both analysis and the runner. |
 | Cluster | Set `runner.detection.scope.cluster` to the cluster name in your telemetry source. It may differ from the Kubernetes context name. Ask the source owner when unsure; a source containing multiple clusters needs an explicit choice. |
 | Namespaces | Set `runner.detection.scope.namespaces` to exact namespace names. An empty list watches all namespaces, including system namespaces. Choose that scope deliberately. |
@@ -48,13 +48,11 @@ Use the local connection from [installation](install.md#4-verify), then open [th
 - **Coverage** shows the monitored entities, saved detector configuration, and status. Expand a row to read its purpose, query, and available evidence.
 - **Significant Findings** shows recorded findings and their associated investigations. Open the investigation record to read the result.
 
-Keep this UI on the direct localhost connection. Opening a view does not start setup or activate checks.
+Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks. Use Slack for finding feedback.
 
 ## Verify monitoring
 
-Complete these checks during phase 1 when Agentic Monitoring is enabled. Setup must finish for the intended scope and detector evaluations must be running before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete.
-
-A ready runner pod does not prove monitoring is working. Confirm that setup completed for the intended scope and that checks are active. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.
+A ready runner pod does not prove monitoring is working. When Agentic Monitoring is enabled, confirm that setup completed for the intended scope and detector evaluations are running. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.
 
 To check ongoing evaluations, use the runner port-forward in [runner verification](alert-investigations.md#check-the-deployment). From another terminal:
 

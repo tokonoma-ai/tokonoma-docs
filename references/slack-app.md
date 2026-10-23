@@ -36,7 +36,7 @@ For an existing deployment, [apply the configuration change](upgrading.md#before
 
 ## Verify the connection
 
-Complete these connection checks during phase 1 when Slack is enabled. Read the MCP logs on the administration workstation:
+When Slack is enabled, read the MCP logs on the administration workstation:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200

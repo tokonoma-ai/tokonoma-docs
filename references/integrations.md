@@ -28,7 +28,7 @@ Uncomment the matching `runner.mcpServers` entries in [values.yaml](../examples/
 - Use unique lowercase names with hyphens rather than underscores. Reserve `toko`, and `grafana` when the bundled Grafana adapter is enabled.
 - Obtain the full MCP endpoint from the provider. It must be reachable from the runner; use HTTPS for external connections.
 - Set `kind: telemetry` for monitoring sources or `kind: source-control` for code access.
-- Set `expectedTools` to exact tool names advertised by that server, without an `mcp__` prefix. Empty or missing entries permit no calls. Choose read-only tools and credentials with matching permissions.
+- Set `expectedTools` to exact tool names advertised by that server, without an `mcp__` prefix. Empty or missing entries permit no calls. List read-only tools only, and use credentials with matching permissions. The runner does not filter these lists: every listed tool is available to automatic investigations and to Agentic Monitoring, whose setup and scheduled refresh run with nobody watching and replay the tool calls they recorded, such as the entity listing, on every refresh.
 
 Automatic investigations and Agentic Monitoring require telemetry query access. Monitoring tools must also cover the selected cluster and namespaces. Alert webhooks and code-only connections do not supply telemetry access. Results are sent to the Anthropic API; review [data flows](data-flows.md).
 
@@ -49,7 +49,7 @@ For a new deployment, finish the selected integrations and use the [single insta
 
 ### 4. Check access
 
-Verify telemetry access during phase 1 when either automatic feature is enabled. With Slack enabled, `@Tokonoma setup` reports the runner's MCP connections and missing tools. A connected server does not prove every query is authorized: use the applicable [investigation](alert-investigations.md#check-it-works) and [monitoring checks](agentic-monitoring.md#verify-monitoring) to confirm the intended data is accessible before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete. Updating the runner does not configure the MCP connections in your personal coding agent.
+With Slack enabled, `@Tokonoma setup` reports the runner's MCP connections and missing tools. A connected server does not prove every query is authorized. When automatic investigations or monitoring are enabled, use the applicable [investigation](alert-investigations.md#check-it-works) and [monitoring checks](agentic-monitoring.md#verify-monitoring) to confirm the intended telemetry is accessible. Updating the runner does not configure the MCP connections in your personal coding agent.
 
 ## GitHub example
 

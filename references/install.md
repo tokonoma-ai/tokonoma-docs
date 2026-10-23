@@ -2,7 +2,7 @@
 
 Install Tokonoma in an existing Kubernetes cluster using one `values.yaml`. The example includes the required MCP service, memory analysis, and runner, with agentic monitoring and automatic investigations enabled. The chart also installs PostgreSQL and Ollama.
 
-Follow the [installation walkthrough](../README.md#2-install-tokonoma), including Slack and the runner's machine login. Ask whether the customer wants either automatic feature disabled; follow [feature choices](#choose-automatic-features) and preserve existing opt-outs. The command below uses Anthropic and Alertmanager. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
+Follow the [installation approach](../README.md#what-to-expect), including Slack and the generated runner machine login. Ask whether the customer wants either automatic feature disabled; follow [feature choices](#choose-automatic-features) and preserve existing opt-outs. The command below uses Anthropic and Alertmanager. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
 Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Follow the [input conventions](#inputs-and-placeholders) before running commands.
 
@@ -12,7 +12,7 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | --- | --- | --- |
 | Target and existing deployment | Ask the cluster owner for the intended context; inspect the release below | New release: follow this guide. Existing release: [connect your agent](coding-agents.md), or use [upgrading](upgrading.md) for an intended deployment change. |
 | Database | Use bundled PostgreSQL for the standard installation. Prepare [external PostgreSQL](external-postgres.md) only when your organization requires it | Helm creates the bundled database credentials. Changing an existing database address does not migrate data. |
-| Access | Start with a local operator connection and the [runner's machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). Add [team access](private-access.md) or [public authenticated access](public-mcp-ingress.md) in phase 2 when requested | Keep MCP inside the cluster during phase 1. Configure shared routing and human sign-in after its checkpoint. |
+| Access | Use a local operator connection and the generated [runner machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). For shared access, follow [authentication](oauth.md) and [team access](private-access.md) | New installations keep MCP authenticated inside the cluster. Preserve supplied or existing authentication. |
 | Analysis, monitoring, and investigations | Prepare an Anthropic API key; it serves both analysis and the runner. Choose the runner's alert sources and telemetry tools using [integrations](integrations.md). Set the monitored cluster and namespaces using [agentic monitoring](agentic-monitoring.md); inspect [data flows](data-flows.md) | Both automatic features require telemetry query access. Prepare access before running Helm; monitoring also needs its scope. |
 | Additional features | Choose code access or cloud telemetry storage as needed | Follow any preparation required by the selected guide. |
 
@@ -92,9 +92,9 @@ cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep raw credentials out of `values.yaml`; use command inputs or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). One Anthropic API key serves both analysis and the runner.
-2. Prepare [investigation tools](alert-investigations.md#before-you-start). The installer provisions the runner and local UI's private machine login. GitOps and existing-credential overrides use the [explicit setup](alert-investigations.md#gitops-or-an-existing-native-machine-secret). Identify your alert senders, or record **none configured**; the chart still requires a receiver token in either case. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
+2. Prepare [investigation tools and alert-source credentials](alert-investigations.md#before-you-start). The installer generates the runner machine login; GitOps and existing credentials use the [explicit setup](alert-investigations.md#gitops-or-an-existing-native-machine-secret). Identify your alert senders, or record **none configured**; the current chart still requires a receiver token in either case. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
 3. If Slack is selected, use the [Slack app guide](slack-app.md#create-the-app) to prepare any missing app, tokens, or channel access, and configure Slack delivery in `values.yaml`.
-4. Merge any [external database](external-postgres.md), [authentication](oauth.md), [routing](public-mcp-ingress.md), or cloud telemetry settings into the same file. Complete their prerequisites first. Configure authentication before sharing access.
+4. Merge any selected [external database](external-postgres.md) or cloud telemetry settings into the same file. Preserve supplied or existing authentication and its [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled).
 
 Keep the commented source files for future changes; `helm get values` does not retain comments. Merge any further snippets using the same rules above.
 
@@ -140,7 +140,7 @@ After it reports `Forwarding from`, run this in **terminal B**:
 curl -fsS http://127.0.0.1:8000/health
 ```
 
-Expect `ok`. Helm status `deployed`, ready workloads, Bound PVCs, and this response complete the deployment health checks. Continue with monitoring and integrations below before declaring phase 1 complete. See [troubleshooting](troubleshooting.md) for failures.
+Expect `ok`. Helm status `deployed`, ready workloads, Bound PVCs, and this response complete the deployment health checks. Continue with monitoring and integrations below. See [troubleshooting](troubleshooting.md) for failures.
 
 Record the target, versions, saved configuration, credential locations without secret values, monitoring scope, and deployment health. Record disabled features and evidence from the checks below. Do not describe telemetry access as verified until a check actually queries it.
 
@@ -153,11 +153,11 @@ Check [analysis configuration](memory-llm.md), then complete these checks for en
 3. Connect each selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender after the receiver is ready. Preserve existing paging routes.
 4. Follow [investigation verification](alert-investigations.md#check-it-works) with a real alert or approved source-side test. Confirm accepted delivery, a completed automatic investigation, its saved record, and configured Slack delivery. Do not create a production anomaly to test monitoring.
 
-**Phase 1 checkpoint:** deployment health passes, detectors are running, and connected alerts are being investigated automatically with saved results and configured delivery. Pending setup, a selected but unconnected sender, or an unverified investigation leaves phase 1 incomplete. Report the blocker and resume when resolved. If no sender is configured, report **none configured** rather than pending or verified alert delivery; an unused receiver token is not an alert check. Record explicit customer opt-outs instead of treating disabled features as verified.
+Report incomplete setup, unconnected senders, and unverified investigations as blockers. If no sender is configured, report **none configured**; an unused receiver token does not verify delivery. Record explicit customer opt-outs separately.
 
-## Phase 2: shared engineer access
+## Shared engineer access
 
-After the phase 1 checkpoint, configure [team access](private-access.md), the shared hostname and route, and [human authentication](oauth.md) when requested. Reuse the runner's phase 1 credentials. Complete a real login from the chosen coding agent.
+Configure [human sign-in](oauth.md) and preserve the [runner's machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) before sharing access. Follow [team access](private-access.md) for the shared hostname, route, and human sign-in. Verify the runner still completes investigations, then complete a real login from the chosen coding agent.
 
 ### Connect and confirm memory access
 

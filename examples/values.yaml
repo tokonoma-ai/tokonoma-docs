@@ -15,8 +15,9 @@ mcp:
   #   name: REPLACE_WITH_LICENSE_SECRET_NAME
   #   key: REPLACE_WITH_LICENSE_SECRET_KEY
   auth:
-    # Phase 1: authenticated local access. The installer provisions runner/UI credentials.
+    # Authenticated local access; the installer provisions the runner's machine login.
     # Requires the native-auth releases in references/upgrading.md.
+    # Keep supplied or existing authentication when adapting this example.
     enabled: true
     baseUrl: http://localhost:8000
     provider: none
@@ -36,7 +37,6 @@ mcp:
     # apiKeySecret:
     #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
     #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
-
   # Slack: follow references/slack-app.md and supply both Slack tokens in the command.
   # Uncomment this section and runner.destinations.slackApp below for Slack results.
   # slack:
@@ -52,7 +52,7 @@ runner:
   # Required: needs the sibling, model credentials and at least one alert-source token.
   enabled: true
   ingress:
-    # External senders use a separately approved webhook route during phase 1.
+    # External senders can use a separate webhook route while MCP stays private.
     enabled: false
   detection:
     # Monitoring uses the runner's model and can start investigations automatically.
@@ -117,6 +117,7 @@ runner:
   # Uncomment mcpServers and only the connections you use. Keep one combined list.
   # Remote HTTP MCP: Datadog, Axiom or another compatible telemetry/code provider.
   # Get the endpoint and exact read-only tool names from the provider; no mcp__ prefix.
+  # List read-only tools only: unattended Agentic Monitoring can call every listed tool.
   # Use a unique lowercase name; reserve toko and the bundled adapter's grafana name.
   # Provider examples and credential setup: references/integrations.md#mcp-connections.
   # mcpServers:

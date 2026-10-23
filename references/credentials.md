@@ -1,6 +1,6 @@
 # Credentials and license
 
-Prepare these credentials before [installation](install.md#2-prepare-your-files). Enter their values directly in the command examples, or reuse existing Kubernetes Secrets.
+Prepare the credentials needed for your [installation](install.md#2-prepare-your-files). Enter their values directly in the command examples, or reuse existing Kubernetes Secrets.
 
 ## What you need
 
@@ -23,11 +23,11 @@ A valid Tokonoma license is required for full-body recalls, but not search, savi
 
 ## What Helm creates
 
-Normal Helm installs generate the bundled PostgreSQL password, the runner and local UI's machine login, and, when the Grafana adapter is enabled, its private caller token. You do not need to create these for the standard installation. Helm reuses their existing Secrets on upgrades; these Secrets survive uninstall. Preserve them when disabling components or upgrading.
+Normal Helm installs generate the bundled PostgreSQL password, the runner's machine login, and, when the Grafana adapter is enabled, its private caller token. You do not need to create these for the standard installation. Helm reuses their existing Secrets on upgrades; these Secrets survive uninstall. Preserve them when disabling components or upgrading.
 
 With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. Credentials stay the same and tokens remain valid. See the [upgrade notes](upgrading.md#native-machine-authentication-release-prerequisite).
 
-The default machine Secret is `toko-runner-oauth`, with keys `clientId` and `clientSecret`. It authenticates the runner and local UI to Tokonoma; it is not an employee login or an integration credential. Do not distribute it to coding agents. Changing its client ID changes the identity that owns private investigation records.
+The default machine Secret is `toko-runner-oauth`, with keys `clientId` and `clientSecret`. It authenticates the runner to Tokonoma; it is not an employee login or an integration credential. Do not distribute it to coding agents. Changing its client ID changes the identity that owns private investigation records.
 
 The Grafana caller token authenticates the runner to the adapter. It does not replace the customer-supplied Grafana Viewer token. [Offline rendering](#offline-rendering) needs stable credentials supplied separately.
 
@@ -73,7 +73,7 @@ Use your assigned namespace if it differs. Permission errors need the cluster ow
 
 ## Offline rendering
 
-Client-only `helm template` and GitOps rendering cannot look up the [generated Secrets](#what-helm-creates). Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Use the [explicit native machine credential](alert-investigations.md#gitops-or-an-existing-native-machine-secret) for the runner and UI. Repeatedly generating new passwords can break an existing installation.
+Client-only `helm template` and GitOps rendering cannot look up the [generated Secrets](#what-helm-creates). Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Use the [explicit native machine credential](alert-investigations.md#gitops-or-an-existing-native-machine-secret) for the runner. Repeatedly generating new passwords can break an existing installation.
 
 For external references, use `postgres.auth.existingSecret` with `postgres.auth.secretKey`; the [external PostgreSQL example](external-postgres.md#3-save-the-values) shows the shape. Use the commented Secret alternatives in the [values example](../examples/values.yaml). For token changes, follow [credential rotation](#renew-and-rotate). Rendering does not check third-party token permissions; verify the integration after deployment.
 

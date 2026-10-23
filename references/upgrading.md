@@ -119,15 +119,15 @@ Use only one entry if you use one source. Lists replace rather than append. An I
 
 ## Native machine authentication: release prerequisite
 
-The generated runner and local UI login requires both an application release that accepts native configured `client_credentials` clients and a chart release that provisions and connects that client. These changes are not available in chart `0.38.0` or its current application contract. Keep the existing provider-backed installation instructions until both releases are published; select compatible released versions before using this revision.
+The generated runner login requires both the [MCP #1372 application release](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1372), which accepts native configured `client_credentials` clients, and the [charts #184 release](https://github.com/tokonoma-ai/tokonoma-charts/pull/184), which provisions and connects that client. These changes are not available in chart `0.38.0` or its current application contract. Keep the existing provider-backed installation instructions until both releases are published; select compatible released versions before using this revision.
 
 Removing the alert-source requirement is a separate change. This revision still requires a receiver token even when there is no alert sender. Remove that requirement only with a release that includes the alert-source change and its matching documentation.
 
 With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. It keeps the same client ID and secret and does not revoke tokens.
 
-For an existing installation, preserve its provider, declared clients, client IDs, and `runner.tokoMcp.oauthClientSecretRef`. With the default local MCP target, the new chart connects the primary MCP's local UI using the same selected credential. Remove only `TOKO_RUNNER_OAUTH_CLIENT_ID` and `TOKO_RUNNER_OAUTH_CLIENT_SECRET` entries from `mcp.extraEnv` or `runner.extraEnv` that duplicate chart-injected credentials. Preserve other environment overrides. Follow the normal configuration-change procedure with a compatible released chart and application, then verify the runner and local UI.
+For an existing installation, preserve its provider, declared clients, client IDs, and `runner.tokoMcp.oauthClientSecretRef`. Remove only `TOKO_RUNNER_OAUTH_CLIENT_ID` and `TOKO_RUNNER_OAUTH_CLIENT_SECRET` entries from `mcp.extraEnv` or `runner.extraEnv` that duplicate chart-injected credentials. Preserve other environment overrides. Follow the normal configuration-change procedure with a compatible released chart and application, then verify the runner.
 
-When `runner.tokoMcp.url` targets an external MCP, preserve its explicit credential reference even if local MCP authentication is disabled. Those remote credentials configure the runner only; they must not be copied into the local UI. Keep local MCP and UI authentication independent.
+When `runner.tokoMcp.url` targets an external MCP, preserve its explicit credential reference even if local MCP authentication is disabled. Those remote credentials configure the runner only; keep local MCP authentication independent.
 
 Do not replace an existing external client with a new generated client without an identity migration plan. Client IDs identify record owners. For GitOps or client-only rendering, use the [explicit native credential](alert-investigations.md#gitops-or-an-existing-native-machine-secret) instead of rendering a fresh random Secret repeatedly.
 

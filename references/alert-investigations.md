@@ -42,15 +42,15 @@ openssl rand -hex 32
 
 Copy the printed value into `REPLACE_WITH_ALERTMANAGER_TOKEN` in the installation command and configure the same value on the sender.
 
-For externally managed Secrets or offline rendering, follow [credentials](credentials.md#use-existing-kubernetes-secrets) and the explicit machine-login setup below.
+For externally managed Secrets or offline rendering, follow [credentials](credentials.md#use-existing-kubernetes-secrets). Use the generated machine login below for standard authenticated installs, or its explicit setup for existing credentials. Preserve existing authentication and credentials on upgrades.
 
 ## Prepare runner credentials when MCP authentication is enabled
 
-For a normal Helm install, leave `runner.tokoMcp.url` and `runner.tokoMcp.oauthClientSecretRef` unset. With the runner and MCP authentication enabled, the chart creates a native machine client and retained Secret, mounts its verification secret in both MCP instances, and connects the runner and local UI automatically. Use `mcp.auth.provider: none`; no Cognito or Google credential provider is needed. The [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite) applies.
+For a normal Helm install, leave `runner.tokoMcp.url` and `runner.tokoMcp.oauthClientSecretRef` unset. With the runner and MCP authentication enabled, the chart creates a native machine client and retained Secret, mounts its verification secret in both MCP instances, and connects the runner automatically. Use `mcp.auth.provider: none`; no Cognito or Google credential provider is needed. The [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite) applies.
 
 The default client ID is `toko-runner` and the Secret is `toko-runner-oauth`, with `clientId` and `clientSecret` keys. Names follow chart name overrides. Helm reuses the Secret on upgrades and retains it when the runner is disabled or the release is removed. Preserve the identity and Secret; changing the client ID can change ownership of private records. Do not copy this backend credential into a coding agent or browser.
 
-Add [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) for individual human sign-in in phase 2. Keep the internal machine login separate from employee identities and external integration credentials.
+Add [Google Workspace](google-saml.md) or [Okta SAML](okta-saml.md) for individual human sign-in before shared access. Keep the internal machine login separate from employee identities and external integration credentials.
 
 ### GitOps or an existing native machine Secret
 
@@ -94,13 +94,13 @@ runner:
       key: clientSecret
 ```
 
-For the default local MCP target, the chart uses this reference for the runner and local UI; do not duplicate its credential variables in `mcp.extraEnv` or `runner.extraEnv`. Update the checksum when the Secret changes and follow [credential rotation](credentials.md#renew-and-rotate). An explicit reference suppresses automatic client provisioning, so keep the matching native client declaration.
+For the default local MCP target, the chart uses this reference for the runner; do not duplicate its credential variables in `mcp.extraEnv` or `runner.extraEnv`. Update the checksum when the Secret changes and follow [credential rotation](credentials.md#renew-and-rotate). An explicit reference suppresses automatic client provisioning, so keep the matching native client declaration.
 
 ### Existing external credentials or an external MCP
 
 Preserve a working Cognito or Google runner client and `runner.tokoMcp.oauthClientSecretRef` on upgrades. Keep its provider settings and `mcp.auth.clients` entry with `origin: external`, grant `client_credentials`, scope `toko-mcp/query`, and `tokenEndpointAuthMethod: client_secret_post`. See [provider setup](oauth.md#1-prepare-the-provider). Do not convert its origin or change its ID as a shortcut to the generated path; these values identify existing records.
 
-For `runner.tokoMcp.url` pointing to another MCP deployment, supply an explicit credential reference and configure the matching client on that server. The runner uses that reference even if local MCP authentication is disabled. Remote credentials are not passed to the local UI; local MCP and UI authentication remain separate. This chart cannot register a client in an external MCP. Generated local credentials are available only with the default local authenticated MCP and enabled runner.
+For `runner.tokoMcp.url` pointing to another MCP deployment, supply an explicit credential reference and configure the matching client on that server. The runner uses that reference even if local MCP authentication is disabled. Remote credentials configure the runner only; local MCP authentication remains independent. This chart cannot register a client in an external MCP. Generated local credentials are available only with the default local authenticated MCP and enabled runner.
 
 ## Configure the runner
 
@@ -114,7 +114,7 @@ If you do not use Grafana, configure a [telemetry MCP connection](integrations.m
 
 For a new installation, prepare the selected credentials and use [Install](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). For a chart-managed Alertmanager token, include `--set-literal 'credentials.alertmanagerToken=REPLACE_WITH_ALERTMANAGER_TOKEN'`. If you enabled Grafana without an existing Secret, include `--set-literal 'grafanaMcp.grafana.apiKey=REPLACE_WITH_GRAFANA_VIEWER_TOKEN'`. Preserve existing Secret references instead of adding inline overrides.
 
-Retain authentication and the runner credential when MCP authentication is enabled. Complete the shared installation health checks and, when automatic investigations are enabled, the [investigation checks](#check-it-works) before phase 1 is complete.
+Retain authentication and the runner credential when MCP authentication is enabled. Complete the shared installation health checks and, when automatic investigations are enabled, the [investigation checks](#check-it-works).
 
 Default Secret names and keys are:
 
@@ -198,13 +198,13 @@ Expected result: `alertmanagerconfig.monitoring.coreos.com/toko-runner` is creat
 
 In-cluster Alertmanager uses the private URL without Ingress. External senders, including Grafana Cloud, need an approved HTTPS ingress or relay. Grafana Cloud cannot reach ClusterIP or Tailscale-only addresses.
 
-#### Phase 1: separate webhook route
+#### Separate webhook route
 
 Keep `mcp.ingress.enabled: false` and `runner.ingress.enabled: false`. Have the platform team route only `/webhooks/alertmanager` from the approved HTTPS edge or relay to `toko-runner:8080`. Preserve the sender's bearer token and configure the edge independently. This connects alerts without exposing MCP. See [webhook access](private-access.md#slack-and-webhooks).
 
 #### Existing shared MCP route
 
-Use this alternative only when preserving an existing shared route or adding team access in phase 2. Merge these settings into your existing `values.yaml`, retaining other fields under `mcp` and `runner`. They reference an existing TLS Secret and keep the configured Alertmanager token:
+Use this alternative only when preserving or adding shared access. Merge these settings into your existing `values.yaml`, retaining other fields under `mcp` and `runner`. They reference an existing TLS Secret and keep the configured Alertmanager token:
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -223,7 +223,7 @@ runner:
     webhookPaths: [/webhooks/alertmanager]
 ```
 
-Configure human sign-in and retain the runner's machine authentication before applying public routing. Keep their complete configuration in the same `values.yaml`. Replace the host/TLS reference and configure your existing controller using
+Configure human sign-in and retain the [runner machine login](#prepare-runner-credentials-when-mcp-authentication-is-enabled) before applying public routing. Keep their complete configuration in the same `values.yaml`. Replace the host/TLS reference and configure your existing controller using
 [Public MCP Ingress](public-mcp-ingress.md). This adds an `Exact` rule for
 `/webhooks/alertmanager` to that MCP Ingress, forwarding to `toko-runner:8080`.
 It does not enable the runner by itself. For Datadog-only exposure, use the
@@ -278,7 +278,7 @@ Accepted alerts survive runner restarts. Check skipped or failed outcomes in the
 
 ## Check it works
 
-When automatic investigations are enabled, complete these checks during phase 1. Connect each selected alert source and confirm a completed automatic investigation, saved record, and configured result delivery before the [phase 1 checkpoint](install.md#check-monitoring-and-integrations) is complete.
+When automatic investigations are enabled, connect each selected alert source and confirm a completed automatic investigation, saved record, and configured result delivery with these checks.
 
 ### Check the deployment
 

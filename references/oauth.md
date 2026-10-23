@@ -1,20 +1,20 @@
 # OAuth
 
-The standard installation enables OAuth for the runner and local UI without an external credential provider. Human sign-in is added before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
+The standard installation enables OAuth for the runner without an external credential provider. Human sign-in is added before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Check the [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite). A stable HTTPS hostname and human sign-in belong to phase 2, after the [installation checkpoint](install.md#check-monitoring-and-integrations). Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
+Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Check the [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite). A stable HTTPS hostname and human sign-in come after the [installation checkpoint](install.md#check-monitoring-and-integrations). Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
 | `REPLACE_WITH_KUBE_CONTEXT` and `values.yaml` | Your installation record and platform team | Before cluster commands |
-| `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Phase 2 shared access |
-| Human login method and provider values | Your identity administrator: direct SAML settings, or an existing Cognito/Google credential provider | Phase 2 human sign-in or a selected external credential provider |
+| `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Shared access |
+| Human login method and provider values | Your identity administrator: direct SAML settings, or an existing Cognito/Google credential provider | Human sign-in or a selected external credential provider |
 | Cognito app credentials or Google account credentials | The identity provider | Only for selected provider-backed clients; not needed for the generated runner login |
 | Requester ID, redirect URLs, grants and secret checksum | The requesting application's configuration | Only for declared clients |
 
 Confirm the target cluster with the [installation checks](install.md#1-check-prerequisites).
 
-For human SAML login, use [Google Workspace](google-saml.md) or [Okta](okta-saml.md). The generated native machine login continues to serve the runner and local UI; SAML does not require a separate Cognito or Google credential provider.
+For human SAML login, use [Google Workspace](google-saml.md) or [Okta](okta-saml.md). The generated native machine login continues to serve the runner; SAML does not require a separate Cognito or Google credential provider.
 
 `mcp.auth.enabled` controls OAuth routes and bearer protection. `mcp.auth.provider: none` permits native machine clients and direct SAML without an external credential verifier. `cognito` or `google` adds verification for provider-backed clients. SAML supplies individual human login.
 
@@ -45,7 +45,7 @@ kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic 
 
 When using an external credential provider, merge these settings into `values.yaml`, preserving existing `mcp` settings and any SAML configuration. Choose `cognito` or `google` and remove the unused provider block. The standard internal machine login keeps `provider: none` instead.
 
-If selecting an external credential provider during phase 1, omit the `domain` field below, set `mcp.auth.baseUrl: http://localhost:8000`, and keep `mcp.ingress.enabled` and `runner.ingress.enabled` false. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Prepare an explicit runner reference only when using a provider-backed runner client. Add the shared HTTPS hostname, routing, and human sign-in in phase 2. Preserve existing addresses and authentication on upgrades.
+If selecting an external credential provider during initial setup, omit the `domain` field below, set `mcp.auth.baseUrl: http://localhost:8000`, and keep `mcp.ingress.enabled` and `runner.ingress.enabled` false. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Prepare an explicit runner reference only when using a provider-backed runner client. Add the shared HTTPS hostname, routing, and human sign-in before shared access. Preserve existing addresses and authentication on upgrades.
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -75,7 +75,7 @@ For public access, merge the [public MCP routing settings](public-mcp-ingress.md
 
 ## 3. Deploy and verify
 
-For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). In phase 1, use the installation's local port-forward and replace the HTTPS base URL in the checks below with `http://localhost:8000`. Once the deployment is healthy, check OAuth metadata:
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). During initial setup, use the installation's local port-forward and replace the HTTPS base URL in the checks below with `http://localhost:8000`. Once the deployment is healthy, check OAuth metadata:
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/.well-known/oauth-protected-resource/mcp
@@ -89,7 +89,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/mcp
 
 Expect `401` before login.
 
-In phase 2, [connect your agent](coding-agents.md#use-a-public-endpoint) to the shared endpoint `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
+[Connect your agent](coding-agents.md#use-a-public-endpoint) to the shared endpoint `https://REPLACE_WITH_MCP_HOSTNAME/mcp` and complete browser login.
 
 ## Choose OAuth client admission
 
