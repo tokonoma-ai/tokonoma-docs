@@ -50,6 +50,20 @@ Use the local connection from [installation](install.md#4-verify), then open [th
 
 Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks. Submitting feedback on a finding requires [authentication](oauth.md).
 
+### Local UI feedback (pending release)
+
+Browser sign-in requires the application change in [MCP #1318](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1318), which is not released yet. Use these instructions only after your installed application includes that change. The existing [runner-credential option](alert-investigations.md#optional-use-runner-credentials-for-local-ui-actions) remains optional.
+
+With MCP authentication enabled and a [login provider configured](oauth.md):
+
+1. Open **Significant Findings** through the local port-forward and choose **Sign in** beside the feedback controls.
+2. Complete the provider's login and return to the UI. Choose **Useful** or **Noisy** on an eligible finding. Feedback is attributed to the signed-in user.
+3. Sign in again when prompted. Sessions last at most 24 hours, end on a pod restart, and may end earlier when session capacity is reached. An expired or revoked browser session cannot fall back to the runner's identity.
+
+Tokens stay on the server; the browser holds a session cookie. Keep the same local hostname and port throughout sign-in.
+
+If `mcp.auth.clientRegistrationMode` is `preregistered_only`, configure exactly one active public client in `mcp.auth.clients` for the exact callback shown by the sign-in error, for example `http://127.0.0.1:8000/ui/api/auth/callback`. Use `origin: configured`, `tokenEndpointAuthMethod: none`, grants `[authorization_code, refresh_token]`, response types `[code]`, and scope `toko-mcp/query`, without a client secret or `secretRef`. The callback must match the browser's scheme, hostname and port.
+
 ## Verify monitoring
 
 A ready runner pod does not prove monitoring is working. When Agentic Monitoring is enabled, confirm that setup completed for the intended scope and detector evaluations are running. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.

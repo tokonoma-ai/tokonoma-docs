@@ -109,7 +109,8 @@ runner:
   #   slackApp:
   #     enabled: true
 
-  # Configure the MCP login and UI credentials together; see references/oauth.md.
+  # Configure the runner's MCP login when authentication is enabled; see references/oauth.md.
+  # Mounting runner credentials for local UI actions is a separate opt-in choice.
   # Omit OAuth credential references while MCP authentication is disabled.
 
   # Uncomment mcpServers and only the connections you use. Keep one combined list.

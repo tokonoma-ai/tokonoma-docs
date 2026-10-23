@@ -72,7 +72,7 @@ Image and model downloads need network access during startup unless you have sup
 
 Keep the default unauthenticated MCP service private. Kubernetes `ClusterIP` is a routing choice, not a user-authentication boundary: workloads that can reach an open service share its access. Use network controls to restrict callers. The [installation port-forward](install.md#4-verify) lets an authorized cluster operator connect without publishing an ingress.
 
-The [read-only UI](endpoints.md) uses the same port-forward. It has no sign-in in this release and accepts only direct localhost connections with a local hostname; it rejects forwarded and cross-origin requests. It uses the local `internal-user` identity and record visibility rules. Do not expose it through a reverse proxy.
+The [local UI](endpoints.md) uses the same port-forward. Browsing requires no sign-in and uses the local `internal-user` identity and record visibility rules. Keep it on a direct localhost connection with a local hostname; do not expose it through a reverse proxy. Finding feedback requires authentication. [Browser sign-in](agentic-monitoring.md#local-ui-feedback-pending-release) is pending an application release; runner-credential use in the UI remains [opt-in](alert-investigations.md#optional-use-runner-credentials-for-local-ui-actions).
 
 For access beyond this local path, configure TLS, explicit MCP authentication, an identity provider or approved client credentials, and network access appropriate to the clients. Private DNS/VPN access works only for clients that can actually reach that network. Cloud-hosted connectors, including Claude's remote connector used separately from `@Tokonoma`, cannot reach your laptop's localhost or an inaccessible private cluster.
 
