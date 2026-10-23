@@ -61,7 +61,7 @@ Set `domainPrefix` to your pool's Cognito-managed prefix in `REPLACE_WITH_COGNIT
 
 `provider: google` selects legacy credentials, not Google Workspace SAML.
 
-Before deploying authentication, merge the [runner machine credentials and local UI settings](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) into the same file. They configure both the runner's OAuth reference and `mcp.extraEnv` for the local Setup/Monitoring UI.
+Before deploying authentication, merge the [runner machine credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) into the same file. Mounting those credentials into the local UI through `mcp.extraEnv` is a separate [opt-in choice](alert-investigations.md#optional-use-runner-credentials-for-local-ui-actions).
 
 For public access, merge the [public MCP routing settings](public-mcp-ingress.md) into the same `values.yaml`. Existing private HTTPS routing needs no public Ingress settings. Set `domain` to the route's HTTPS hostname.
 
