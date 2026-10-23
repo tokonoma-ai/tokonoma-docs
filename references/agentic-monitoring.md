@@ -48,7 +48,7 @@ Use the local connection from [installation](install.md#4-verify), then open [th
 - **Coverage** shows the monitored entities, saved detector configuration, and status. Expand a row to read its purpose, query, and available evidence.
 - **Significant Findings** shows recorded findings and their associated investigations. Open the investigation record to read the result.
 
-Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks. Submitting feedback on a finding requires [authentication](oauth.md).
+Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks.
 
 ## Verify monitoring
 
