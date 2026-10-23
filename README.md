@@ -1,5 +1,7 @@
 # Install and use Tokonoma
 
+This revision requires the application and chart releases described in [native machine authentication](references/upgrading.md#native-machine-authentication-release-prerequisite). Keep using the released installation guide until those releases are available.
+
 ## What to expect
 
 Tokonoma monitors your services, detects significant changes, and automatically investigates findings and alerts using your observability tools. Engineers can work with it through Slack and coding agents, using saved findings and procedures to build on what the team has learned.
@@ -48,7 +50,7 @@ flowchart LR
   style Connections fill:#f8fafc,stroke:#cbd5e1,color:#334155
 ```
 
-First, get Tokonoma healthy, detectors running, and connected alerts automatically investigated with saved results and Slack delivery. MCP stays inside the cluster, with local operator access. Shared engineer access comes afterward, with authentication, the runner's machine login, and the chosen HTTPS route.
+First, get Tokonoma healthy, detectors running, and connected alerts automatically investigated with saved results and Slack delivery. MCP stays authenticated inside the cluster, with local operator access. The installer generates the [runner's machine login](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled); no Cognito pool or separate client credentials are needed. Shared engineer access comes afterward, with human sign-in and the chosen HTTPS route.
 
 ## Give these instructions to your agent
 

@@ -42,7 +42,7 @@ Your coding agent uses its own model provider. Tokonoma's MCP services and runne
 | Grafana MCP adapter | Your existing Grafana, which can be private or externally hosted | Read-only queries and telemetry allowed by the Grafana service account; the runner connects to the adapter inside your cluster, and the agent and model receive the results |
 | Optional telemetry backend | Your S3 or GCS bucket | Store and query ingested logs, traces, and configured Kubernetes telemetry; disabled by default |
 | Operational telemetry | Configured Prometheus scrape targets or OpenTelemetry (OTLP) endpoint | Process metrics and traces; an external endpoint receives operational data |
-| Authentication | The identity provider you configure | Login and identity information; Tokonoma holds OAuth tokens and related state |
+| Optional external authentication | The identity provider you configure | Human login or selected provider-backed machine verification; native internal machine login stays inside the cluster. Tokonoma holds OAuth tokens and related state |
 
 See [analysis configuration](memory-llm.md) for setup and maintenance controls.
 
@@ -58,7 +58,7 @@ For the recommended Slack setup, the runner hands results to the native Slack ap
 
 Incoming alert webhooks are separate connections: Alertmanager, Grafana Alerting, or Datadog sends alerts to the runner. External senders need a reachable endpoint; an Alertmanager in the cluster can use a private one. Slack Socket Mode needs only outbound access.
 
-For direct Google Workspace or Okta SAML login, the user's browser visits the identity provider and returns a login assertion to Tokonoma. Server-side credential-login providers have their own verification connections. Follow the chosen [authentication setup](oauth.md) when planning network access.
+The generated runner login is verified inside Tokonoma and needs no external identity service. For direct Google Workspace or Okta SAML login, the user's browser visits the identity provider and returns a login assertion to Tokonoma. Selected server-side credential-login providers have their own verification connections. Follow the chosen [authentication setup](oauth.md) when planning network access.
 
 ## Network destinations
 
@@ -70,9 +70,9 @@ Image and model downloads need network access during startup unless you have sup
 
 ## Private access
 
-Keep the default unauthenticated MCP service private. Kubernetes `ClusterIP` is a routing choice, not a user-authentication boundary: workloads that can reach an open service share its access. Use network controls to restrict callers. The [installation port-forward](install.md#4-verify) lets an authorized cluster operator connect without publishing an ingress.
+Keep MCP private and authenticated during initial setup, as configured in the installation example. Kubernetes `ClusterIP` is a routing choice, not a user-authentication boundary: workloads that can reach an open service share its access. Use network controls to restrict callers. The [installation port-forward](install.md#4-verify) lets an authorized cluster operator connect without publishing an ingress.
 
-The [read-only UI](endpoints.md) uses the same port-forward. It has no sign-in in this release and accepts only direct localhost connections with a local hostname; it rejects forwarded and cross-origin requests. It uses the local `internal-user` identity and record visibility rules. Do not expose it through a reverse proxy.
+The [local UI](endpoints.md) uses the same port-forward. It has no browser sign-in and accepts only direct localhost connections with a local hostname; it rejects forwarded and cross-origin requests. Read views use the local `internal-user` identity and record visibility rules. Use Slack for finding feedback. Do not expose it through a reverse proxy.
 
 For access beyond this local path, configure TLS, explicit MCP authentication, an identity provider or approved client credentials, and network access appropriate to the clients. Private DNS/VPN access works only for clients that can actually reach that network. Cloud-hosted connectors, including Claude's remote connector used separately from `@Tokonoma`, cannot reach your laptop's localhost or an inaccessible private cluster.
 

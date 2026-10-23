@@ -15,10 +15,11 @@ mcp:
   #   name: REPLACE_WITH_LICENSE_SECRET_NAME
   #   key: REPLACE_WITH_LICENSE_SECRET_KEY
   auth:
-    # Local operator access, with MCP kept inside the cluster.
-    # Before shared access, configure authentication and runner credentials using references/oauth.md.
+    # Authenticated local access; the installer provisions the runner's machine login.
+    # Requires the native-auth releases in references/upgrading.md.
     # Keep supplied or existing authentication when adapting this example.
-    enabled: false
+    enabled: true
+    baseUrl: http://localhost:8000
     provider: none
   ingress:
     # Use a local port-forward first. Public access needs TLS and authentication.
@@ -109,8 +110,9 @@ runner:
   #   slackApp:
   #     enabled: true
 
-  # Configure the MCP login and UI credentials together; see references/oauth.md.
-  # Omit OAuth credential references while MCP authentication is disabled.
+  # Leave tokoMcp.url and tokoMcp.oauthClientSecretRef unset for the generated local login.
+  # Keep existing working credentials on upgrades. GitOps or an external MCP needs an
+  # explicit Secret reference and client declaration; see references/alert-investigations.md.
 
   # Uncomment mcpServers and only the connections you use. Keep one combined list.
   # Remote HTTP MCP: Datadog, Axiom or another compatible telemetry/code provider.

@@ -117,11 +117,25 @@ runner:
 
 Use only one entry if you use one source. Lists replace rather than append. An Ingress rule does not create a receiver or change its authentication.
 
+## Native machine authentication: release prerequisite
+
+The generated runner login requires both the [MCP #1372 application release](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1372), which accepts native configured `client_credentials` clients, and the [charts #184 release](https://github.com/tokonoma-ai/tokonoma-charts/pull/184), which provisions and connects that client. These changes are not available in chart `0.38.0` or its current application contract. Keep the existing provider-backed installation instructions until both releases are published; select compatible released versions before using this revision.
+
+Removing the alert-source requirement is a separate change. This revision still requires a receiver token even when there is no alert sender. Remove that requirement only with a release that includes the alert-source change and its matching documentation.
+
+With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. It keeps the same client ID and secret and does not revoke tokens.
+
+For an existing installation, preserve its provider, declared clients, client IDs, and `runner.tokoMcp.oauthClientSecretRef`. Remove only `TOKO_RUNNER_OAUTH_CLIENT_ID` and `TOKO_RUNNER_OAUTH_CLIENT_SECRET` entries from `mcp.extraEnv` or `runner.extraEnv` that duplicate chart-injected credentials. Preserve other environment overrides. Follow the normal configuration-change procedure with a compatible released chart and application, then verify the runner.
+
+When `runner.tokoMcp.url` targets an external MCP, preserve its explicit credential reference even if local MCP authentication is disabled. Those remote credentials configure the runner only; keep local MCP authentication independent.
+
+Do not replace an existing external client with a new generated client without an identity migration plan. Client IDs identify record owners. For GitOps or client-only rendering, use the [explicit native credential](alert-investigations.md#gitops-or-an-existing-native-machine-secret) instead of rendering a fresh random Secret repeatedly.
+
 ## Authentication
 
-Set `mcp.auth.enabled` explicitly. `true` requires the provider/login configuration and a stable base URL. `false` rejects leftover provider or SAML settings. See [OAuth](oauth.md), including client admission and rotation, before changing an existing authenticated deployment.
+Set `mcp.auth.enabled` explicitly. `true` requires a base URL and an active native machine client, credential provider, or SAML login method. The standard enabled runner provisions the native client. `provider: none` keeps native and SAML authentication enabled without external credential verification; it does not disable authentication. `mcp.auth.enabled: false` rejects leftover provider or SAML settings. See [OAuth](oauth.md), including client admission and rotation, before changing an existing authenticated deployment.
 
-The unattended MCP shares authentication configuration. An authenticated runner needs a separately configured client-credentials grant with the required query scope. Use a top-level `domain` or explicit `mcp.auth.baseUrl` for a shared auth base URL; the sibling does not inherit `mcp.domain` alone.
+The unattended MCP shares authentication configuration. A new normal Helm install generates the runner's client-credentials grant and query scope automatically. Existing explicit runner credentials continue to work; custom external MCP URLs require an explicit credential reference. Use a top-level `domain` or explicit `mcp.auth.baseUrl` for a shared auth base URL; the sibling does not inherit `mcp.domain` alone.
 
 ## Older installations
 
