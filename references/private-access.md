@@ -22,6 +22,8 @@ The local Setup/Monitoring UI remains readable without MCP authentication. Detec
 
 ## Team access
 
+For the full sequence from a verified installation to human and runner login, use the [shared access checklist](team-access.md).
+
 Preserve existing authentication and routes when configuring shared access.
 
 1. Agree on a private route with your platform team, such as an existing VPN or internal Ingress. Choose its stable HTTPS hostname without opening shared access yet.

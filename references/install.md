@@ -6,6 +6,12 @@ Follow the [installation approach](../README.md#what-to-expect), including Slack
 
 Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Follow the [input conventions](#inputs-and-placeholders) before running commands.
 
+## Release baseline
+
+These instructions use chart **0.38.0** and application image **0.74.1**. The [example values file](../examples/values.yaml) pins `mcp.image.tag`; the unattended MCP and runner inherit that image. The chart pins its bundled PostgreSQL and Ollama images by digest. This is the release baseline checked against the chart and application source, not a capacity or availability guarantee. Verify the functional checks below in your own environment.
+
+For an existing installation, preserve its installed chart and image overrides unless an upgrade is requested; use [upgrading](upgrading.md). Do not copy these pins over an existing deployment's configuration.
+
 ## Before installing
 
 | Decision | How to resolve it | Effect |
@@ -25,7 +31,7 @@ Use one release per namespace: component names are fixed. Examples use release a
 | `REPLACE_WITH_KUBE_CONTEXT` | The kubeconfig context supplied by your cluster administrator | It must identify the intended cluster and account. |
 | Helm 3.14 or later, `kubectl`, and `curl` | Your workstation's approved tool installation | `helm version --short`, `kubectl version --client`, and `curl --version` must run. |
 | Storage and workload permissions | Your platform team | A default StorageClass must provision PersistentVolumes; the namespace must allow the chart's workloads. |
-| Capacity and outbound network access | Your platform team | Review the released chart's resource requests and [network destinations](data-flows.md#network-destinations). |
+| Capacity, Pod Security, and outbound network access | Your platform team | Review [planning](planning.md) for scheduling floors, admission restrictions, cost, and required owners, then check [network destinations](data-flows.md#network-destinations). |
 | Issued license | Your Tokonoma contact | Have it ready for the [installation command](#3-install). |
 
 ```sh
@@ -43,7 +49,7 @@ Check [AWS storage preparation](cloud-providers/aws.md#persistent-volumes) or [G
 Inspect the package defaults for resource requests and configuration:
 
 ```sh
-helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
+helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma --version 0.38.0
 ```
 
 The chart's defaults mention Bedrock, Vertex, and Foundry through `runner.extraEnv`. Tokonoma supports only the Anthropic API, so do not configure these.
@@ -100,11 +106,12 @@ Keep the commented source files for future changes; `helm get values` does not r
 
 ## 3. Install
 
-Install after the required credentials and selected integrations are ready. Without `--version`, Helm selects the latest stable chart; the chart currently defaults to the application image tag `latest`:
+Install after the required credentials and selected integrations are ready. For a new values file without an intentional image override, use `mcp.image.tag: "0.74.1"`. If supplied configuration deliberately selects another chart or application version, preserve that choice and confirm the intended target before changing it; adapt the command's chart version to that confirmed target. The baseline command pins the chart separately from the image in `values.yaml`:
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma \
   oci://public.ecr.aws/tokonoma/charts/tokonoma \
+  --version 0.38.0 \
   --namespace tokonoma --create-namespace \
   --values values.yaml \
   --set-literal 'mcp.license=REPLACE_WITH_LICENSE' \
