@@ -8,8 +8,13 @@
 # Supply credentials directly in the installation command or use existing Secret
 # references. See references/install.md and references/credentials.md.
 # Replace placeholders with verified values; agents ask for missing inputs.
-# PostgreSQL, local search embeddings and application images use chart defaults.
+# New-installation baseline: chart 0.38.0, application 0.74.1.
+# PostgreSQL and Ollama use the chart's digest-pinned images.
+# Do not replace an existing deployment's chart/image choices with these pins.
 mcp:
+  image:
+    # The unattended MCP and runner inherit this application image.
+    tag: "0.74.1"
   # Supply your issued license with --set-literal 'mcp.license=...', or use this existing Secret:
   # licenseSecret:
   #   name: REPLACE_WITH_LICENSE_SECRET_NAME

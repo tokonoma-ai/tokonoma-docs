@@ -221,6 +221,8 @@ Expected result: `Apply complete!`. The saved plan is `REPLACE_WITH_DATADOG_TERR
 
 `env:* OR NOT env:*` matches notifications whether or not they contain an `env` tag. It needs no opt-in tag and includes untagged monitors. It uses Datadog's supported [`key:*`, `OR` and `NOT` scope syntax](https://docs.datadoghq.com/monitors/notify/notification_rules/#rule-scope-syntax).
 
+Review expected alert volume and model spend before applying this rule: it forwards the full monitor inventory. The runner's default daily investigation counters are independent, allowing up to 200 non-critical plus 200 critical starts per runner process per day. These are run-count controls, not a dollar budget, and restarts reset the counters. Monitoring checks, memory analysis, and manual investigations can add model usage. Set a budget with the provider and review [cost planning](planning.md#model-and-infrastructure-cost) before enabling broad delivery.
+
 After saving the rule, check its **Coverage** and monitor **Recipient Summary** in Datadog. Datadog documents rule application when monitors are created or updated after the rule is saved. If existing monitors are missing, save them through their existing management workflow, preserving their settings. Confirm coverage includes the full monitor inventory before claiming all-monitor routing is active. See [Datadog's notification-rule guide](https://docs.datadoghq.com/monitors/notify/notification_rules/).
 
 ### Recovery notifications

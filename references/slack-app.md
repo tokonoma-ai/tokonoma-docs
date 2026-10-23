@@ -55,6 +55,22 @@ Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited
 
 For token changes, follow [credential rotation](credentials.md#renew-and-rotate), then repeat the Slack reply check above.
 
+## Use Tokonoma in a channel
+
+Mention the app in a channel where it has been invited. Run `@Tokonoma help` for the commands supported by your installed version.
+
+| Task | Command and expected behavior |
+| --- | --- |
+| Start a shared incident session | `@Tokonoma start checkout errors` creates a `TKNM-<N>` session and posts a prompt teammates can give their coding agents to join it. |
+| Review progress | `@Tokonoma state` summarizes the active session; `@Tokonoma timeline` assembles its timeline. Use `timeline TKNM-<N>` for a specific session in this channel. |
+| Close and save | `@Tokonoma stop` closes the session. Then `@Tokonoma save` saves the closed session as one investigation; `save TKNM-<N>` selects a specific closed session. |
+| Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
+| Review monitoring | `@Tokonoma detectors` lists detectors. `@Tokonoma detectors show proposals` shows proposals and `@Tokonoma detectors show findings` shows findings. |
+| Decide on a detector proposal | Use `@Tokonoma detectors approve REPLACE_WITH_DETECTOR_ID` or `@Tokonoma detectors reject REPLACE_WITH_DETECTOR_ID`, using an identifier from the report. Review its scope and query before approving it. |
+| Read the saved result | Click **Full record** on a result, or use `@Tokonoma full record for REPLACE_WITH_RECORD_UUID`. Reading the body requires a valid license. |
+
+A Slack session coordinates teammates and their agents. Starting one does not itself start a runner investigation. Follow the handoff prompt to join from a coding agent, or request an investigation in the alert thread. See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
+
 ## Choose what to enable
 
 Questions, relevance checks, and session timelines use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, exact commands such as `help`, `state`, `stop`, and `resume` remain available. Reading `full record for REPLACE_WITH_RECORD_UUID` also needs a valid Tokonoma license.

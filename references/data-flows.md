@@ -48,7 +48,7 @@ See [analysis configuration](memory-llm.md) for setup and maintenance controls.
 
 Agentic monitoring is enabled in the example. It can query telemetry, make model calls, and start investigations without an incoming alert. Review [monitoring scope and access](agentic-monitoring.md) before installing.
 
-Monitoring uses the Anthropic API by default. If you configure the optional `runner.detection.judge.apiKeySecretRef`, the runner also sends monitoring context to `https://api.typesafe.ai`; allow that destination only when using this credential.
+Monitoring uses the Anthropic API by default. If you configure the optional `runner.detection.judge.apiKeySecretRef`, the runner also sends monitoring context to `https://api.typesafe.ai`; allow that destination only when using this credential. See [TypeSafe credential setup](credentials.md#optional-typesafe-judge).
 
 Alertmanager and Datadog are supported webhook sources. There is no CloudWatch adapter. Other MCP connections need an endpoint, authentication, and a list of tools the runner may call.
 

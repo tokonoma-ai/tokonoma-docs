@@ -11,6 +11,7 @@ Prepare the credentials needed for your [installation](install.md#2-prepare-your
 | Slack bot token (`xoxb-`) | Your Slack app's **Install App** page | `credentials.slackBotToken` | Reading invited channels and posting as `@Tokonoma` |
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
 | Runner client ID and secret | Dedicated machine client from your [identity provider](oauth.md#1-prepare-the-provider) | `mcp.auth.clients`, `runner.tokoMcp.oauthClientSecretRef`, and `mcp.extraEnv` | When MCP authentication is enabled; see [runner credential setup](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) |
+| TypeSafe API key (optional) | Your TypeSafe administrator | `runner.detection.judge.apiKeySecretRef` | The optional TypeSafe/Jev monitoring Judge; the runner uses its Anthropic engine instead when this reference is unset |
 
 Add only the credentials required by your selected [telemetry connection](integrations.md#mcp-connections), such as a Grafana Viewer token or a provider's API credentials. Telemetry query access is required while either automatic feature is enabled. Reuse existing working connections and Secrets.
 
@@ -68,6 +69,30 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT create namespace tokonoma
 
 Use your assigned namespace if it differs. Permission errors need the cluster owner's help. Create Secrets through the selected integration guide or your secret-management workflow; preserve existing Secrets and their owners.
 
+## Optional TypeSafe Judge
+
+You do not need a TypeSafe key for monitoring. Without it, the Judge uses the runner's configured Anthropic engine. Add TypeSafe only when you have selected it and approved the additional [data destination](data-flows.md#model-and-integration-connections).
+
+For a new Secret, prepare the namespace above, fill the placeholder locally, and run:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-runner-typesafe \
+  --from-literal=apiKey='REPLACE_WITH_TYPESAFE_API_KEY'
+```
+
+Expect `secret/toko-runner-typesafe created`. If it already exists, preserve it and confirm its owner through your secret-management workflow. Merge this reference into the existing values:
+
+```yaml
+runner:
+  detection:
+    judge:
+      apiKeySecretRef:
+        name: toko-runner-typesafe
+        key: apiKey
+```
+
+The chart supplies `TOKO_RUNNER_TYPESAFE_API_KEY` to the runner from that Secret. [Apply the configuration change](upgrading.md#before-changing-configuration), allow HTTPS to `api.typesafe.ai`, and repeat [monitoring verification](agentic-monitoring.md#verify-monitoring). Changing the contents of this external Secret requires a runner restart; it does not rotate the Anthropic key.
+
 ## Offline rendering
 
 Client-only `helm template` and GitOps rendering cannot look up the [generated Secrets](#what-helm-creates). Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Repeatedly generating new passwords can break an existing installation.
@@ -86,6 +111,7 @@ Use this table for changes that need a manual restart. Names shown are the defau
 | External Anthropic key | `toko-mcp`, `toko-mcp-unattended`; also `toko-runner` if it uses that Secret |
 | External Slack tokens | `toko-mcp` |
 | External runner model, MCP, or alert-source credential | `toko-runner` |
+| Optional TypeSafe Judge key | `toko-runner` |
 | Grafana Viewer token, including direct `grafanaMcp.grafana.apiKey` | `toko-grafana-mcp-server` |
 | Grafana adapter caller token | `toko-grafana-mcp-server`, `toko-runner` |
 

@@ -77,11 +77,11 @@ Start a new agent session and enter:
 Run Tokonoma onboard.
 ```
 
-Onboarding saves investigation context. It can also add a Tokonoma pointer to `AGENTS.md` or `CLAUDE.md` and install a session finalizer. The pointer and finalizer are optional.
+Onboarding has three optional steps: add Tokonoma instructions to the agent's instruction file, select prior agent sessions to save as investigations, and import historical incidents or runbooks. Review the proposed instructions and choose which material to save. It reads shared material or named paths; prior-session discovery starts only when you choose `scan`. It does not install a session finalizer.
 
-### Optional session finalization
+After saving material, use one of onboarding's suggested recall prompts to check that your agent can search for it and fetch the saved record. Re-run onboarding when you have more material to add; imported sources are not continuously synchronized.
 
-The finalizer can resume an agent to save an investigation, maintain a used procedure, or render a memory receipt within existing permissions. Review its proposed files and hooks before enabling it, then start a new session and follow the client's trust prompt. Unsupported clients are skipped.
+Continue with [Using Tokonoma](using-tokonoma.md) for a first investigation, health checks, and saving team knowledge.
 
 ## Use a public endpoint
 
