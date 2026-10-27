@@ -4,6 +4,8 @@ Use this page with the platform and integration owners before starting the [agen
 
 ## Capacity and cluster policy
 
+Start with roughly **8 vCPU and 32 GiB of RAM available to Tokonoma across your Kubernetes cluster**, after reserving resources for Kubernetes and other workloads. This is a recommended starting capacity, not a benchmark, throughput guarantee, or scheduling floor. Individual pods must still fit on a node.
+
 Chart 0.38.0 requests the following resources with the [installation example](../examples/values.yaml), before optional adapters and telemetry storage:
 
 | Workload | CPU request | Memory request | Persistent storage |
