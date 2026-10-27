@@ -18,9 +18,11 @@ Run cluster commands from your working directory on a workstation with cluster a
 
 Use the [installation port-forward and health check](install.md#4-verify). It binds to localhost by default and requires Kubernetes access. Keep it on localhost; do not add `--address 0.0.0.0` for shared access.
 
-Keep the local Setup/Monitoring UI on the direct localhost connection. Use Slack for finding feedback.
+The local Setup/Monitoring UI is read-only and remains readable without MCP authentication or a UI sign-in. Keep it on the direct localhost connection. Use Slack for finding feedback.
 
 ## Team access
+
+For the full sequence from a verified installation to human and runner login, use the [shared access checklist](team-access.md).
 
 Preserve existing authentication, routes, and the runner's machine identity when configuring shared access. Adding human sign-in does not require replacing that identity.
 

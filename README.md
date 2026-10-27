@@ -6,9 +6,11 @@ This revision requires the application and chart releases described in [native m
 
 Tokonoma monitors your services, detects significant changes, and automatically investigates findings and alerts using your observability tools. Engineers can work with it through Slack and coding agents, using saved findings and procedures to build on what the team has learned.
 
+New to Tokonoma? [Start here](references/start-here.md) for use cases, deployment choices, and a first investigation. The [product website](https://tokonoma.ai/) has the broader feature tour.
+
 The installation runs in your Kubernetes cluster and includes:
 
-- **Tokonoma MCP service:** investigation tools, saved findings and procedures, the Slack connection, and a local administration UI. MCP means Model Context Protocol, which lets coding agents use these tools.
+- **Tokonoma MCP service:** investigation tools, saved findings and procedures, the Slack connection, and a local read-only UI. MCP means Model Context Protocol, which lets coding agents use these tools.
 - **Tokonoma runner and its dedicated MCP instance:** Agentic Monitoring and automatic investigations using your connected telemetry and alert sources.
 - **PostgreSQL:** bundled storage for records and application state. Helm creates its credentials.
 - **Ollama:** local search embeddings, which turn text into numeric representations for search.
@@ -68,6 +70,6 @@ The agent should finish with the saved configuration locations, the checks it ra
 
 ## Reference documentation
 
-The agent uses [SKILL.md](SKILL.md) and the [detailed guides](references/) for installation commands, provider setup, and operation. You can read them to inspect a particular step; the agent will bring the relevant instructions into your conversation.
+The agent uses [SKILL.md](SKILL.md) and the [detailed guides](references/) for installation commands, provider setup, and operation. You can read them to inspect a particular step; the agent will bring the relevant instructions into your conversation. After installation, follow [Using Tokonoma](references/using-tokonoma.md) to investigate an issue, share knowledge, and take findings into a code review.
 
 Use your Tokonoma contact for a license or deployment help. Keep credentials, issued licenses, customer data, and unredacted diagnostics out of this repository and public issues.

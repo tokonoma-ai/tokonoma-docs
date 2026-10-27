@@ -342,10 +342,33 @@ Use the shared [MCP connection guide](integrations.md#mcp-connections) for Datad
 
 ## Stop the runner for maintenance
 
-This stops investigations and agentic monitoring, and removes the runner, its dedicated MCP instance, and the Grafana adapter. Use it only for a planned service interruption. Pause only Tokonoma alert deliveries, preserving paging routes.
+This temporarily stops investigations and Agentic Monitoring. Pause only Tokonoma alert deliveries, preserving paging routes. Let active investigations finish or record that they will be interrupted.
 
-Record the component settings, then set `runner.enabled`, `mcp.sibling.enabled`, and `grafanaMcp.enabled` to `false` in `values.yaml`. [Apply the configuration change](upgrading.md#before-changing-configuration), preserving credentials. Confirm those components are removed with `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods`; skip their readiness checks while they are disabled. Existing investigation records remain.
+Keep the saved component settings and generated Secret in place so the native machine client remains registered. Disabling `runner.enabled` through Helm removes that automatic client and can leave native-only authentication without an issuance path. Coordinate any GitOps controller so it does not undo temporary scaling; a Helm upgrade can restore the runner too.
 
-Restore the recorded settings and apply again. Verify one controlled alert before resuming routine Tokonoma deliveries.
+Record the current replica count:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deployment toko-runner \
+  -o jsonpath='{.spec.replicas}{"\n"}'
+```
+
+Scale only the runner down, then confirm its desired replica count is `0` and its pods have stopped. The dedicated MCP instance, Grafana adapter, and saved records remain in place:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma scale deployment/toko-runner --replicas=0
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deployment toko-runner
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods
+```
+
+To resume, replace the placeholder with the recorded replica count. Scaling up a mutable image tag can pull newer code; review the [upgrade effects](upgrading.md#before-changing-configuration) first.
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma scale deployment/toko-runner \
+  --replicas=REPLACE_WITH_RECORDED_REPLICA_COUNT
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout status deployment/toko-runner --timeout=5m
+```
+
+Verify one approved controlled alert before resuming routine Tokonoma deliveries. Scale down again and inspect the failure if verification does not pass.
 
 Return to [integrations](integrations.md) or continue with [Datadog alerts](datadog-alerts.md).

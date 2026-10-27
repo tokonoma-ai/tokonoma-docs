@@ -10,6 +10,7 @@ Prepare the credentials needed for your [installation](install.md#2-prepare-your
 | Anthropic API key | Your Anthropic account | `credentials.anthropicApiKey` | Server-side memory analysis, Slack questions and timelines, and the runner |
 | Slack bot token (`xoxb-`) | Your Slack app's **Install App** page | `credentials.slackBotToken` | Reading invited channels and posting as `@Tokonoma` |
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
+| TypeSafe API key (optional) | Your TypeSafe administrator | `runner.detection.judge.apiKeySecretRef` | The optional TypeSafe/Jev monitoring Judge; the runner uses its Anthropic engine instead when this reference is unset |
 
 Add only the credentials required by your selected [telemetry connection](integrations.md#mcp-connections), such as a Grafana Viewer token or a provider's API credentials. Telemetry query access is required while either automatic feature is enabled. Reuse existing working connections and Secrets.
 
@@ -25,9 +26,13 @@ A valid Tokonoma license is required for full-body recalls, but not search, savi
 
 Normal Helm installs generate the bundled PostgreSQL password, the runner's machine login, and, when the Grafana adapter is enabled, its private caller token. You do not need to create these for the standard installation. Helm reuses their existing Secrets on upgrades; these Secrets survive uninstall. Preserve them when disabling components or upgrading.
 
+The generated runner login requires the matching public application and chart releases in the [release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite).
+
 With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. Credentials stay the same and tokens remain valid. See the [upgrade notes](upgrading.md#native-machine-authentication-release-prerequisite).
 
 The default machine Secret is `toko-runner-oauth`, with keys `clientId` and `clientSecret`. It authenticates the runner to Tokonoma; it is not an employee login or an integration credential. Do not distribute it to coding agents. Changing its client ID changes the identity that owns private investigation records.
+
+Preserve a recoverable copy of this Secret. If it is lost, restore it before the next Helm run: an absent Secret follows the initial-install path and gets a new credential. An existing retained Secret with missing keys, a mismatched client ID, or an empty or whitespace-padded secret is rejected until repaired or restored.
 
 The Grafana caller token authenticates the runner to the adapter. It does not replace the customer-supplied Grafana Viewer token. [Offline rendering](#offline-rendering) needs stable credentials supplied separately.
 
@@ -71,6 +76,30 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT create namespace tokonoma
 
 Use your assigned namespace if it differs. Permission errors need the cluster owner's help. Create Secrets through the selected integration guide or your secret-management workflow; preserve existing Secrets and their owners.
 
+## Optional TypeSafe Judge
+
+You do not need a TypeSafe key for monitoring. Without it, the Judge uses the runner's configured Anthropic engine. Add TypeSafe only when you have selected it and approved the additional [data destination](data-flows.md#model-and-integration-connections).
+
+For a new Secret, prepare the namespace above, fill the placeholder locally, and run:
+
+```sh
+kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic toko-runner-typesafe \
+  --from-literal=apiKey='REPLACE_WITH_TYPESAFE_API_KEY'
+```
+
+Expect `secret/toko-runner-typesafe created`. If it already exists, preserve it and confirm its owner through your secret-management workflow. Merge this reference into the existing values:
+
+```yaml
+runner:
+  detection:
+    judge:
+      apiKeySecretRef:
+        name: toko-runner-typesafe
+        key: apiKey
+```
+
+The chart supplies `TOKO_RUNNER_TYPESAFE_API_KEY` to the runner from that Secret. [Apply the configuration change](upgrading.md#before-changing-configuration), allow HTTPS to `api.typesafe.ai`, and repeat [monitoring verification](agentic-monitoring.md#verify-monitoring). Changing the contents of this external Secret requires a runner restart; it does not rotate the Anthropic key.
+
 ## Offline rendering
 
 Client-only `helm template` and GitOps rendering cannot look up the [generated Secrets](#what-helm-creates). Supply stable `postgres.auth.password` and `grafanaMcp.auth.token` values with `--set-literal`, or use externally managed Secrets, before rendering. Use the [explicit native machine credential](alert-investigations.md#gitops-or-an-existing-native-machine-secret) for the runner. Repeatedly generating new passwords can break an existing installation.
@@ -92,6 +121,7 @@ Use this table for changes that need a manual restart. Names shown are the defau
 | External Slack tokens | `toko-mcp` |
 | External runner model, remote-MCP, or alert-source credential | `toko-runner` |
 | Local runner MCP credential, changed without a Helm rollout | `toko-mcp`, `toko-mcp-unattended`, and `toko-runner` |
+| Optional TypeSafe Judge key | `toko-runner` |
 | Grafana Viewer token, including direct `grafanaMcp.grafana.apiKey` | `toko-grafana-mcp-server` |
 | Grafana adapter caller token | `toko-grafana-mcp-server`, `toko-runner` |
 

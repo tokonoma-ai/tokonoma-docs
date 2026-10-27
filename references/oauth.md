@@ -155,9 +155,11 @@ mcp:
         tokenEndpointAuthMethod: client_secret_post
 ```
 
-`mcp.auth.clientCredentialsRefreshMode: legacy` preserves refresh tokens for `client_credentials`. Prefer `disabled` for new managed deployments; switch existing automation only after confirming it can repeat the credential grant.
+`mcp.auth.clientCredentialsRefreshMode: legacy` preserves refresh tokens for external provider-backed `client_credentials` clients that declare `refresh_token`. Prefer `disabled` for new external automation; switch existing automation only after confirming it can repeat the credential grant.
 
-With `disabled`, the server consumes and rejects credential refresh tokens; rollback to `legacy` cannot revive them. Existing access tokens retain their expiry. Authorization-code refresh tokens still follow each client's `refresh_token` grant. Older browser password sessions may need one new login because their tokens lack the originating grant.
+With `disabled`, the server consumes and rejects external credential refresh tokens; rollback to `legacy` cannot revive them. Existing access tokens retain their expiry. Authorization-code refresh tokens still follow each client's `refresh_token` grant. Older browser password sessions may need one new login because their tokens lack the originating grant.
+
+Native configured machine clients accept only `client_credentials`. They receive no refresh token, human groups, or roles, regardless of the refresh mode.
 
 Supported grants are `authorization_code`, `refresh_token`, and `client_credentials`; JWT bearer and ID-JAG redemption are unsupported.
 
