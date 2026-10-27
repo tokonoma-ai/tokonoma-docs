@@ -25,7 +25,7 @@ Use one release per namespace: component names are fixed. Examples use release a
 | `REPLACE_WITH_KUBE_CONTEXT` | The kubeconfig context supplied by your cluster administrator | It must identify the intended cluster and account. |
 | Helm 3.14 or later, `kubectl`, and `curl` | Your workstation's approved tool installation | `helm version --short`, `kubectl version --client`, and `curl --version` must run. |
 | Storage and workload permissions | Your platform team | A default StorageClass must provision PersistentVolumes; the namespace must allow the chart's workloads. |
-| Capacity and outbound network access | Your platform team | Review the released chart's resource requests and [network destinations](data-flows.md#network-destinations). |
+| Capacity, Pod Security, and outbound network access | Your platform team | Review [planning](planning.md) for recommended starting capacity, chart requests, admission restrictions, cost, and required owners, then check [network destinations](data-flows.md#network-destinations). |
 | Issued license | Your Tokonoma contact | Have it ready for the [installation command](#3-install). |
 
 ```sh

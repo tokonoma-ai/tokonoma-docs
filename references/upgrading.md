@@ -13,34 +13,34 @@ Run the commands from the existing installation's working directory on an author
 
 ## Before changing configuration
 
-To change settings without upgrading the chart, use `--version REPLACE_WITH_INSTALLED_CHART_VERSION`. Find the latest deployed revision below, record its revision number for possible rollback, and use its chart version without the `tokonoma-` prefix. Keep application image overrides. Upgrade first if the installed chart does not support the new settings.
+Review the deployed revision and saved configuration before changing settings. The commands below use the latest released chart, so applying a configuration change can also upgrade the chart. Confirm that this is within the customer's requested change, and complete the upgrade preparation below before applying it. Record the current revision for possible rollback:
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT history tokonoma -n tokonoma
 ```
 
-Apply the edited `values.yaml` with the installed chart version:
+Apply the edited `values.yaml` using the chart defaults:
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
-  --version REPLACE_WITH_INSTALLED_CHART_VERSION -n tokonoma \
+  -n tokonoma \
   --reset-then-reuse-values --values values.yaml \
   --wait --timeout 15m
 ```
 
 This preserves previously supplied values, including credentials. Add `--set-literal 'KEY=REPLACE_WITH_VALUE'` for each new or changed credential, using the keys in [credentials](credentials.md#what-you-need) or the selected integration guide. Keep existing Secret references. Removing a setting from the file alone does not clear its saved value; set its intended replacement explicitly.
 
-To remove obsolete keys, review a complete replacement values file and all required credential inputs, then replace `--reset-then-reuse-values` with `--reset-values` in the command above. Keep `--version REPLACE_WITH_INSTALLED_CHART_VERSION` for a configuration-only change.
+To remove obsolete keys, review a complete replacement values file and all required credential inputs, then replace `--reset-then-reuse-values` with `--reset-values` in the command above.
 
 After Helm reports `deployed`, use the [installation health checks](install.md#4-verify). Follow [credential rotation](credentials.md#renew-and-rotate) for any required restarts. Integration guides provide optional functional checks.
 
 The chart's application image default is `latest`, with image pull policy `Always`. A restarted pod can therefore pull a newer application build even when the chart version stays the same. Configuration changes that restart workloads can have this effect too. The unattended MCP and runner inherit the primary MCP image unless overridden.
 
-For reproducible builds, choose and test a chart version with `--version` and set `mcp.image.tag` to the intended application release. Check separate unattended MCP or runner image overrides too. These guides do not require fixed versions.
+Use the chart's application image defaults. Record the deployed chart version and actual image digest in the installation report so changes can be traced without fixing an installation version in these commands.
 
 ## Before upgrading
 
-1. Back up PostgreSQL and all other persistent data with your normal recovery process, and verify that you can restore them.
+1. [Back up PostgreSQL](backup.md) and all other persistent data with your normal recovery process, and verify that you can restore them.
 2. Record the current release revision and image, and review your saved values and externally managed Secrets. Helm values can contain credentials; do not paste them into tickets or public logs.
 3. Check the migration notes below, including webhook paths, Grafana adapter values, authentication, and retired meeting capture.
 4. Keep one complete nonsecret `values.yaml` and protected credential inputs. Do not assume an old override is still valid in a new chart.
@@ -59,7 +59,7 @@ Review the latest chart defaults:
 helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
-Keep deliberate image overrides unless changing them is part of the upgrade. To return an existing pinned deployment to the rolling application default, remove the saved override and pass `--set-string mcp.image.tag=latest` on this upgrade. Removing the file entry alone does not clear a value preserved by `--reset-then-reuse-values`.
+Review any saved primary MCP or runner image overrides. To return an existing deployment to chart image defaults, remove those overrides from a complete replacement values file and use the reviewed `--reset-values` procedure above with all required credential inputs. Removing a file entry alone does not clear a value preserved by `--reset-then-reuse-values`. The unattended MCP shares `mcp.image`.
 
 Apply the upgrade:
 
