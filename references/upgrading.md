@@ -1,6 +1,6 @@
 # Upgrade Tokonoma
 
-Chart and application versions are independent. New installations use the [documented release baseline](install.md#release-baseline). An existing installation keeps its current chart and image choices until you select and test an upgrade target.
+Install and upgrade commands use the latest released chart and its application image defaults. Chart and application versions are independent. Test the upgrade with your configuration before changing a production release.
 
 Run the commands from the existing installation's working directory on an authorized workstation. Use [installation](install.md) for a new release.
 
@@ -36,7 +36,7 @@ After Helm reports `deployed`, use the [installation health checks](install.md#4
 
 The chart's application image default is `latest`, with image pull policy `Always`. A restarted pod can therefore pull a newer application build even when the chart version stays the same. Configuration changes that restart workloads can have this effect too. The unattended MCP and runner inherit the primary MCP image unless overridden.
 
-For reproducible builds, choose and test a chart version with `--version` and set `mcp.image.tag` to the intended application release. Check any separate runner image override too; the unattended sibling shares `mcp.image`. Do not replace installed pins with the new-installation example during a configuration-only change. Record image digests if your release policy requires immutable references.
+For reproducible builds, choose and test a chart version with `--version` and set `mcp.image.tag` to the intended application release. Check any separate runner image override too; the unattended sibling shares `mcp.image`. These guides do not require fixed versions.
 
 ## Before upgrading
 
@@ -53,10 +53,10 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deployment toko-mcp 
 
 ## Apply the upgrade
 
-Select the target chart version and review its defaults:
+Review the latest chart defaults:
 
 ```sh
-helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma --version REPLACE_WITH_TARGET_CHART_VERSION
+helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
 Keep deliberate image overrides unless changing them is part of the upgrade. To return an existing pinned deployment to the rolling application default, remove the saved override and pass `--set-string mcp.image.tag=latest` on this upgrade. Removing the file entry alone does not clear a value preserved by `--reset-then-reuse-values`.
@@ -66,7 +66,6 @@ Apply the upgrade:
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.aws/tokonoma/charts/tokonoma \
   -n tokonoma \
-  --version REPLACE_WITH_TARGET_CHART_VERSION \
   --reset-then-reuse-values --values values.yaml \
   --wait --timeout 15m
 ```

@@ -20,7 +20,7 @@ Follow the shared customer guides in `references/`. Resolve every documentation 
 
 Identify the task, authorized kubeconfig context, release name, and namespace from supplied files and inspected configuration. Check for an existing release using the [prerequisite checks](references/install.md#1-check-prerequisites) when the target is known. Carry unresolved target choices into the single question batch below. A permission error does not mean the namespace is empty.
 
-- No release: follow the new-installation path with its [release baseline](references/install.md#release-baseline). Preserve deliberately supplied chart or image choices; resolve a different target before applying it.
+- No release: follow the new-installation path. Use the published chart and its image defaults.
 - Existing release: use its installed chart version and keep its image overrides, as described in [upgrading](references/upgrading.md#before-changing-configuration).
 
 ## 2. Read the existing configuration
