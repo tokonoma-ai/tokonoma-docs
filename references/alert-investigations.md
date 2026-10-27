@@ -60,7 +60,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic to
   --from-literal='clientSecret=REPLACE_WITH_RUNNER_CLIENT_SECRET'
 ```
 
-Expected output: `secret/toko-runner-oauth created`. Merge this configuration into `values.yaml`, retaining the full identity-provider settings and other `mcp.extraEnv` entries. It supplies the runner's login and lets the local Setup/Monitoring UI use the same identity for authenticated actions. If using a different Secret, update every reference:
+Expected output: `secret/toko-runner-oauth created`. Merge this configuration into `values.yaml`, retaining the full identity-provider settings. It supplies the runner's login. If using a different Secret, update every reference:
 
 ```yaml
 mcp:
@@ -73,17 +73,6 @@ mcp:
         grantTypes: [client_credentials]
         scopes: [toko-mcp/query]
         tokenEndpointAuthMethod: client_secret_post
-  extraEnv:
-    - name: TOKO_RUNNER_OAUTH_CLIENT_ID
-      valueFrom:
-        secretKeyRef:
-          name: toko-runner-oauth
-          key: clientId
-    - name: TOKO_RUNNER_OAUTH_CLIENT_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: toko-runner-oauth
-          key: clientSecret
 runner:
   tokoMcp:
     oauthClientSecretRef:
@@ -213,7 +202,7 @@ runner:
     webhookPaths: [/webhooks/alertmanager]
 ```
 
-Complete [OAuth](oauth.md) and the [runner and local UI credentials](#prepare-runner-credentials-when-mcp-authentication-is-enabled) before applying public routing. Keep their complete configuration in the same `values.yaml`. Replace the host/TLS reference and configure your existing controller using
+Complete [OAuth](oauth.md) and the [runner credentials](#prepare-runner-credentials-when-mcp-authentication-is-enabled) before applying public routing. Keep their complete configuration in the same `values.yaml`. Replace the host/TLS reference and configure your existing controller using
 [Public MCP Ingress](public-mcp-ingress.md). This adds an `Exact` rule for
 `/webhooks/alertmanager` to that MCP Ingress, forwarding to `toko-runner:8080`.
 It does not enable the runner by itself. For Datadog-only exposure, use the

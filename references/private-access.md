@@ -18,7 +18,7 @@ Run cluster commands from your working directory on a workstation with cluster a
 
 Use the [installation port-forward and health check](install.md#4-verify). It binds to localhost by default and requires Kubernetes access. Keep it on localhost; do not add `--address 0.0.0.0` for shared access.
 
-The local Setup/Monitoring UI remains readable without MCP authentication. Detector actions require authentication.
+The local Setup/Monitoring UI remains readable without MCP authentication.
 
 ## Team access
 
@@ -27,7 +27,7 @@ For the full sequence from a verified installation to human and runner login, us
 Preserve existing authentication and routes when configuring shared access.
 
 1. Agree on a private route with your platform team, such as an existing VPN or internal Ingress. Choose its stable HTTPS hostname without opening shared access yet.
-2. Configure [OAuth](oauth.md), including the [runner and local UI credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). Add [Google SAML](google-saml.md) or [Okta SAML](okta-saml.md) for human sign-in when selected. Set `mcp.auth.enabled: true` explicitly in `values.yaml`. Use the same hostname for the auth base URL and identity-provider redirect configuration.
+2. Configure [OAuth](oauth.md), including the [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). Add [Google SAML](google-saml.md) or [Okta SAML](okta-saml.md) for human sign-in when selected. Set `mcp.auth.enabled: true` explicitly in `values.yaml`. Use the same hostname for the auth base URL and identity-provider redirect configuration.
 3. [Apply the configuration change](upgrading.md#before-changing-configuration) with the authentication settings and private route. The hostname must be reachable by the MCP client and the user's browser.
 4. From a user's device, request `https://REPLACE_WITH_MCP_HOSTNAME/mcp` without credentials and expect `401`. Complete login through a [coding agent](coding-agents.md) and confirm it can list Tokonoma tools.
 
