@@ -47,6 +47,12 @@ mcp:
   #   #   botTokenKey: REPLACE_WITH_SLACK_BOT_TOKEN_KEY
   #   #   appTokenKey: REPLACE_WITH_SLACK_APP_TOKEN_KEY
 
+  # Optional incident sessions are off by default; see references/slack-app.md.
+  # Requires an application build with this flag; older builds ignore it.
+  # extraEnv:
+  #   - name: SLACK_MULTIPLAYER_ENABLED
+  #     value: "true"
+
 runner:
   # Required: needs the sibling, model credentials and at least one alert-source token.
   enabled: true

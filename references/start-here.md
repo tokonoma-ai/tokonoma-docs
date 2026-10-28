@@ -8,7 +8,7 @@ Tokonoma is a reliability teammate for engineers operating production services. 
 | --- | --- | --- |
 | A service changes without firing an alert | Agentic Monitoring discovers and evaluates checks for the services in scope, then assesses significant findings | Review coverage, evidence, and detector proposals |
 | An existing alert fires | The runner queries connected tools, investigates, saves a result, and posts to Slack when configured | Check the evidence and proposed next steps |
-| Engineers investigate together | Slack sessions and connected coding agents keep investigation context available to the team | Save the timeline, decisions, and outcome |
+| Engineers investigate together | Optional Slack sessions and connected coding agents keep investigation context available to the team | [Enable incident sessions](slack-app.md#optional-incident-sessions), then save the timeline, decisions, and outcome |
 | A similar problem returns | Agents can search past investigations and procedures before starting fresh | Check that the old evidence and procedure still apply |
 
 Start with [Using Tokonoma](using-tokonoma.md) for a first investigation, an illustrative result, Slack commands, and a glossary. The [product walkthrough](https://tokonoma.ai/guides/detection-to-fix) shows how evidence passes to a coding agent to prepare a pull request. Your team reviews, releases, and verifies the fix.

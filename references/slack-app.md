@@ -49,7 +49,7 @@ Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited
 | `Slack listener NOT started` | Both tokens and the database must be configured. |
 | No reply in one channel | Invite the app to that channel. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
-| Questions or timelines unavailable | Supply an Anthropic API key and leave `mcp.memoryLlm.enabled: true`; exact commands still work without it. |
+| Questions or timelines unavailable | Supply an Anthropic API key and leave `mcp.memoryLlm.enabled: true`. Timelines also require [incident sessions](#optional-incident-sessions). |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
 | Connection fails behind a proxy | Allow Slack API traffic and Socket Mode WebSocket upgrades. |
 
@@ -61,19 +61,40 @@ Mention the app in a channel where it has been invited. Run `@Tokonoma help` for
 
 | Task | Command and expected behavior |
 | --- | --- |
-| Start a shared incident session | `@Tokonoma start checkout errors` creates a `TKNM-<N>` session and posts a prompt teammates can give their coding agents to join it. |
-| Review progress | `@Tokonoma state` summarizes the active session; `@Tokonoma timeline` assembles its timeline. Use `timeline TKNM-<N>` for a specific session in this channel. |
-| Close and save | `@Tokonoma stop` closes the session. Then `@Tokonoma save` saves the closed session as one investigation; `save TKNM-<N>` selects a specific closed session. |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Review monitoring | `@Tokonoma detectors` lists detectors. `@Tokonoma detectors show proposals` shows proposals and `@Tokonoma detectors show findings` shows findings. |
 | Decide on a detector proposal | Use `@Tokonoma detectors approve REPLACE_WITH_DETECTOR_ID` or `@Tokonoma detectors reject REPLACE_WITH_DETECTOR_ID`, using an identifier from the report. Review its scope and query before approving it. |
 | Read the saved result | Click **Full record** on a result, or use `@Tokonoma full record for REPLACE_WITH_RECORD_UUID`. Reading the body requires a valid license. |
 
-A Slack session coordinates teammates and their agents. Starting one does not itself start a runner investigation. Follow the handoff prompt to join from a coding agent, or request an investigation in the alert thread. See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
+See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
+
+### Optional incident sessions
+
+Slack multiplayer incident sessions are off by default. This switch requires an application build with `SLACK_MULTIPLAYER_ENABLED` support. Older builds ignore the setting and may still expose session commands.
+
+To enable sessions, add this entry to `mcp.extraEnv` in your saved `values.yaml`, preserving any existing entries:
+
+```yaml
+mcp:
+  extraEnv:
+    - name: SLACK_MULTIPLAYER_ENABLED
+      value: "true"
+```
+
+[Apply the configuration change](upgrading.md#before-changing-configuration), then run `@Tokonoma help` to confirm that session commands are listed. Remove the entry or set its value to `"false"` to disable sessions. While disabled, session commands return a disabled reply and are omitted from help. Session capture and automatic timelines stop. The Slack `investigate` command remains available but cannot join a `TKNM-<N>` session.
+
+| Task | Command and expected behavior when enabled |
+| --- | --- |
+| Start or rename a session | `@Tokonoma start checkout errors` creates a `TKNM-<N>` session and posts a prompt teammates can give their coding agents to join it. Bare `start` uses recent discussion for a title when available; `set title to <title>` changes the active title. |
+| Resume a session | `@Tokonoma resume` reopens the most recent closed session in this channel within 24 hours. `resume TKNM-<N>` selects an older session in its original channel. |
+| Review progress | `@Tokonoma state` summarizes the active session; `@Tokonoma timeline` assembles its timeline. Use `timeline TKNM-<N>` for a specific session in this channel. |
+| Close and save | `@Tokonoma stop` closes the session. Then `@Tokonoma save` saves the closed session as one investigation; `save TKNM-<N>` selects a specific closed session. |
+
+A Slack session coordinates teammates and their agents. Starting one does not itself start a runner investigation. Follow the handoff prompt to join from a coding agent, or request an investigation in the alert thread.
 
 ## Choose what to enable
 
-Questions, relevance checks, and session timelines use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, exact commands such as `help`, `state`, `stop`, and `resume` remain available. Reading `full record for REPLACE_WITH_RECORD_UUID` also needs a valid Tokonoma license.
+Questions, relevance checks, and session timelines use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Reading `full record for REPLACE_WITH_RECORD_UUID` also needs a valid Tokonoma license.
 
 Automatic memory recall on alerts is off by default. To make the app reply to alerts from other apps, set `mcp.slack.autoRecallEnabled: true` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration).
 
@@ -81,7 +102,7 @@ Automatic recall is separate from runner investigations. Investigation results u
 
 ## Channel access and shared records
 
-The app receives channel messages where it is invited. It can read channel history for sessions and post shared records into those channels. Its memory identity can access organization-wide records, not an individual user's private records or records shared only with named identity-provider groups. New records are shared with everyone by default; choose private sharing when needed. See [data flows](data-flows.md).
+The app receives channel messages where it is invited. With incident sessions enabled, it can read channel history for sessions. It can post shared records into invited channels. Its memory identity can access organization-wide records, not an individual user's private records or records shared only with named identity-provider groups. New records are shared with everyone by default; choose private sharing when needed. See [data flows](data-flows.md).
 
 The manifest requests channel and user read scopes, `chat:write`, `reactions:write`, and `channels:join`. It also uses `reactions:read` for monitoring feedback and `files:write` for setup reports. Tokonoma does not automatically join channels; invite it explicitly. It does not request `chat:write.public` or direct-message history.
 
