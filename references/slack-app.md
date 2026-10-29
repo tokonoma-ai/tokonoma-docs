@@ -81,7 +81,9 @@ mcp:
       value: "true"
 ```
 
-[Apply the configuration change](upgrading.md#before-changing-configuration), then run `@Tokonoma help` to confirm that session commands are listed. Remove the entry or set its value to `"false"` to disable sessions. While disabled, session commands return a disabled reply and are omitted from help. Session capture and automatic timelines stop. The Slack `investigate` command remains available but cannot join a `TKNM-<N>` session.
+[Apply the configuration change](upgrading.md#before-changing-configuration), then run `@Tokonoma help` to confirm that session commands are listed.
+
+To disable sessions, set the entry's value to `"false"` and apply the configuration change again. Removing it from the file alone can preserve the saved `"true"` value. Confirm that `@Tokonoma help` omits session commands; those commands now return a disabled reply. Session capture and automatic timelines stop. The Slack `investigate` command remains available but cannot join a `TKNM-<N>` session.
 
 | Task | Command and expected behavior when enabled |
 | --- | --- |
