@@ -69,23 +69,33 @@ With `mcp.slack.multiplayerEnabled: false`, mentions run only supported exact co
 
 | Task | Command and expected behavior |
 | --- | --- |
+| Request a monitoring summary | `@Tokonoma monitoring summary` composes a fresh summary for the last 24 hours and posts it in the investigations channel. It does not replace the scheduled daily report. Requests within 10 minutes of the last manual summary, or while one is being composed, are refused. |
+| Change detector activity | `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID` stops future checks; `@Tokonoma enable detector REPLACE_WITH_DETECTOR_ID` starts or resumes them. Copy complete IDs from a report or saved plan; use `enable detector <detector_id; separate multiple IDs with spaces>` or `disable detector <detector_id; separate multiple IDs with spaces>`. Review its scope and query before enabling it. |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
-| Review monitoring | `@Tokonoma monitoring summary` requests a fresh report for the last 24 hours. `@Tokonoma admin get plan` attaches the saved current monitoring plan. |
-| Change detector activity | Use `@Tokonoma enable detector REPLACE_WITH_DETECTOR_ID` or `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID`, using an identifier from the report or saved plan. Review its scope and query before enabling it. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-In scheduled and requested summaries, each Recurring finding and any **Full record** button appear before the Disable command. Use the complete detector IDs shown in that command; consult the full plan for IDs that do not fit.
+In scheduled and requested summaries, each Recurring finding and any **Full record** button appear before the `disable detector` command. The command appears in a code block below the italic text "To stop future checks for this detector:" (or "these detectors" for multiple IDs). Use the complete detector IDs shown in that command; consult the full plan for IDs that do not fit.
+
+Use `disable detector` for unwanted or unhelpful monitoring and `enable detector` to resume the same checks. The choice is kept when the detector is carried into a new plan. Repeated commands are safe; obsolete or superseded IDs are unavailable. Work already in flight may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
 
 When multiplayer is enabled, ask ordinary questions with `@Tokonoma <question>` to find relevant saved records. See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
 
 ### Operator commands
 
-Use `@Tokonoma admin` for operator help. Normal help does not advertise these commands. The admin help contains:
+Use `@Tokonoma admin` for operator help. These commands run in invited channels with no additional permission check. Normal help, setup reports, refresh reports, and daily summaries do not advertise them. The admin help contains:
 
 - `admin` shows this help
 - `admin status` shows what is connected and what needs attention; only you see it
 - `admin get plan` attaches the full current monitoring plan
 - `admin replan` runs monitoring discovery and builds a new plan
+
+| Task | Command and expected behavior |
+| --- | --- |
+| Check readiness | `@Tokonoma admin status` reports connections, missing access, and runner readiness. Only the requester sees the reply. |
+| Run monitoring setup | `@Tokonoma admin replan` requests discovery again. The completed report posts in the investigations channel. |
+| Read the monitoring plan | `@Tokonoma admin get plan` attaches the full saved current plan document with a short label in the request's thread, without running setup. If no current plan is available, it says so. |
+
+The plan includes detector IDs for `enable detector` and `disable detector`. It is a saved setup or refresh snapshot: its statuses may differ from live detector state after those commands.
 
 ### Optional incident sessions
 
