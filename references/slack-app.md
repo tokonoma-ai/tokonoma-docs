@@ -70,24 +70,23 @@ See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an il
 
 ### Optional incident sessions
 
-Slack multiplayer incident coordination is off by default across Slack, the MCP services, and the runner. This switch requires an application build with `SLACK_MULTIPLAYER_ENABLED` support. Older builds ignore the setting and may still expose incident coordination.
+With compatible chart and application builds, Slack multiplayer incident coordination is off by default. The single chart setting `mcp.slack.multiplayerEnabled` applies to the primary MCP service, its unattended sibling, and the runner. MCP and the runner each enforce the setting.
 
-To enable incident coordination, add the flag to both `mcp.extraEnv` and `runner.extraEnv` in your saved `values.yaml`, preserving existing entries. The MCP setting also applies to its unattended sibling:
+Use a chart release containing [the multiplayer setting in charts PR #186](https://github.com/tokonoma-ai/tokonoma-charts/pull/186) and an application image containing [the incident-coordination gate in MCP PR #1443](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1443). Older application images ignore the flag and may still expose incident coordination; a chart change alone does not enforce it.
+
+Remove any `SLACK_MULTIPLAYER_ENABLED` entry from `mcp.extraEnv` and `runner.extraEnv`, preserving other entries. The chart rejects these entries, including matching values and `valueFrom`. If Helm has saved an old list, explicitly replace it with the remaining entries, or `[]` when none remain; deleting a line from the file alone can retain saved values. See [configuration changes](upgrading.md#before-changing-configuration).
+
+To enable incident coordination, set this value in your saved `values.yaml`:
 
 ```yaml
 mcp:
-  extraEnv:
-    - name: SLACK_MULTIPLAYER_ENABLED
-      value: "true"
-runner:
-  extraEnv:
-    - name: SLACK_MULTIPLAYER_ENABLED
-      value: "true"
+  slack:
+    multiplayerEnabled: true
 ```
 
 [Apply the configuration change](upgrading.md#before-changing-configuration), then run `@Tokonoma help` to confirm that session commands are listed.
 
-To disable incident coordination, set both entries to `"false"` and apply the configuration change again. Removing them from the file alone can preserve saved `"true"` values. Confirm that `@Tokonoma help` omits session commands; those commands now return a disabled reply.
+To disable incident coordination, explicitly set `mcp.slack.multiplayerEnabled: false` and apply the configuration change again. Removing the key alone can preserve a saved `true` when Helm reuses values. Confirm that `@Tokonoma help` omits session commands; those commands now return a disabled reply.
 
 While disabled, session lookup, agent check-ins, progress updates, discussion tracking, expiry, and timelines do not run. The `investigation-session` skill and `get_investigation_session` tool are unavailable. The runner does not receive coordination instructions and refuses requests to join a `TKNM-<N>` session. Session cleanup and metadata backfills also stop; session tables remain installed and existing data is not deleted.
 
