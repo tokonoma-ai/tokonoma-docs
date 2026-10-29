@@ -92,6 +92,8 @@ While disabled, session lookup, agent check-ins, progress updates, discussion tr
 
 Ordinary investigations, memory reads and writes, and saved outcomes remain available. You can still mark an investigation `resolved`, `dead_end`, or `wont_fix` and save its `resolution_summary`. The Slack `investigate` command still requests an ordinary runner investigation.
 
+Existing session-linked investigations can still be edited, resolved, and archived under the ordinary memory rules. Keep their session metadata exactly unchanged, including older formats. These updates do not access coordination tables. Adding, changing, or removing session metadata, or publishing a private check-in into a shared session, is refused while coordination is off.
+
 | Task | Command and expected behavior when enabled |
 | --- | --- |
 | Start or rename a session | `@Tokonoma start checkout errors` creates a `TKNM-<N>` session and posts a prompt teammates can give their coding agents to join it. Bare `start` uses recent discussion for a title when available; `set title to <title>` changes the active title. |
