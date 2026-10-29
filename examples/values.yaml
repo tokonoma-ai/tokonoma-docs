@@ -47,8 +47,9 @@ mcp:
   #   #   botTokenKey: REPLACE_WITH_SLACK_BOT_TOKEN_KEY
   #   #   appTokenKey: REPLACE_WITH_SLACK_APP_TOKEN_KEY
 
-  # Optional incident sessions are off by default; see references/slack-app.md.
+  # Optional incident coordination is off by default; see references/slack-app.md.
   # Requires an application build with this flag; older builds ignore it.
+  # Enable the matching runner.extraEnv entry below too.
   # extraEnv:
   #   - name: SLACK_MULTIPLAYER_ENABLED
   #     value: "true"
@@ -56,6 +57,11 @@ mcp:
 runner:
   # Required: needs the sibling, model credentials and at least one alert-source token.
   enabled: true
+  # Optional incident coordination: enable together with mcp.extraEnv above.
+  # To disable it later, set both values to "false"; do not just remove them.
+  # extraEnv:
+  #   - name: SLACK_MULTIPLAYER_ENABLED
+  #     value: "true"
   ingress:
     # External senders can use a separate webhook route while MCP stays private.
     enabled: false

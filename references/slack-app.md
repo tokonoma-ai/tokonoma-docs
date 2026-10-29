@@ -70,12 +70,16 @@ See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an il
 
 ### Optional incident sessions
 
-Slack multiplayer incident sessions are off by default. This switch requires an application build with `SLACK_MULTIPLAYER_ENABLED` support. Older builds ignore the setting and may still expose session commands.
+Slack multiplayer incident coordination is off by default across Slack, the MCP services, and the runner. This switch requires an application build with `SLACK_MULTIPLAYER_ENABLED` support. Older builds ignore the setting and may still expose incident coordination.
 
-To enable sessions, add this entry to `mcp.extraEnv` in your saved `values.yaml`, preserving any existing entries:
+To enable incident coordination, add the flag to both `mcp.extraEnv` and `runner.extraEnv` in your saved `values.yaml`, preserving existing entries. The MCP setting also applies to its unattended sibling:
 
 ```yaml
 mcp:
+  extraEnv:
+    - name: SLACK_MULTIPLAYER_ENABLED
+      value: "true"
+runner:
   extraEnv:
     - name: SLACK_MULTIPLAYER_ENABLED
       value: "true"
@@ -83,7 +87,11 @@ mcp:
 
 [Apply the configuration change](upgrading.md#before-changing-configuration), then run `@Tokonoma help` to confirm that session commands are listed.
 
-To disable sessions, set the entry's value to `"false"` and apply the configuration change again. Removing it from the file alone can preserve the saved `"true"` value. Confirm that `@Tokonoma help` omits session commands; those commands now return a disabled reply. Session capture and automatic timelines stop. The Slack `investigate` command remains available but cannot join a `TKNM-<N>` session.
+To disable incident coordination, set both entries to `"false"` and apply the configuration change again. Removing them from the file alone can preserve saved `"true"` values. Confirm that `@Tokonoma help` omits session commands; those commands now return a disabled reply.
+
+While disabled, session lookup, agent check-ins, progress updates, discussion tracking, expiry, and timelines do not run. The `investigation-session` skill and `get_investigation_session` tool are unavailable. The runner does not receive coordination instructions and refuses requests to join a `TKNM-<N>` session. Session cleanup and metadata backfills also stop; session tables remain installed and existing data is not deleted.
+
+Ordinary investigations, memory reads and writes, and saved outcomes remain available. You can still mark an investigation `resolved`, `dead_end`, or `wont_fix` and save its `resolution_summary`. The Slack `investigate` command still requests an ordinary runner investigation.
 
 | Task | Command and expected behavior when enabled |
 | --- | --- |

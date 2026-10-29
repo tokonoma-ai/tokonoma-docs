@@ -55,7 +55,7 @@ To retrieve it later, ask `What has the team learned about checkout connection-p
 
 ## Work with teammates in Slack
 
-Use [Slack commands](slack-app.md#use-tokonoma-in-a-channel) to request a runner investigation or read a saved result. [Incident sessions](slack-app.md#optional-incident-sessions) are optional and off by default. When enabled, start a shared session, see its timeline, and save the closed session. Give the posted `TKNM-<N>` handoff to each teammate's coding agent so their work joins the same session.
+Use [Slack commands](slack-app.md#use-tokonoma-in-a-channel) to request a runner investigation or read a saved result. [Incident coordination](slack-app.md#optional-incident-sessions) is optional and off by default for Slack, coding agents, and the runner. Ordinary investigations and their saved outcomes remain available. When enabled, start a shared session, see its timeline, and save the closed session. Give the posted `TKNM-<N>` handoff to each teammate's coding agent so their work joins the same session.
 
 For monitoring, inspect detector findings and proposals before approving a proposed detector. A finding describes something observed by a check. The runner groups related signals and asks the Judge whether they repeat a known issue. A sufficiently supported recurrence links to the prior record instead of starting another investigation; other groups proceed to investigation subject to the runner's guardrails. If the Judge is unavailable, the group proceeds rather than being silently dismissed. [Monitoring verification](agentic-monitoring.md#verify-monitoring) explains how to distinguish active checks from coverage gaps.
 
