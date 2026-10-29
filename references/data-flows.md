@@ -84,6 +84,6 @@ Without MCP authentication, callers use the same local identity. For separate us
 
 The Slack app reads shared records under its own service identity. Channel membership controls which Slack channels it can use; it is not a separate per-channel memory permission system. Inviting the app to a channel can therefore make organization-wide shared records available there through its replies. Full-record replies and runner results can remain visible in Slack after a record changes in Tokonoma.
 
-Slack sessions can retain discussion snapshots in the Tokonoma database. Temporary event content is cleared after processing, but saved sessions, investigations, backups, and Slack messages have separate retention rules.
+When [incident coordination](slack-app.md#optional-incident-sessions) is enabled, Slack sessions can retain discussion snapshots and agents can share session check-ins in the Tokonoma database. Temporary event content is cleared after processing, but saved sessions, investigations, backups, and Slack messages have separate retention rules.
 
 Review the identities and destinations you enable, and configure your database, object-storage, Slack, and model-provider retention policies for the data they receive. See [credentials](credentials.md) and [Slack setup](slack-app.md) for the inputs controlling these paths.
