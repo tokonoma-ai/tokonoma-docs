@@ -17,7 +17,9 @@ Follow [credential setup](credentials.md#supply-credentials-in-commands) when su
 
 For an existing app, update **App Manifest** with this manifest and reinstall the app to grant any added permissions. Save the current bot token; keep the app-level token unless you are rotating it.
 
-The manifest enables Socket Mode, mentions, channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
+For channel-join welcomes, check that **Event Subscriptions > Subscribe to bot events** includes `member_joined_channel`. This requires an application build containing [the channel-join welcome change](https://github.com/tokonoma-ai/tokonoma-mcp/issues/1442). Updating the application or repository manifest alone does not update an existing Slack app's subscriptions. No additional scopes are required if the app already has this manifest's permissions.
+
+The manifest enables Socket Mode, mentions, membership and channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
 ## Save the connection settings
 
@@ -30,7 +32,7 @@ In `values.yaml`, uncomment the Slack settings from the [example](../examples/va
 
 For existing Secrets, use `mcp.slack.tokenSecret` instead of the two Slack arguments.
 
-In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default results channel; set `mcp.slack.investigationsChannel` only for a different channel name.
+Choose an existing or new public or private `#tokonoma-investigations` channel for monitoring and runner results. Set `mcp.slack.investigationsChannel` only for a different channel name. Invite the app after it connects, as described below.
 
 For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration), including any changed token arguments and preserving other credentials.
 
@@ -42,18 +44,27 @@ When Slack is enabled, read the MCP logs on the administration workstation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Add the app to the designated monitoring channel to [receive its welcome](#receive-the-monitoring-welcome), and invite it to other channels where you want to use it. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |
 | `Slack listener NOT started` | Both tokens and the database must be configured. |
 | No reply in one channel | Invite the app to that channel. |
+| No welcome after adding the app | Check the application build, `member_joined_channel` subscription, configured channel name, and that the listener was connected when the app joined. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
 | Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `mcp.memoryLlm.enabled: true`. |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
 | Connection fails behind a proxy | Allow Slack API traffic and Socket Mode WebSocket upgrades. |
 
 For token changes, follow [credential rotation](credentials.md#renew-and-rotate), then repeat the Slack reply check above.
+
+### Receive the monitoring welcome
+
+After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. Only the app's own join to this configured channel triggers the welcome; another person joining or adding the app elsewhere does not.
+
+If a completed saved monitoring report and plan are available, the welcome attaches that document using its recorded title/date when available. It is a saved snapshot: detector statuses may differ from their current enable/disable state. Otherwise the welcome directs you to mention the app with `admin status` for the current status and next steps.
+
+The welcome does not start monitoring setup or produce a fresh report. Later setup and daily reports arrive through their normal delivery path, not as a promised reply to the welcome. Restarting the application does not welcome an app already in the channel. Removing and re-adding it after the listener connects can produce another welcome; a missed join event is not replayed.
 
 ## Use Tokonoma in a channel
 
