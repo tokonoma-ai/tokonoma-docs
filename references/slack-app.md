@@ -42,7 +42,7 @@ When Slack is enabled, read the MCP logs on the administration workstation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |
@@ -61,12 +61,26 @@ Mention the app in a channel where it has been invited. Run `@Tokonoma help` for
 
 | Task | Command and expected behavior |
 | --- | --- |
+| Read the monitoring plan | `@Tokonoma plan` posts the full current plan document in the request's thread. It reads the saved plan without running setup. If no current plan is available, it says so. |
+| Request a monitoring summary | `@Tokonoma summary` composes a fresh summary for the last 24 hours and posts it in the investigations channel. It does not replace the scheduled daily report. Requests within 10 minutes of the last manual summary, or while one is being composed, are refused. |
+| Change detector activity | `@Tokonoma approve REPLACE_WITH_DETECTOR_ID` turns a detector on; `@Tokonoma reject REPLACE_WITH_DETECTOR_ID` stops it. Each command accepts multiple IDs. Review its scope and query before approving it. |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
-| Review monitoring | `@Tokonoma detectors` lists detectors. `@Tokonoma detectors show proposals` shows proposals and `@Tokonoma detectors show findings` shows findings. |
-| Decide on a detector proposal | Use `@Tokonoma detectors approve REPLACE_WITH_DETECTOR_ID` or `@Tokonoma detectors reject REPLACE_WITH_DETECTOR_ID`, using an identifier from the report. Review its scope and query before approving it. |
-| Read the saved result | Click **Full record** on a result, or use `@Tokonoma full record for REPLACE_WITH_RECORD_UUID`. Reading the body requires a valid license. |
+| Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
+Ask ordinary questions with `@Tokonoma <question>` to find relevant saved records. See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
+
+### Operator commands
+
+Use `@Tokonoma admin` or `@Tokonoma admin help` for operator help. These commands run in invited channels with no additional permission check. Normal help, setup reports, refresh reports, and daily summaries do not advertise them.
+
+| Task | Command and expected behavior |
+| --- | --- |
+| Check readiness | `@Tokonoma admin status` reports connections, missing access, and runner readiness. Only the requester sees the reply. |
+| Run monitoring setup | `@Tokonoma admin replan` requests discovery again. The completed report posts in the investigations channel. |
+| Read a service profile | `@Tokonoma admin profile REPLACE_WITH_ENTITY_NAME` shows its saved profile. |
+| Inspect detectors | `@Tokonoma admin detectors` lists detectors. `@Tokonoma admin detectors show proposals` or `@Tokonoma admin detectors show findings` reads a saved report section. |
+
+The old top-level `setup` and `detectors` commands are no longer supported.
 
 ### Optional incident sessions
 
@@ -96,7 +110,7 @@ A Slack session coordinates teammates and their agents. Starting one does not it
 
 ## Choose what to enable
 
-Questions, relevance checks, and session timelines use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Reading `full record for REPLACE_WITH_RECORD_UUID` also needs a valid Tokonoma license.
+Questions, relevance checks, and session timelines use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Full record buttons need a valid Tokonoma license.
 
 Automatic memory recall on alerts is off by default. To make the app reply to alerts from other apps, set `mcp.slack.autoRecallEnabled: true` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration).
 
