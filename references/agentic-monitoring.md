@@ -29,19 +29,21 @@ For a new release, finish preparation and use the [installation command](install
 Monitoring starts setup automatically when first enabled. With Slack connected, send these commands in a channel where Tokonoma is invited:
 
 ```text
-@Tokonoma setup
-@Tokonoma detectors
+@Tokonoma admin status
+@Tokonoma admin get plan
 ```
 
-The setup response reports progress, missing access, scope questions, or failures. Confirm that the reported cluster, namespaces, and services match your chosen scope. The detector list shows active and inactive checks; report coverage gaps rather than assuming every service is monitored.
+The status response reports progress, missing access, scope questions, or failures. Confirm that the reported cluster, namespaces, and services match your chosen scope. The saved plan lists checks and their IDs; its statuses may differ from live detector state. Report coverage gaps rather than assuming every service is monitored. `@Tokonoma admin` lists the operator commands.
 
 If setup stopped, correct the reported configuration or access problem. To request setup again:
 
 ```text
-@Tokonoma detectors setup
+@Tokonoma admin replan
 ```
 
 ## Read the monitoring views
+
+In Slack, `@Tokonoma monitoring summary` requests a fresh report for the last 24 hours. See [Slack commands](slack-app.md#use-tokonoma-in-a-channel) for the report and detector controls.
 
 Use the local connection from [installation](install.md#4-verify), then open [the local UI](http://localhost:8000/ui/) and choose **Agentic Monitoring**:
 

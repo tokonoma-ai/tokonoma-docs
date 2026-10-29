@@ -42,14 +42,14 @@ When Slack is enabled, read the MCP logs on the administration workstation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma setup` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |
 | `Slack listener NOT started` | Both tokens and the database must be configured. |
 | No reply in one channel | Invite the app to that channel. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
-| Questions or timelines unavailable | Supply an Anthropic API key and leave `mcp.memoryLlm.enabled: true`. Timelines also require [incident sessions](#optional-incident-sessions). |
+| Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `mcp.memoryLlm.enabled: true`. |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
 | Connection fails behind a proxy | Allow Slack API traffic and Socket Mode WebSocket upgrades. |
 
@@ -59,20 +59,39 @@ For token changes, follow [credential rotation](credentials.md#renew-and-rotate)
 
 Mention the app in a channel where it has been invited. Run `@Tokonoma help` for the commands supported by your installed version.
 
+With `mcp.slack.multiplayerEnabled: false`, mentions run only supported exact commands. Unknown commands, incomplete or malformed commands, and ordinary questions return normal help without model interpretation or memory recall. The normal help contains only these five entries:
+
+- `help` shows available commands
+- `investigate` or `investigate <what to look into>` asks Tokonoma to investigate an alert; use this command in an alert’s Slack thread
+- `monitoring summary` requests a fresh monitoring report for the last 24 hours
+- `enable detector <detector_id; separate multiple IDs with spaces>` turns detectors on
+- `disable detector <detector_id; separate multiple IDs with spaces>` stops future checks until you enable them again
+
 | Task | Command and expected behavior |
 | --- | --- |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
-| Review monitoring | `@Tokonoma detectors` lists detectors. `@Tokonoma detectors show proposals` shows proposals and `@Tokonoma detectors show findings` shows findings. |
-| Decide on a detector proposal | Use `@Tokonoma detectors approve REPLACE_WITH_DETECTOR_ID` or `@Tokonoma detectors reject REPLACE_WITH_DETECTOR_ID`, using an identifier from the report. Review its scope and query before approving it. |
-| Read the saved result | Click **Full record** on a result, or use `@Tokonoma full record for REPLACE_WITH_RECORD_UUID`. Reading the body requires a valid license. |
+| Review monitoring | `@Tokonoma monitoring summary` requests a fresh report for the last 24 hours. `@Tokonoma admin get plan` attaches the saved current monitoring plan. |
+| Change detector activity | Use `@Tokonoma enable detector REPLACE_WITH_DETECTOR_ID` or `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID`, using an identifier from the report or saved plan. Review its scope and query before enabling it. |
+| Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
+In scheduled and requested summaries, each Recurring finding and any **Full record** button appear before the Disable command. Use the complete detector IDs shown in that command; consult the full plan for IDs that do not fit.
+
+When multiplayer is enabled, ask ordinary questions with `@Tokonoma <question>` to find relevant saved records. See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
+
+### Operator commands
+
+Use `@Tokonoma admin` for operator help. Normal help does not advertise these commands. The admin help contains:
+
+- `admin` shows this help
+- `admin status` shows what is connected and what needs attention; only you see it
+- `admin get plan` attaches the full current monitoring plan
+- `admin replan` runs monitoring discovery and builds a new plan
 
 ### Optional incident sessions
 
 With compatible chart and application builds, Slack multiplayer incident coordination is off by default. The single chart setting `mcp.slack.multiplayerEnabled` applies to the primary MCP service, its unattended sibling, and the runner. MCP and the runner each enforce the setting.
 
-Use a chart release containing [the multiplayer setting in charts PR #186](https://github.com/tokonoma-ai/tokonoma-charts/pull/186) and an application image containing [the incident-coordination gate in MCP PR #1443](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1443). Older application images ignore the flag and may still expose incident coordination; a chart change alone does not enforce it.
+Use a public chart release containing [the multiplayer setting in charts PR #186](https://github.com/tokonoma-ai/tokonoma-charts/pull/186) and a public application image containing [the incident-coordination gate in MCP PR #1443](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1443), [the monitoring commands in #1444](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1444), [the final exact-command behavior in #1447](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1447), and [the concise summary controls in #1449](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1449). Application version 0.76.0 is insufficient for the updated help, command replies, and summary format in this guide; wait for a public image containing both final follow-up changes. Older application images may ignore the flag and expose incident coordination; a chart change alone does not enforce it.
 
 Remove any `SLACK_MULTIPLAYER_ENABLED` entry from `mcp.extraEnv` and `runner.extraEnv`, preserving other entries. The chart rejects these entries, including matching values and `valueFrom`. If Helm has saved an old list, explicitly replace it with the remaining entries, or `[]` when none remain; deleting a line from the file alone can retain saved values. See [configuration changes](upgrading.md#before-changing-configuration).
 
@@ -86,11 +105,11 @@ mcp:
 
 [Apply the configuration change](upgrading.md#before-changing-configuration), then run `@Tokonoma help` to confirm that session commands are listed.
 
-To disable incident coordination, explicitly set `mcp.slack.multiplayerEnabled: false` and apply the configuration change again. Removing the key alone can preserve a saved `true` when Helm reuses values. Confirm that `@Tokonoma help` omits session commands.
+To disable incident coordination, explicitly set `mcp.slack.multiplayerEnabled: false` and apply the configuration change again. Removing the key alone can preserve a saved `true` when Helm reuses values. Confirm that `@Tokonoma help` omits session commands. Requests for those commands return the normal help while coordination is off.
 
 While disabled, session lookup, agent check-ins, progress updates, discussion tracking, expiry, and timelines do not run. The `investigation-session` skill and `get_investigation_session` tool are unavailable. The runner does not receive coordination instructions and refuses requests to join a `TKNM-<N>` session. Session cleanup and metadata backfills also stop; session tables remain installed and existing data is not deleted.
 
-Ordinary investigations, memory reads and writes, and saved outcomes remain available. You can still mark an investigation `resolved`, `dead_end`, or `wont_fix` and save its `resolution_summary`. The Slack `investigate` command still requests an ordinary runner investigation.
+Ordinary investigations, memory reads and writes, and saved outcomes remain available through coding agents. In Slack, use the supported exact commands while coordination is off. You can still mark an investigation `resolved`, `dead_end`, or `wont_fix` and save its `resolution_summary`. The Slack `investigate` command still requests an ordinary runner investigation.
 
 Existing session-linked investigations can still be edited, resolved, and archived under the ordinary memory rules. Keep their session metadata exactly unchanged, including older formats. These updates do not access coordination tables. Adding, changing, or removing session metadata, or publishing a private check-in into a shared session, is refused while coordination is off.
 
@@ -105,7 +124,7 @@ A Slack session coordinates teammates and their agents. Starting one does not it
 
 ## Choose what to enable
 
-Questions, relevance checks, and session timelines use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Reading `full record for REPLACE_WITH_RECORD_UUID` also needs a valid Tokonoma license.
+Questions and session timelines require multiplayer to be enabled. They and automatic alert relevance checks use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Full record buttons need a valid Tokonoma license.
 
 Automatic memory recall on alerts is off by default. To make the app reply to alerts from other apps, set `mcp.slack.autoRecallEnabled: true` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration).
 
