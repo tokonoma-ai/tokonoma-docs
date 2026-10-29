@@ -62,13 +62,11 @@ Mention the app in a channel where it has been invited. Run `@Tokonoma help` for
 | Task | Command and expected behavior |
 | --- | --- |
 | Request a monitoring summary | `@Tokonoma summary` composes a fresh summary for the last 24 hours and posts it in the investigations channel. It does not replace the scheduled daily report. Requests within 10 minutes of the last manual summary, or while one is being composed, are refused. |
-| Change detector activity | `@Tokonoma enable REPLACE_WITH_DETECTOR_ID` turns a detector on; `@Tokonoma disable REPLACE_WITH_DETECTOR_ID` retires active or degraded detectors and rejects unwatched detectors. Each command accepts multiple IDs from a report or plan. Review its scope and query before enabling it. |
+| Change detector activity | `@Tokonoma disable REPLACE_WITH_DETECTOR_ID` stops future checks; `@Tokonoma enable REPLACE_WITH_DETECTOR_ID` starts or resumes them. Each command accepts multiple IDs from a report or plan. Review its scope and query before enabling it. |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-Use `disable` for unwanted or unhelpful monitoring. An evaluation already running may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
-
-`enable` starts unwatched or rejected detectors and resumes degraded detectors. It refuses retired detectors. A later replan can propose a detector again.
+Use `disable` for unwanted or unhelpful monitoring and `enable` to resume the same checks. The choice is kept when the detector is carried into a new plan. Work already in flight may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
 
 Ask ordinary questions with `@Tokonoma <question>` to find relevant saved records. See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
 
