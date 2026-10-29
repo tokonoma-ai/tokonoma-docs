@@ -1,6 +1,6 @@
 # Connect a coding agent
 
-After installation and health checks, connect your client to Tokonoma's Streamable HTTP MCP endpoint at `/mcp`. Run commands on the client workstation.
+After installation and human login setup, connect your client to Tokonoma's Streamable HTTP MCP endpoint at `/mcp`. The internal machine login serves the runner. Configure [human sign-in](private-access.md#team-access) before connecting engineers' coding agents; do not copy the generated runner credential. Run commands on the client workstation.
 
 | Input | Source | When needed |
 | --- | --- | --- |

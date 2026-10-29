@@ -2,7 +2,7 @@
 
 Install Tokonoma in an existing Kubernetes cluster using one `values.yaml`. The example includes the required MCP service, memory analysis, and runner, with agentic monitoring and automatic investigations enabled. The chart also installs PostgreSQL and Ollama.
 
-Follow the [installation approach](../README.md#what-to-expect), including Slack. Ask whether the customer wants either automatic feature disabled; follow [feature choices](#choose-automatic-features) and preserve existing opt-outs. The command below uses Anthropic and Alertmanager. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
+Follow the [installation approach](../README.md#what-to-expect), including Slack and the generated runner machine login. Ask whether the customer wants either automatic feature disabled; follow [feature choices](#choose-automatic-features) and preserve existing opt-outs. The command below uses Anthropic and Alertmanager. Choose your actual [integrations](integrations.md) before installing; the YAML includes commented sections for them.
 
 Run commands on an authorized workstation using Helm, the Kubernetes package manager; `kubectl`, the cluster client; and `curl`. Follow the [input conventions](#inputs-and-placeholders) before running commands.
 
@@ -12,7 +12,7 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | --- | --- | --- |
 | Target and existing deployment | Ask the cluster owner for the intended context; inspect the release below | New release: follow this guide. Existing release: [connect your agent](coding-agents.md), or use [upgrading](upgrading.md) for an intended deployment change. |
 | Database | Use bundled PostgreSQL for the standard installation. Prepare [external PostgreSQL](external-postgres.md) only when your organization requires it | Helm creates the bundled database credentials. Changing an existing database address does not migrate data. |
-| Access | Use a local operator connection. For shared access, follow [authentication](oauth.md) and [team access](private-access.md) | New installations keep MCP inside the cluster with authentication disabled. Preserve supplied or existing authentication. |
+| Access | Use a local operator connection and the generated [runner machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled). For shared access, follow [authentication](oauth.md) and [team access](private-access.md) | New installations keep MCP authenticated inside the cluster. Preserve supplied or existing authentication. |
 | Analysis, monitoring, and investigations | Prepare an Anthropic API key; it serves both analysis and the runner. Choose the runner's alert sources and telemetry tools using [integrations](integrations.md). Set the monitored cluster and namespaces using [agentic monitoring](agentic-monitoring.md); inspect [data flows](data-flows.md) | Both automatic features require telemetry query access. Prepare access before running Helm; monitoring also needs its scope. |
 | Additional features | Choose code access or cloud telemetry storage as needed | Follow any preparation required by the selected guide. |
 
@@ -92,7 +92,7 @@ cp "REPLACE_WITH_DOCS_DIRECTORY/examples/values.yaml" values.yaml
 Summarize the configured integrations, list the remaining [supported options](integrations.md), and ask whether the customer would like to add any. Read the comments in `values.yaml`, fill missing monitoring inputs, and configure only selected additions. Keep raw credentials out of `values.yaml`; use command inputs or existing Secrets.
 
 1. Prepare the [license and credentials](credentials.md). One Anthropic API key serves both analysis and the runner.
-2. Prepare [investigation tools and alert-source credentials](alert-investigations.md#before-you-start). Identify your alert senders, or record **none configured**; the current chart still requires a receiver token in either case. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
+2. Prepare [investigation tools and alert-source credentials](alert-investigations.md#before-you-start). The installer generates the runner machine login; GitOps and existing credentials use the [explicit setup](alert-investigations.md#gitops-or-an-existing-native-machine-secret). Identify your alert senders and prepare their receiver tokens, or record **none configured** and omit those credentials. Without alert senders, keep monitoring or Slack-requested investigations enabled. Prepare telemetry query access when either automatic feature is enabled, and the intended cluster and namespaces for [monitoring](agentic-monitoring.md) when enabled. For Datadog, follow its [token setup](datadog-alerts.md) before installation; alert delivery and query access are separate.
 3. If Slack is selected, use the [Slack app guide](slack-app.md#create-the-app) to prepare any missing app, tokens, or channel access, and configure Slack delivery in `values.yaml`.
 4. Merge any selected [external database](external-postgres.md) or cloud telemetry settings into the same file. Preserve supplied or existing authentication and its [runner credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled).
 
@@ -100,7 +100,7 @@ Keep the commented source files for future changes; `helm get values` does not r
 
 ## 3. Install
 
-Install after the required credentials and selected integrations are ready. Without `--version`, Helm selects the latest stable chart; the chart currently defaults to the application image tag `latest`:
+Install after the required credentials and selected integrations are ready. First check the [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite); these settings do not work with earlier releases. Without `--version`, Helm selects the latest stable chart; the chart currently defaults to the application image tag `latest`:
 
 ```sh
 helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma \
@@ -115,7 +115,7 @@ helm --kube-context REPLACE_WITH_KUBE_CONTEXT install tokonoma \
   --wait --timeout 10m
 ```
 
-Use only the credential inputs for your choices. Existing Secret references replace their matching `--set-literal` arguments. For Datadog-only alerts, omit the Alertmanager token and retain the Datadog Secret reference. Omit both Slack arguments if Slack is disabled or uses an existing Secret. If Grafana is enabled, add `--set-literal 'grafanaMcp.grafana.apiKey=REPLACE_WITH_GRAFANA_VIEWER_TOKEN'` or use its existing Secret option. Keep the analysis credential in every complete installation.
+Use only the credential inputs for your choices. Existing Secret references replace their matching `--set-literal` arguments. For Datadog-only alerts, omit the Alertmanager token and retain the Datadog Secret reference. With no alert senders, omit both receiver credentials and keep monitoring or Slack-requested investigations enabled. Omit both Slack arguments if Slack is disabled or uses an existing Secret. If Grafana is enabled, add `--set-literal 'grafanaMcp.grafana.apiKey=REPLACE_WITH_GRAFANA_VIEWER_TOKEN'` or use its existing Secret option. Keep the analysis credential in every complete installation.
 
 Expect status `deployed`. Diagnose timeouts before retrying; do not uninstall to bypass errors. Helm stores the license in release metadata and a Secret. Restrict access to both.
 
@@ -157,11 +157,11 @@ Report incomplete setup, unconnected senders, and unverified investigations as b
 
 ## Shared engineer access
 
-Configure [MCP authentication](oauth.md), including the [runner's machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled), before sharing access. Follow [team access](private-access.md) for the shared hostname, route, and human sign-in. Verify the runner still completes investigations, then complete a real login from the chosen coding agent.
+Configure [human sign-in](oauth.md) and preserve the [runner's machine login](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) before sharing access. Follow [team access](private-access.md) for the shared hostname, route, and human sign-in. Verify the runner still completes investigations, then complete a real login from the chosen coding agent.
 
 ### Connect and confirm memory access
 
-This standalone memory check is optional. Follow [Connect a coding agent](coding-agents.md) using the chosen endpoint. An operator can also use `http://127.0.0.1:8000/mcp` with terminal A open.
+This standalone memory check is optional. After human login is configured, follow [Connect a coding agent](coding-agents.md) using the chosen endpoint. An operator can also use `http://127.0.0.1:8000/mcp` with terminal A open and a supported login. Do not reuse the internal runner credential for this check.
 
 In a new session with the connected agent, ask:
 
