@@ -14,7 +14,7 @@ Prepare the credentials needed for your [installation](install.md#2-prepare-your
 
 Add only the credentials required by your selected [telemetry connection](integrations.md#mcp-connections), such as a Grafana Viewer token or a provider's API credentials. Telemetry query access is required while either automatic feature is enabled. Reuse existing working connections and Secrets.
 
-For alert delivery, generate an [Alertmanager receiver token](alert-investigations.md#before-you-start) or prepare the [Datadog token](datadog-alerts.md). The current chart requires at least one receiver token even when no alert sender is configured. In that case, retain the Alertmanager token argument in the installation command and record the sender as **none configured**. A configured receiver does not prove that any sender is connected.
+For alert delivery, generate an [Alertmanager receiver token](alert-investigations.md#before-you-start) or prepare the [Datadog token](datadog-alerts.md). With no alert sender, omit receiver credentials and record **none configured**; keep monitoring or Slack-requested investigations enabled instead. A configured receiver does not prove that any sender is connected.
 
 Cluster names, endpoints, provider IDs and scopes are configuration, not additional secrets. Obtain them from the selected service's owner; keep nonsecret settings in `values.yaml`.
 

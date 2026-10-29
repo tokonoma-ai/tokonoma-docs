@@ -119,9 +119,9 @@ Use only one entry if you use one source. Lists replace rather than append. An I
 
 ## Native machine authentication: release prerequisite
 
-The generated runner login requires both a published application image containing [MCP #1372](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1372), which accepts native configured `client_credentials` clients, and a published chart containing [charts #184](https://github.com/tokonoma-ai/tokonoma-charts/pull/184), which provisions and connects that client. These changes are not available in chart `0.38.0` or its current application contract. Keep this revision draft until both matching releases are verified published. Merged code and private development images do not satisfy this gate. Keep using the released installation guide until then.
+The generated runner login requires a public application image containing [MCP #1372](https://github.com/tokonoma-ai/tokonoma-mcp/pull/1372), which accepts native configured `client_credentials` clients, and a public chart containing [charts #184](https://github.com/tokonoma-ai/tokonoma-charts/pull/184), which provisions and connects that client. Application [v0.76.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.76.0) includes the required authentication support. Chart `0.38.0` does not include the matching provisioning. Keep using the released installation guide until a compatible chart is published and verified; merged code and private development images do not satisfy this requirement.
 
-Removing the alert-source requirement is a separate change. This revision still requires a receiver token even when there is no alert sender. Remove that requirement only with a release that includes the alert-source change and its matching documentation.
+The target chart also permits monitoring-only or Slack-requested investigations without an alert receiver token. With no alert sender, keep `runner.detection.enabled` or `runner.destinations.slackApp.enabled` true. Preserve credentials for receivers that are still in use; removing an Alertmanager or Datadog token disables that receiver.
 
 With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. It keeps the same client ID and secret and does not revoke tokens.
 

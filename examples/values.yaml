@@ -49,7 +49,7 @@ mcp:
   #   #   appTokenKey: REPLACE_WITH_SLACK_APP_TOKEN_KEY
 
 runner:
-  # Required: needs the sibling, model credentials and at least one alert-source token.
+  # Required: needs the sibling, model credentials, and monitoring, Slack requests, or an alert source.
   enabled: true
   ingress:
     # External senders can use a separate webhook route while MCP stays private.

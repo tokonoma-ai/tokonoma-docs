@@ -6,7 +6,7 @@ The [installation example](../examples/values.yaml) enables the required runner 
 
 Investigations send alert content, retrieved telemetry, memory content, and tool results to the Anthropic API. Configured Slack destinations receive summaries and links. Review source permissions before enabling unattended work.
 
-Use Alertmanager, [Datadog](datadog-alerts.md), or both. At least one source token is required. Datadog-only installations omit the Alertmanager token input.
+Use Alertmanager, [Datadog](datadog-alerts.md), or both, with a token for each configured receiver. Datadog-only installations omit the Alertmanager token input. Without alert senders, [monitoring](agentic-monitoring.md) or [Slack-requested investigations](slack-app.md) can run without receiver tokens.
 
 ## What gets deployed
 
@@ -130,7 +130,7 @@ Anthropic, Slack, and Alertmanager names follow the parent `fullnameOverride` or
 
 The adapter permits read-only data-source, Prometheus, Loki, Tempo, Pyroscope, and assertions tools. Dashboard/navigation, general API, annotation, and alert-management tools are excluded. Available data depends on your Grafana sources and Viewer permissions. The independent `grafana.enabled` self-monitoring UI is unnecessary for querying an existing Grafana.
 
-Rendering fails and names the missing value if the runner lacks its sibling, a source token, or a model credential. An external MCP URL also requires an explicit machine credential. The standard authenticated local setup provisions that credential automatically.
+Rendering fails if the runner lacks an MCP target, a model credential, or any way to start an investigation: an alert receiver token, `runner.detection.enabled: true`, or `runner.destinations.slackApp.enabled: true`. An external MCP URL also requires an explicit machine credential. The standard authenticated local setup provisions that credential automatically.
 
 ## Wire up Alertmanager
 

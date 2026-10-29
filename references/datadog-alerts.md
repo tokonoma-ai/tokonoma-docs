@@ -6,7 +6,7 @@ Datadog needs a public HTTPS webhook. Choose a separate webhook route to keep MC
 
 ## Before you start
 
-- Prepare the [runner configuration](alert-investigations.md), including its model credential and telemetry query access. The standard authenticated local setup provisions its machine login automatically. Configure Slack if wanted. Datadog-only installations need no Alertmanager token, but at least one source token is required.
+- Prepare the [runner configuration](alert-investigations.md), including its model credential and telemetry query access. The standard authenticated local setup provisions its machine login automatically. Configure Slack if wanted. Datadog-only installations need the Datadog receiver token, not an Alertmanager token.
 - Choose a hostname, certificate and ingress controller with your platform team. The webhook must serve HTTPS only before Datadog deliveries begin. Preserve the request path and `Authorization` header; the bearer token travels in that header.
 - Use Datadog Terraform provider 3.83.0 or later for notification-rule `filter.scope` support. Add the three resources below to your existing project. Outside US1, set your site's API in `provider "datadog"`, for example `api_url = "https://api.us3.datadoghq.com/"`.
 - Use credentials with read and write access to webhooks, custom variables, and notification rules. Terraform reads resources after creation and during refresh, so write-only keys fail. Verify permissions against your organization's role policy.
@@ -71,7 +71,7 @@ Configure telemetry query access separately using the [general MCP guide and Dat
 
 After all selected integrations are prepared, use the [installation command](install.md#3-install). For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration).
 
-Missing source tokens prevent rendering, and missing referenced Secrets cause `CreateContainerConfigError`. Verify the HTTPS endpoint before enabling Datadog deliveries in step 3.
+Without the Datadog token, the runner does not serve the Datadog receiver. Missing referenced Secrets cause `CreateContainerConfigError`. Verify the HTTPS endpoint before enabling Datadog deliveries in step 3.
 
 ### Separate webhook route, private MCP
 
