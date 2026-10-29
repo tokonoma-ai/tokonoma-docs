@@ -61,11 +61,12 @@ Mention the app in a channel where it has been invited. Run `@Tokonoma help` for
 
 | Task | Command and expected behavior |
 | --- | --- |
-| Read the monitoring plan | `@Tokonoma plan` posts the full current plan document in the request's thread. It reads the saved plan without running setup. If no current plan is available, it says so. |
 | Request a monitoring summary | `@Tokonoma summary` composes a fresh summary for the last 24 hours and posts it in the investigations channel. It does not replace the scheduled daily report. Requests within 10 minutes of the last manual summary, or while one is being composed, are refused. |
-| Change detector activity | `@Tokonoma enable REPLACE_WITH_DETECTOR_ID` turns a detector on; `@Tokonoma disable REPLACE_WITH_DETECTOR_ID` stops evaluation until enabled again. Each command accepts multiple IDs. Review its scope and query before enabling it. |
+| Change detector activity | `@Tokonoma enable REPLACE_WITH_DETECTOR_ID` turns a detector on; `@Tokonoma disable REPLACE_WITH_DETECTOR_ID` stops future evaluations until enabled again. Each command accepts multiple IDs from a report or plan. Review its scope and query before enabling it. |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
+
+Use `disable` for unwanted or unhelpful monitoring. An evaluation already running may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
 
 `enable` can resume disabled or degraded detectors and start unwatched detectors. A disabled detector stays off through replans until enabled again. System-retired detectors cannot be enabled. Newly created detectors follow normal backtest rules.
 
@@ -79,10 +80,9 @@ Use `@Tokonoma admin` or `@Tokonoma admin help` for operator help. These command
 | --- | --- |
 | Check readiness | `@Tokonoma admin status` reports connections, missing access, and runner readiness. Only the requester sees the reply. |
 | Run monitoring setup | `@Tokonoma admin replan` requests discovery again. The completed report posts in the investigations channel. |
-| Read a service profile | `@Tokonoma admin profile REPLACE_WITH_ENTITY_NAME` shows its saved profile. |
-| Inspect detectors | `@Tokonoma admin detectors` lists detectors. `@Tokonoma admin detectors show proposals` or `@Tokonoma admin detectors show findings` reads a saved report section. |
+| Read the monitoring plan | `@Tokonoma admin get plan` posts the full saved current plan document in the request's thread without running setup. If no current plan is available, it says so. |
 
-The old top-level `setup` and `detectors` commands are no longer supported.
+The plan includes detector IDs for `enable` and `disable`. It is a saved setup or refresh snapshot: its statuses may differ from live detector state after those commands.
 
 ### Optional incident sessions
 
