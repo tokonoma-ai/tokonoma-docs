@@ -82,3 +82,24 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp
 Look for `memory module: schema applied`. The pod can run even if the memory store fails, so rollout alone does not verify the database. The optional [memory access check](install.md#connect-and-confirm-memory-access) tests a saved record.
 
 For `password authentication failed`, check that the Secret matches the database role's password. For `memory module: ensure_schema failed`, check the `vector` extension and database ownership.
+
+## Managed-service acceptance
+
+Local PostgreSQL regression tests do not validate RDS or Cloud SQL compatibility. Work with Tokonoma on an approved non-production database to record the results below. Results apply only to the provider and versions tested.
+
+| Environment | Validation status |
+|---|---|
+| Local PostgreSQL | PostgreSQL 18.4 to 18.6 and pgvector 0.8.5 to 0.8.6 tested with an ordinary database-owner role. Schema setup, stored records, extension maintenance, Quickwit metadata, encrypted connections, and full database dump/restore passed. |
+| Amazon RDS | Not validated. Provider permissions, certificate verification, upgrades, and snapshot restoration remain untested. |
+| Cloud SQL | Not validated. Provider permissions, certificate verification, upgrades, and snapshot restoration remain untested. |
+
+The local run on 2026-10-29 used chart source `c43439e6095395b1943a7e190eeded94f6f436a2` on Kubernetes 1.36.1 (ARM64).
+Its MCP image was `public.ecr.aws/tokonoma/toko-mcp@sha256:6ea053a6a454290c0688061d0cd9a5befc5b27c3472ba60afbe672f09ffe8751`.
+Quickwit used `public.ecr.aws/tokonoma/tokonoma-core:0.9.2` at digest `sha256:8f7a4a7cc24abc6d59d94ba855861ff8ec6ece466ffe7cfe204b92326e4f27d3`.
+This run checked encrypted connections and plaintext rejection; it did not establish certificate identity verification or provider snapshot recovery.
+
+1. **Versions and roles:** Record the provider, PostgreSQL and pgvector versions, extension availability, and tested Tokonoma versions. Record the privileges and role memberships of the extension administrator and the ordinary role that owns the application database.
+2. **Schemas and operations:** As the ordinary database owner, verify schema setup and real memory, queue, OAuth token-store, and runner operations. Repeat startup and confirm existing data remains accessible.
+3. **Database maintenance:** Separately test PostgreSQL or pgvector upgrades. Verify extension updates as the extension owner and index rebuilds as the database owner or authorized administrator. Check startup logs and confirm existing data remains accessible afterward.
+4. **Telemetry and encryption:** With telemetry enabled, verify Quickwit creates and uses its metastore tables in the same database. Check encryption and server identity verification for MCP, runner, and Quickwit connections under the provider's unchanged Transport Layer Security (TLS) policy.
+5. **Backup and restore:** Restore the backup into an approved non-production target. Verify `public` and `pgmq`, including queue messages, archives, functions, and ownership, then repeat application operations. The unlogged `pgmq.notify_insert_throttle` table holds notification timing metadata and may be empty after restore; queue data must survive.
