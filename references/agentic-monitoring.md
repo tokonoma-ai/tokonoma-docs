@@ -33,7 +33,7 @@ Monitoring starts setup automatically when first enabled. Operators can check it
 @Tokonoma admin get plan
 ```
 
-The status response reports progress, missing access, scope questions, or failures. Confirm that the reported cluster, namespaces, and services match your chosen scope. The plan lists checks and their IDs as a saved setup or refresh snapshot. Its statuses may differ from live detector state after `enable detector` or `disable detector`; report coverage gaps rather than assuming every service is monitored. `@Tokonoma admin help` lists the operator commands.
+The status response reports progress, missing access, scope questions, or failures. Confirm that the reported cluster, namespaces, and services match your chosen scope. The plan lists checks and their IDs as a saved setup or refresh snapshot. Its statuses may differ from live detector state after `enable detector` or `disable detector`; report coverage gaps rather than assuming every service is monitored. `@Tokonoma admin` lists the operator commands.
 
 If setup stopped, correct the reported configuration or access problem. To request setup again:
 
