@@ -1,6 +1,6 @@
 # Install and use Tokonoma
 
-This revision requires the application and chart releases described in [native machine authentication](references/upgrading.md#native-machine-authentication-release-prerequisite). Keep using the released installation guide until those releases are available.
+This guide uses the application and chart versions described in [native machine authentication](references/upgrading.md#native-machine-authentication-release-prerequisite). Check those requirements before using an older installation.
 
 ## What to expect
 
