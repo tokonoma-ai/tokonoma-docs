@@ -21,6 +21,7 @@ domain: REPLACE_WITH_MCP_HOSTNAME
 mcp:
   auth:
     enabled: true
+    baseUrl: https://REPLACE_WITH_MCP_HOSTNAME
 ```
 
 ## 1. Save the values for your controller

@@ -1,24 +1,32 @@
 # OAuth
 
-Configure OAuth before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
+The standard installation enables OAuth for the runner without an external credential provider. Human sign-in is added before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Preserve existing authentication and routes on upgrades. Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
+Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Check the [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite). A stable HTTPS hostname and human sign-in come after the [installation checkpoint](install.md#check-monitoring-and-integrations). Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
 | `REPLACE_WITH_KUBE_CONTEXT` and `values.yaml` | Your installation record and platform team | Before cluster commands |
 | `REPLACE_WITH_MCP_HOSTNAME` and private or public route | Your DNS and platform owners | Shared access |
-| Login method and provider values | Your identity administrator: Cognito pool ID, region and domain prefix, or Google project API key | Before enabling MCP authentication |
-| Cognito app credentials or Google account credentials | The identity provider | Credential login and machine clients |
+| Human login method and provider values | Your identity administrator: direct SAML settings, or an existing Cognito/Google credential provider | Human sign-in or a selected external credential provider |
+| Cognito app credentials or Google account credentials | The identity provider | Only for selected provider-backed clients; not needed for the generated runner login |
 | Requester ID, redirect URLs, grants and secret checksum | The requesting application's configuration | Only for declared clients |
 
 Confirm the target cluster with the [installation checks](install.md#1-check-prerequisites).
 
-For human SAML login, use [Google Workspace](google-saml.md) or [Okta](okta-saml.md) alongside the credential provider below. The required runner needs machine credentials when MCP authentication is enabled. Keep both configurations in `values.yaml`.
+For human SAML login, use [Google Workspace](google-saml.md) or [Okta](okta-saml.md). The generated native machine login continues to serve the runner; SAML does not require a separate Cognito or Google credential provider.
 
-`mcp.auth.enabled` controls OAuth routes and bearer protection. `mcp.auth.provider` selects Cognito or legacy Google to verify machine credentials. SAML supplies human login.
+`mcp.auth.enabled` controls OAuth routes and bearer protection. `mcp.auth.provider: none` permits native machine clients and direct SAML without an external credential verifier. `cognito` or `google` adds verification for provider-backed clients. SAML supplies individual human login.
+
+## Internal machine login
+
+The [installation example](../examples/values.yaml) enables authentication with `provider: none` and `baseUrl: http://localhost:8000`, keeps ingress disabled, and leaves the runner's local URL and credential reference unset. Helm generates and connects the machine client. No provider setup or secret copying is needed. For GitOps or a customer-managed Secret, follow the [explicit native client setup](alert-investigations.md#gitops-or-an-existing-native-machine-secret).
+
+This machine-only configuration has no employee sign-in method. Keep MCP private and use the local UI for operator access. Add SAML or another approved human login before connecting engineers' coding agents. Do not distribute the internal runner credential.
 
 ## 1. Prepare the provider
+
+Skip this section for the generated internal machine login or direct SAML. Use it only when keeping or selecting Cognito/Google-backed credential clients.
 
 For Cognito, create a user pool and record its ID and region. Add a Cognito-managed domain and resource server `toko-mcp` with scope `query`. Create a machine-to-machine app client with a secret, `client_credentials` flow, and `toko-mcp/query` scope.
 
@@ -35,9 +43,9 @@ kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic 
 
 ## 2. Save the values
 
-Merge these settings into `values.yaml`, preserving existing `mcp` settings and any SAML configuration. Choose `cognito` or `google` and remove the unused provider block.
+When using an external credential provider, merge these settings into `values.yaml`, preserving existing `mcp` settings and any SAML configuration. Choose `cognito` or `google` and remove the unused provider block. The standard internal machine login keeps `provider: none` instead.
 
-Keep MCP private until authentication and the chosen HTTPS route are ready. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Preserve existing addresses and authentication on upgrades.
+If selecting an external credential provider during initial setup, omit the `domain` field below, set `mcp.auth.baseUrl: http://localhost:8000`, and keep `mcp.ingress.enabled` and `runner.ingress.enabled` false. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Prepare an explicit runner reference only when using a provider-backed runner client. Add the shared HTTPS hostname, routing, and human sign-in before shared access. Preserve existing addresses and authentication on upgrades.
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -61,13 +69,13 @@ Set `domainPrefix` to your pool's Cognito-managed prefix in `REPLACE_WITH_COGNIT
 
 `provider: google` selects legacy credentials, not Google Workspace SAML.
 
-Before deploying authentication, merge the [runner machine credentials](alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled) into the same file to configure the runner's OAuth reference.
+Retain any [existing runner machine credentials](alert-investigations.md#existing-external-credentials-or-an-external-mcp) before deploying a provider change. Adding an external provider does not require replacing a generated native runner identity.
 
 For public access, merge the [public MCP routing settings](public-mcp-ingress.md) into the same `values.yaml`. Existing private HTTPS routing needs no public Ingress settings. Set `domain` to the route's HTTPS hostname.
 
 ## 3. Deploy and verify
 
-For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). If there is no installation yet, [install Tokonoma](install.md#3-install) with the prepared file and credentials. Once the deployment and HTTPS route are ready, check OAuth metadata:
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). During initial setup, use the installation's local port-forward and replace the HTTPS base URL in the checks below with `http://localhost:8000`. Once the deployment is healthy, check OAuth metadata:
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/.well-known/oauth-protected-resource/mcp
@@ -94,6 +102,8 @@ Expect `401` before login.
 | `preregistered_only` | No | Yes | No |
 
 Use `hybrid` during upgrades, or `preregistered_only` when you manage every requesting application and service client. A client blocked by the selected mode cannot use an older PostgreSQL registration to gain access.
+
+The generated internal machine login is a configured client. It works with `hybrid` and `preregistered_only`; `dynamic_only` is incompatible with the authenticated runner because that mode rejects configured clients.
 
 Before changing modes, declare each credential client registered through `hybrid` as `external`, using its existing Cognito app client ID or Google account email. No database cleanup is needed. `preregistered_only` rejects undeclared clients but retains their records for rollback to `hybrid`. Reusing a dynamic client ID or switching between `configured` and `external` causes a startup error.
 
@@ -145,15 +155,17 @@ mcp:
         tokenEndpointAuthMethod: client_secret_post
 ```
 
-`mcp.auth.clientCredentialsRefreshMode: legacy` preserves refresh tokens for `client_credentials`. Prefer `disabled` for new managed deployments; switch existing automation only after confirming it can repeat the credential grant.
+`mcp.auth.clientCredentialsRefreshMode: legacy` preserves refresh tokens for external provider-backed `client_credentials` clients that declare `refresh_token`. Prefer `disabled` for new external automation; switch existing automation only after confirming it can repeat the credential grant.
 
-With `disabled`, the server consumes and rejects credential refresh tokens; rollback to `legacy` cannot revive them. Existing access tokens retain their expiry. Authorization-code refresh tokens still follow each client's `refresh_token` grant. Older browser password sessions may need one new login because their tokens lack the originating grant.
+With `disabled`, the server consumes and rejects external credential refresh tokens; rollback to `legacy` cannot revive them. Existing access tokens retain their expiry. Authorization-code refresh tokens still follow each client's `refresh_token` grant. Older browser password sessions may need one new login because their tokens lack the originating grant.
+
+Native configured machine clients accept only `client_credentials`. They receive no refresh token, human groups, or roles, regardless of the refresh mode.
 
 Supported grants are `authorization_code`, `refresh_token`, and `client_credentials`; JWT bearer and ID-JAG redemption are unsupported.
 
 ## Optional: direct Google Workspace or Okta SAML login
 
-Select one provider with `mcp.auth.saml.provider`: [Google Workspace](google-saml.md) or [Okta](okta-saml.md). SAML requires stable HTTPS and persistent PostgreSQL token storage. Keep the credential provider for the runner; the login page offers both methods.
+Select one provider with `mcp.auth.saml.provider`: [Google Workspace](google-saml.md) or [Okta](okta-saml.md). SAML requires stable HTTPS and persistent PostgreSQL token storage. Keep the native machine login for the runner; `mcp.auth.provider: none` is valid alongside SAML. Preserve an existing external credential provider when it still serves configured clients.
 
 Google supports group sharing. Okta supports only private and `toko:everyone` access; do not configure Okta group statements.
 

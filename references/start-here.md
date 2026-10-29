@@ -38,4 +38,4 @@ Use one coding agent on an authorized workstation; it brings commands and select
 4. If requested, follow the [shared access checklist](team-access.md) after installation verification.
 5. Continue with [Using Tokonoma](using-tokonoma.md), then [upgrading](upgrading.md) and [backup and recovery](backup.md) for ongoing operation.
 
-The initial operator connection stays local. Authentication and a shared HTTPS route come later; preserve them when they already exist. See [data flows](data-flows.md) before granting access to a new system or sending content to a new destination.
+The initial operator connection stays local. The installer manages the runner's machine login; human sign-in and a shared HTTPS route come later. Preserve existing authentication and routes. See [data flows](data-flows.md) before granting access to a new system or sending content to a new destination.

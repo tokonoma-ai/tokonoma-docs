@@ -22,6 +22,7 @@ The chart's default uninstall behavior is:
 |---|---|
 | PostgreSQL and Ollama PVCs, generated PostgreSQL Secret | Retained |
 | Generated Grafana MCP caller Secret | Retained when the adapter was enabled |
+| Generated runner machine Secret | Retained when native runner authentication was enabled; preserve it for reinstalling |
 | Self-monitoring Grafana and Prometheus PVCs | Removed; back up or configure retention before uninstalling |
 | Chart-owned license, Anthropic, Slack, and Alertmanager Secrets | Removed |
 | Externally managed Secrets | Remain under your secret manager's control |

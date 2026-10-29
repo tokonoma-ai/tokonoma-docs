@@ -1,5 +1,7 @@
 # Install and use Tokonoma
 
+This guide uses the application and chart versions described in [native machine authentication](references/upgrading.md#native-machine-authentication-release-prerequisite). Check those requirements before using an older installation.
+
 ## What to expect
 
 Tokonoma monitors your services, detects significant changes, and automatically investigates findings and alerts using your observability tools. Engineers can work with it through Slack and coding agents, using saved findings and procedures to build on what the team has learned.
@@ -8,7 +10,7 @@ New to Tokonoma? [Start here](references/start-here.md) for use cases, deploymen
 
 The installation runs in your Kubernetes cluster and includes:
 
-- **Tokonoma MCP service:** investigation tools, saved findings and procedures, the Slack connection, and a local administration UI. MCP means Model Context Protocol, which lets coding agents use these tools.
+- **Tokonoma MCP service:** investigation tools, saved findings and procedures, the Slack connection, and a local read-only UI. MCP means Model Context Protocol, which lets coding agents use these tools.
 - **Tokonoma runner and its dedicated MCP instance:** Agentic Monitoring and automatic investigations using your connected telemetry and alert sources.
 - **PostgreSQL:** bundled storage for records and application state. Helm creates its credentials.
 - **Ollama:** local search embeddings, which turn text into numeric representations for search.
@@ -50,7 +52,7 @@ flowchart LR
   style Connections fill:#f8fafc,stroke:#cbd5e1,color:#334155
 ```
 
-First, get Tokonoma healthy, detectors running, and connected alerts automatically investigated with saved results and Slack delivery. MCP stays inside the cluster, with local operator access. Shared engineer access comes afterward, with authentication, the runner's machine login, and the chosen HTTPS route.
+First, get Tokonoma healthy, detectors running, and connected alerts automatically investigated with saved results and Slack delivery. MCP stays authenticated inside the cluster, with local operator access. The installer generates the [runner's machine login](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled); no Cognito pool or separate client credentials are needed. Shared engineer access comes afterward, with human sign-in and the chosen HTTPS route.
 
 ## Give these instructions to your agent
 
