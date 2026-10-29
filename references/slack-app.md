@@ -78,7 +78,7 @@ Use `@Tokonoma admin` or `@Tokonoma admin help` for operator help. These command
 | --- | --- |
 | Check readiness | `@Tokonoma admin status` reports connections, missing access, and runner readiness. Only the requester sees the reply. |
 | Run monitoring setup | `@Tokonoma admin replan` requests discovery again. The completed report posts in the investigations channel. |
-| Read the monitoring plan | `@Tokonoma admin get plan` posts the full saved current plan document in the request's thread without running setup. If no current plan is available, it says so. |
+| Read the monitoring plan | `@Tokonoma admin get plan` attaches the full saved current plan document with a short label in the request's thread, without running setup. If no current plan is available, it says so. |
 
 The plan includes detector IDs for `enable detector` and `disable detector`. It is a saved setup or refresh snapshot: its statuses may differ from live detector state after those commands.
 
