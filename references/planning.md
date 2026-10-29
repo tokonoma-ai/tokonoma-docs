@@ -49,6 +49,6 @@ Line up these owners before the operator starts; one person may hold several rol
 | Telemetry owner | Query endpoint, approved read-only tools, credentials, cluster and namespace scope |
 | Alerting owner | Receiver token, sender configuration, preserved paging routes, approved test alert |
 | Slack administrator, when selected | App approval, tokens supplied securely, channel and app membership |
-| Identity and network owners, for later shared access | Human login, runner machine credential, hostname, TLS, and routing |
+| Identity and network owners, for later shared access | Human login, hostname, TLS, and routing; preserve the runner's installed machine identity |
 
 Hands-on setup and calendar lead time are separate. Configuration and checks need an operator session; account approvals, network changes, and administrator availability can span days. There is no measured install-duration guarantee. Arrange the approved alert test and integration owners in advance, and allow time to resolve failed checks. A healthy Helm release alone does not complete installation: require active monitoring, completed investigations, saved results, and configured Slack delivery before moving to shared team access.

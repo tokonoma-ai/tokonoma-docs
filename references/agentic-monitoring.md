@@ -16,7 +16,7 @@ Use the same `values.yaml` as the rest of the installation. For an existing depl
 | Model credentials | Keep the Anthropic API key from [installation](install.md#2-prepare-your-files). It serves both analysis and the runner. |
 | Cluster | Set `runner.detection.scope.cluster` to the cluster name in your telemetry source. It may differ from the Kubernetes context name. Ask the source owner when unsure; a source containing multiple clusters needs an explicit choice. |
 | Namespaces | Set `runner.detection.scope.namespaces` to exact namespace names. An empty list watches all namespaces, including system namespaces. Choose that scope deliberately. |
-| Alert source | Keep at least one Alertmanager or Datadog source credential, as required by the chart. Follow [runner setup](alert-investigations.md#before-you-start). |
+| Alert source (optional) | Monitoring does not require an alert receiver. To investigate incoming Alertmanager or Datadog alerts too, configure that receiver's credential using [runner setup](alert-investigations.md#before-you-start). |
 
 Check telemetry access with the source owner before deploying. Configure [Slack](slack-app.md) for setup reports, status commands, investigation results, and feedback.
 
@@ -50,7 +50,7 @@ Use the local connection from [installation](install.md#4-verify), then open [th
 - **Coverage** shows the monitored entities, saved detector configuration, and status. Expand a row to read its purpose, query, and available evidence.
 - **Significant Findings** shows recorded findings and their associated investigations. Open the investigation record to read the result.
 
-Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks.
+Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks. Use Slack for finding feedback.
 
 ## Verify monitoring
 

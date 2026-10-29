@@ -40,7 +40,10 @@ In your complete [installation command](install.md#3-install), replace the OCI U
 
 **OAuth configuration fails template render.** Enabled OAuth requires
 `mcp.auth.baseUrl`, `mcp.domain`, or top-level `domain`, plus at least one
-credential provider or SAML login method. Cognito also requires
+active native machine client, credential provider, or SAML login method. The
+standard authenticated local runner provisions its machine client automatically.
+This requires the [native-auth releases](upgrading.md#native-machine-authentication-release-prerequisite).
+Cognito also requires
 `mcp.auth.cognito.userPoolId`; Google requires the configured API key Secret.
 In `preregistered_only`, declare at least one active client. Client errors name
 the invalid grant, redirect, scope, authentication method, or Secret reference;
