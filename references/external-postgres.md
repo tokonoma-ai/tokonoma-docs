@@ -14,6 +14,8 @@ Run `kubectl` from a workstation with cluster access and SQL in an administrativ
 
 With `telemetryPlatform: true`, keep database `tokonoma`, user `tokonoma`, Secret name `toko-postgres`, and Secret key `password`. These match the bundled search backend. Use a URL-safe password containing letters, digits, `.`, `_`, `~`, or `-` because the search backend places it in a PostgreSQL URI.
 
+Check those characters in your secret-management workflow too. A successful Helm render does not validate passwords stored in an existing Secret.
+
 Changing the database host does not migrate existing records. For an existing installation, back up and migrate the data before switching hosts, then use the [upgrade guide](upgrading.md) with the updated `values.yaml`. Do not run the new-database SQL against an existing database without reviewing it.
 
 ## 1. Prepare the database
