@@ -61,12 +61,12 @@ Mention the app in a channel where it has been invited. Run `@Tokonoma help` for
 
 | Task | Command and expected behavior |
 | --- | --- |
-| Request a monitoring summary | `@Tokonoma summary` composes a fresh summary for the last 24 hours and posts it in the investigations channel. It does not replace the scheduled daily report. Requests within 10 minutes of the last manual summary, or while one is being composed, are refused. |
-| Change detector activity | `@Tokonoma disable REPLACE_WITH_DETECTOR_ID` stops future checks; `@Tokonoma enable REPLACE_WITH_DETECTOR_ID` starts or resumes them. Copy complete IDs from a report or saved plan; each command accepts multiple IDs. Review its scope and query before enabling it. |
+| Request a monitoring summary | `@Tokonoma monitoring summary` composes a fresh summary for the last 24 hours and posts it in the investigations channel. It does not replace the scheduled daily report. Requests within 10 minutes of the last manual summary, or while one is being composed, are refused. |
+| Change detector activity | `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID` stops future checks; `@Tokonoma enable detector REPLACE_WITH_DETECTOR_ID` starts or resumes them. Copy complete IDs from a report or saved plan; use `enable detector <id> [id ...]` or `disable detector <id> [id ...]` for multiple IDs. Review its scope and query before enabling it. |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-Use `disable` for unwanted or unhelpful monitoring and `enable` to resume the same checks. The choice is kept when the detector is carried into a new plan. Repeated commands are safe; obsolete or superseded IDs are unavailable. Work already in flight may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
+Use `disable detector` for unwanted or unhelpful monitoring and `enable detector` to resume the same checks. The choice is kept when the detector is carried into a new plan. Repeated commands are safe; obsolete or superseded IDs are unavailable. Work already in flight may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
 
 Ask ordinary questions with `@Tokonoma <question>` to find relevant saved records. See [Using Tokonoma](using-tokonoma.md) for the investigation workflow and an illustrative result.
 
@@ -80,7 +80,7 @@ Use `@Tokonoma admin` or `@Tokonoma admin help` for operator help. These command
 | Run monitoring setup | `@Tokonoma admin replan` requests discovery again. The completed report posts in the investigations channel. |
 | Read the monitoring plan | `@Tokonoma admin get plan` posts the full saved current plan document in the request's thread without running setup. If no current plan is available, it says so. |
 
-The plan includes detector IDs for `enable` and `disable`. It is a saved setup or refresh snapshot: its statuses may differ from live detector state after those commands.
+The plan includes detector IDs for `enable detector` and `disable detector`. It is a saved setup or refresh snapshot: its statuses may differ from live detector state after those commands.
 
 ### Optional incident sessions
 
