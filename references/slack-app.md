@@ -86,7 +86,7 @@ mcp:
 
 [Apply the configuration change](upgrading.md#before-changing-configuration), then run `@Tokonoma help` to confirm that session commands are listed.
 
-To disable incident coordination, explicitly set `mcp.slack.multiplayerEnabled: false` and apply the configuration change again. Removing the key alone can preserve a saved `true` when Helm reuses values. Confirm that `@Tokonoma help` omits session commands; those commands now return a disabled reply.
+To disable incident coordination, explicitly set `mcp.slack.multiplayerEnabled: false` and apply the configuration change again. Removing the key alone can preserve a saved `true` when Helm reuses values. Confirm that `@Tokonoma help` omits session commands.
 
 While disabled, session lookup, agent check-ins, progress updates, discussion tracking, expiry, and timelines do not run. The `investigation-session` skill and `get_investigation_session` tool are unavailable. The runner does not receive coordination instructions and refuses requests to join a `TKNM-<N>` session. Session cleanup and metadata backfills also stop; session tables remain installed and existing data is not deleted.
 
