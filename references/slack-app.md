@@ -64,6 +64,8 @@ After the listener connects, open the designated monitoring channel and add the 
 
 If a completed saved monitoring report and plan are available, the welcome attaches that document using its recorded title/date when available. It is a saved snapshot: detector statuses may differ from their current enable/disable state. Otherwise the welcome directs you to mention the app with `admin status` for the current status and next steps.
 
+The welcome uses the same runner request path as `admin get plan`. If the runner cannot answer, the generic response can take about three minutes. Like ordinary plan requests, a crash after the request is consumed can lose the response. Delivery uses the same cached channel lookup as ordinary reports; it discards a welcome if its original join channel differs from the resolved destination.
+
 The welcome does not start monitoring setup or produce a fresh report. Later setup and daily reports arrive through their normal delivery path, not as a promised reply to the welcome. Restarting the application does not welcome an app already in the channel. Removing and re-adding it after the listener connects can produce another welcome; a missed join event is not replayed.
 
 ## Use Tokonoma in a channel
