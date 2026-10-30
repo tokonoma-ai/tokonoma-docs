@@ -15,9 +15,9 @@ Follow [credential setup](credentials.md#supply-credentials-in-commands) when su
 3. Under **Basic Information > App-Level Tokens**, generate an `xapp-` token with the `connections:write` scope.
 4. Under **Install App**, install the app to your workspace and obtain the **Bot User OAuth Token** (`xoxb-`).
 
-For an existing app, update **App Manifest** with this manifest and reinstall the app to grant any added permissions. Save the current bot token; keep the app-level token unless you are rotating it.
+For an existing app, update **App Manifest** with this manifest. Reinstall if the change adds required permissions that are not already granted. Save the current bot token; keep the app-level token unless you are rotating it.
 
-For channel-join welcomes, check that **Event Subscriptions > Subscribe to bot events** includes `member_joined_channel`. This requires an application build containing [the channel-join welcome change](https://github.com/tokonoma-ai/tokonoma-mcp/issues/1442). Updating the application or repository manifest alone does not update an existing Slack app's subscriptions. No additional scopes are required if the app already has this manifest's permissions.
+For channel-join welcomes, add and save `member_joined_channel` under **Event Subscriptions > Subscribe to bot events**. This requires an application build containing [the channel-join welcome change](https://github.com/tokonoma-ai/tokonoma-mcp/issues/1442). Updating the application or repository manifest alone does not update an existing Slack app's subscriptions. Saving this subscription takes effect without reinstalling when the relevant permission is already granted: `channels:read` for public channels or `groups:read` for private channels. See Slack's [subscription and reinstall rules](https://docs.slack.dev/app-management/distribution/#when-is-a-reinstall-required).
 
 The manifest enables Socket Mode, mentions, membership and channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
@@ -62,7 +62,7 @@ For token changes, follow [credential rotation](credentials.md#renew-and-rotate)
 
 After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. Only the app's own join to this configured channel triggers the welcome; another person joining or adding the app elsewhere does not.
 
-If a completed saved monitoring report and plan are available, the welcome attaches that document using its recorded title/date when available. It is a saved snapshot: detector statuses may differ from their current enable/disable state. Otherwise the welcome directs you to mention the app with `admin status` for the current status and next steps.
+If a completed saved monitoring report and plan are available, the welcome shows the formatted setup report and attaches the full saved plan in its thread. The card uses saved setup findings with current monitoring counts and coverage, using the existing report title/date. The document is a saved snapshot: detector statuses may differ from their current enable/disable state. Otherwise the welcome directs you to mention the app with `admin status` for the current status and next steps.
 
 The welcome uses the same runner request path as `admin get plan`. If the runner cannot answer, the generic response can take about three minutes. Like ordinary plan requests, a crash after the request is consumed can lose the response. Delivery uses the same cached channel lookup as ordinary reports; it discards a welcome if its original join channel differs from the resolved destination.
 
