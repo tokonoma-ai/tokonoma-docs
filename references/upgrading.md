@@ -88,13 +88,11 @@ Confirm readiness and `/health` with the [installation checks](install.md#4-veri
 
 Helm rollback restores chart resources and values, not database state, deleted objects, or revoked credentials. Review application and database compatibility before rolling back; use your backups when a state migration cannot be reversed.
 
-## PostgreSQL and Ollama restarts: pending chart fix
+## PostgreSQL and Ollama restarts
 
-The fix for [unrelated PostgreSQL and Ollama restarts](https://github.com/tokonoma-ai/tokonoma-charts/issues/171) is unreleased and is not included in chart 0.39.0. Check the target chart's release notes before relying on this behavior.
+In chart [0.40.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.40.0) and later, changing only `mcp.image.tag` or the chart version leaves bundled PostgreSQL and Ollama running. Changes to their own images or pod configuration still restart them.
 
-The first upgrade to a chart containing the fix restarts bundled PostgreSQL and Ollama once to remove version labels from their pod templates. Plan for a database interruption and for Ollama to reload its model.
-
-Afterward, changing only `mcp.image.tag` or the chart version leaves those pods running. Changes to their own images or pod configuration still restart them.
+Upgrading from chart 0.39.0 or earlier to 0.40.0 or later restarts both components once. Plan for a database interruption and for Ollama to reload its model.
 
 ## Grafana adapter: 0.35.x to 0.36.0 or later
 
