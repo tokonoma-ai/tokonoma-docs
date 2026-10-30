@@ -22,7 +22,7 @@ oauth_config:
       - users:read
       - channels:read
       - groups:read
-      # Included in the release manifest; people still invite the app explicitly.
+      # Invite the app explicitly; it does not join channels automatically.
       - channels:join
       - chat:write
       - reactions:write

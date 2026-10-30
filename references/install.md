@@ -46,7 +46,7 @@ Inspect the package defaults for resource requests and configuration:
 helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
-The chart's defaults mention Bedrock, Vertex, and Foundry through `runner.extraEnv`. Tokonoma supports only the Anthropic API, so do not configure these.
+Use Anthropic API credentials. Bedrock, Vertex, and Foundry are unsupported.
 
 If the registry reports an expired token, follow [registry troubleshooting](troubleshooting.md#public-ecr-reports-an-expired-token), then return here.
 

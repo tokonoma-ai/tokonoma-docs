@@ -28,7 +28,7 @@ Normal Helm installs generate the bundled PostgreSQL password, the runner's mach
 
 The generated runner login requires the matching public application and chart releases in the [release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite).
 
-With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. Credentials stay the same and tokens remain valid. See the [upgrade notes](upgrading.md#native-machine-authentication-release-prerequisite).
+With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once. Credentials stay unchanged and existing tokens remain valid. See the [upgrade notes](upgrading.md#native-machine-authentication-release-prerequisite).
 
 The default machine Secret is `toko-runner-oauth`, with keys `clientId` and `clientSecret`. It authenticates the runner to Tokonoma; it is not an employee login or an integration credential. Do not distribute it to coding agents. Changing its client ID changes the identity that owns private investigation records.
 

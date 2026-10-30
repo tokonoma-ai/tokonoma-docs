@@ -123,7 +123,7 @@ The generated runner login requires application [v0.76.0](https://github.com/tok
 
 Chart 0.39.0 also permits monitoring-only or Slack-requested investigations without an alert receiver token. With no alert sender, keep `runner.detection.enabled` or `runner.destinations.slackApp.enabled` true. Preserve credentials for receivers that are still in use; removing an Alertmanager or Datadog token disables that receiver.
 
-With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. It keeps the same client ID and secret and does not revoke tokens.
+With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once. Credentials stay unchanged and existing tokens remain valid.
 
 For an existing installation, preserve its provider, declared clients, client IDs, and `runner.tokoMcp.oauthClientSecretRef`. Remove obsolete copies of the runner credential variables from `mcp.extraEnv`; the read-only UI needs no sign-in or machine credential setup. Remove `runner.extraEnv` entries only when they duplicate the runner's chart-managed credential references. Preserve other environment overrides. Follow the normal configuration-change procedure with a compatible released chart and application, then verify the runner.
 
