@@ -1,6 +1,6 @@
 # Connect a coding agent
 
-After installation and human login setup, connect your client to Tokonoma's Streamable HTTP MCP endpoint at `/mcp`. The internal machine login serves the runner. Configure [human sign-in](private-access.md#team-access) before connecting engineers' coding agents; do not copy the generated runner credential. Run commands on the client workstation.
+After installation, connect your client to Tokonoma's Streamable HTTP MCP endpoint at `/mcp`. Configure [human sign-in](private-access.md#team-access) before connecting engineers' coding agents; do not copy the generated runner credential. Run commands on the client workstation.
 
 | Input | Source | When needed |
 | --- | --- | --- |
@@ -77,7 +77,7 @@ Start a new agent session and enter:
 Run Tokonoma onboard.
 ```
 
-Onboarding has three optional steps: add Tokonoma instructions to the agent's instruction file, select prior agent sessions to save as investigations, and import historical incidents or runbooks. Review the proposed instructions and choose which material to save. It reads shared material or named paths; prior-session discovery starts only when you choose `scan`. It does not install a session finalizer.
+Onboarding has three optional steps: add Tokonoma instructions to the agent's instruction file, select prior agent sessions to save as investigations, and import historical incidents or runbooks. Review the proposed instructions and choose which material to save. It reads shared material or named paths; prior-session discovery starts only when you choose `scan`.
 
 After saving material, use one of onboarding's suggested recall prompts to check that your agent can search for it and fetch the saved record. Re-run onboarding when you have more material to add; imported sources are not continuously synchronized.
 

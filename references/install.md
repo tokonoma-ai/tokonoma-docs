@@ -16,7 +16,7 @@ Run commands on an authorized workstation using Helm, the Kubernetes package man
 | Analysis, monitoring, and investigations | Prepare an Anthropic API key; it serves both analysis and the runner. Choose the runner's alert sources and telemetry tools using [integrations](integrations.md). Set the monitored cluster and namespaces using [agentic monitoring](agentic-monitoring.md); inspect [data flows](data-flows.md) | Both automatic features require telemetry query access. Prepare access before running Helm; monitoring also needs its scope. |
 | Additional features | Choose code access or cloud telemetry storage as needed | Follow any preparation required by the selected guide. |
 
-Use one release per namespace: component names are fixed. Examples use release and namespace `tokonoma`; substitute assigned names consistently. Do not reuse an unrelated deployment's namespace.
+Use one release per namespace. Examples use release and namespace `tokonoma`; substitute assigned names consistently. Do not reuse an unrelated deployment's namespace.
 
 ## 1. Check prerequisites
 
@@ -46,7 +46,7 @@ Inspect the package defaults for resource requests and configuration:
 helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
-The chart's defaults mention Bedrock, Vertex, and Foundry through `runner.extraEnv`. Tokonoma supports only the Anthropic API, so do not configure these.
+Use Anthropic API credentials. Bedrock, Vertex, and Foundry are unsupported.
 
 If the registry reports an expired token, follow [registry troubleshooting](troubleshooting.md#public-ecr-reports-an-expired-token), then return here.
 

@@ -1,6 +1,6 @@
 # Connect integrations
 
-Tokonoma connects to compatible remote Model Context Protocol (MCP) servers for telemetry and investigation tools. Datadog and Axiom are examples; the connection settings are not tied to a provider. Check saved values before adding connections. Agents read existing choices and ask for missing inputs.
+Tokonoma connects to compatible remote Model Context Protocol (MCP) servers for telemetry and investigation tools. Check saved values before adding connections.
 
 | Integration | What it does | Setup |
 |---|---|---|
@@ -13,7 +13,7 @@ Tokonoma connects to compatible remote Model Context Protocol (MCP) servers for 
 
 The bundled `grafanaMcp` adapter queries an existing Grafana. The separate `grafana.enabled` setting installs a UI for Tokonoma's own monitoring. They are independent options.
 
-There is no bundled CloudWatch adapter. A separately supplied MCP server must meet the connection requirements below; enabling telemetry storage does not connect it.
+CloudWatch requires a separately supplied MCP server that meets the connection requirements below.
 
 Memory analysis and the runner both use the Anthropic API. Verify model identifiers before changing them. See [memory analysis](memory-llm.md) and [data flows](data-flows.md).
 
@@ -28,7 +28,7 @@ Uncomment the matching `runner.mcpServers` entries in [values.yaml](../examples/
 - Use unique lowercase names with hyphens rather than underscores. Reserve `toko`, and `grafana` when the bundled Grafana adapter is enabled.
 - Obtain the full MCP endpoint from the provider. It must be reachable from the runner; use HTTPS for external connections.
 - Set `kind: telemetry` for monitoring sources or `kind: source-control` for code access.
-- Set `expectedTools` to exact tool names advertised by that server, without an `mcp__` prefix. Empty or missing entries permit no calls. List read-only tools only, and use credentials with matching permissions. The runner does not filter these lists: every listed tool is available to automatic investigations and to Agentic Monitoring, whose setup and scheduled refresh run with nobody watching and replay the tool calls they recorded, such as the entity listing, on every refresh.
+- Set `expectedTools` to exact tool names advertised by that server, without an `mcp__` prefix. Empty or missing entries permit no calls. Every listed tool is available to unattended monitoring setup, refreshes, and investigations. Permit read-only tools only, with credentials restricted to the required read access.
 
 Automatic investigations and Agentic Monitoring require telemetry query access. Monitoring tools must also cover the selected cluster and namespaces. Alert webhooks and code-only connections do not supply telemetry access. Results are sent to the Anthropic API; review [data flows](data-flows.md).
 
@@ -45,7 +45,7 @@ For bearer authentication, store the raw token without `Bearer ` and fill `authS
 
 ### 3. Apply the configuration
 
-For a new deployment, finish the selected integrations and use the [single installation command](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). Do not create a separate values file for each provider.
+For a new deployment, finish the selected integrations and use the [single installation command](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration). Keep all integrations in the same `values.yaml`.
 
 ### 4. Check access
 
@@ -53,7 +53,7 @@ With Slack enabled, `@Tokonoma admin status` reports the runner's MCP connection
 
 ## GitHub example
 
-GitHub adds source-code context to investigations. It is optional and does not replace telemetry access. For GitHub.com, use the commented `name: github` entry in [values.yaml](../examples/values.yaml), with `kind: source-control` and GitHub's [hosted read-only endpoint](https://github.com/github/github-mcp-server/blob/main/docs/remote-server.md): `https://api.githubcopilot.com/mcp/readonly`. No local GitHub server is needed.
+GitHub adds source-code context to investigations. It is optional and does not replace telemetry access. For GitHub.com, use the commented `name: github` entry in [values.yaml](../examples/values.yaml), with `kind: source-control` and GitHub's [hosted read-only endpoint](https://github.com/github/github-mcp-server/blob/main/docs/remote-server.md): `https://api.githubcopilot.com/mcp/readonly`.
 
 1. [Create a fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token). Choose the organization or account that owns the repositories, select only the repositories Tokonoma may read, and set an expiration. Grant repository **Contents: Read-only**; Metadata access is included. Obtain organization approval if required before using the token for private repositories.
 2. Use [Prepare credentials](#2-prepare-credentials) to create or reuse the Secret with the raw token: the example uses `toko-runner-github`, key `token`. Fill the credential placeholder locally; never paste the token into chat.
