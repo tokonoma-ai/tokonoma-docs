@@ -17,7 +17,7 @@ Follow [credential setup](credentials.md#supply-credentials-in-commands) when su
 
 For an existing app, update **App Manifest** with this manifest. Reinstall if the change adds required permissions that are not already granted. Save the current bot token; keep the app-level token unless you are rotating it.
 
-For channel-join welcomes, add and save `member_joined_channel` under **Event Subscriptions > Subscribe to bot events**. This requires an application build containing [the channel-join welcome change](https://github.com/tokonoma-ai/tokonoma-mcp/issues/1442). Updating the application or repository manifest alone does not update an existing Slack app's subscriptions. Saving this subscription takes effect without reinstalling when the relevant permission is already granted: `channels:read` for public channels or `groups:read` for private channels. See Slack's [subscription and reinstall rules](https://docs.slack.dev/app-management/distribution/#when-is-a-reinstall-required).
+Channel-join welcomes require [Tokonoma v0.78.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.78.0) or newer. The manifest above includes `member_joined_channel` for new apps. For an existing app, add and save it under **Event Subscriptions > Subscribe to bot events**. Updating Tokonoma alone does not update an existing Slack app's subscriptions. Saving this subscription takes effect without reinstalling when the relevant permission is already granted: `channels:read` for public channels or `groups:read` for private channels. See Slack's [subscription and reinstall rules](https://docs.slack.dev/app-management/distribution/#when-is-a-reinstall-required).
 
 The manifest enables Socket Mode, mentions, membership and channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
@@ -50,7 +50,7 @@ Look for `slack socket mode connected`. Add the app to the designated monitoring
 | --- | --- |
 | `Slack listener NOT started` | Both tokens and the database must be configured. |
 | No reply in one channel | Invite the app to that channel. |
-| No welcome after adding the app | Check the application build, `member_joined_channel` subscription, configured channel name, and that the listener was connected when the app joined. |
+| No welcome after adding the app | Check that Tokonoma is v0.78.0 or newer, the `member_joined_channel` subscription is saved, and the app joined the configured monitoring channel after the listener connected. Follow the [welcome checks](#receive-the-monitoring-welcome) below. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
 | Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `mcp.memoryLlm.enabled: true`. |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
@@ -62,11 +62,13 @@ For token changes, follow [credential rotation](credentials.md#renew-and-rotate)
 
 After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. Only the app's own join to this configured channel triggers the welcome; another person joining or adding the app elsewhere does not.
 
-If a completed saved monitoring report and plan are available, the welcome posts an introduction first, then the formatted setup report as a second channel message. The full saved plan attaches to the report's thread. The card uses saved setup findings with current monitoring counts and coverage, using the existing report title/date. The document is a saved snapshot: detector statuses may differ from their current enable/disable state. Otherwise the welcome directs you to mention the app with `admin status` for the current status and next steps. The same response is used if the report cannot be read or prepared.
+If a completed monitoring plan is available, Tokonoma posts an introduction first, then the formatted setup report as a second channel message. The full saved plan attaches to the report's thread. The report combines saved setup findings with current monitoring counts and coverage; its date identifies the plan. The attached plan remains a saved snapshot, so its detector statuses may differ from their current enable/disable state.
 
-The welcome uses the same runner request path as `admin get plan`. If the runner cannot answer, the generic response can take about three minutes. Like ordinary plan requests, a crash after the request is consumed can lose the response. Delivery uses the same cached channel lookup as ordinary reports; it discards a welcome if its original join channel differs from the resolved destination.
+If setup is incomplete, the saved plan is unavailable, or Tokonoma cannot read or prepare the report, it posts one standalone message containing its introduction and a paragraph saying the report is not ready. That message directs you to `@Tokonoma admin status` to check progress and anything that needs fixing. No report or plan is attached.
 
-The welcome does not start monitoring setup or produce a fresh report. Later setup and daily reports arrive through their normal delivery path, not as a promised reply to the welcome. Restarting the application does not welcome an app already in the channel. Removing and re-adding it after the listener connects can produce another welcome; a missed join event is not replayed.
+If the runner cannot answer, the not-ready message can take about three minutes. A restart or Slack delivery failure can leave the welcome missing. Check `@Tokonoma admin status` and the connection checks above; once the listener is connected, remove and re-add the app to retry.
+
+The welcome does not start monitoring setup or generate a new plan. Later setup and daily reports arrive separately. Restarting Tokonoma does not welcome an app already in the channel, and a missed join does not produce a welcome later.
 
 ## Use Tokonoma in a channel
 
