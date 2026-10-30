@@ -36,7 +36,7 @@ After Helm reports `deployed`, use the [installation health checks](install.md#4
 
 The chart's application image default is `latest`, with image pull policy `Always`. A restarted pod can therefore pull a newer application build even when the chart version stays the same. Configuration changes that restart workloads can have this effect too. The unattended MCP and runner inherit the primary MCP image unless overridden.
 
-Use the chart's application image defaults. Record the deployed chart version and actual image digest in the installation report so changes can be traced without fixing an installation version in these commands.
+Use the chart's application image defaults. Record the deployed chart version and actual image digest in the installation report.
 
 ## Before upgrading
 
@@ -72,7 +72,7 @@ helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.
 
 Expect Helm to report status `deployed`. Unchanged credentials are preserved; add `--set-literal` arguments only for new or changed values. Keep existing Secret references. Helm 3.14+ is required for `--reset-then-reuse-values`: it starts from new chart defaults, reapplies the previous supplied values, and then applies this command's overrides. Plain `--reuse-values` can retain old chart defaults. When intentionally removing obsolete keys, use a complete replacement values file and all required credential inputs with `--reset-values` after reviewing the effect.
 
-An unchanged image reference does not trigger a Helm rollout. If the requested upgrade includes pulling the newest application behind `latest`, restart its Deployments after Helm finishes:
+An unchanged image reference alone does not trigger a Helm rollout. If the requested upgrade includes pulling the newest application behind `latest`, restart its Deployments after Helm finishes:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart \
@@ -107,9 +107,15 @@ If the key is set only in `runner.engine.apiKeySecret` with the runner enabled, 
 
 Without an Anthropic API key, for example when the runner's only model credential is in `runner.extraEnv`, the server model features stay off and the install notes say so.
 
+## PostgreSQL and Ollama restarts
+
+With chart [0.40.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.40.0) or later, updating only the MCP image leaves bundled PostgreSQL and Ollama running. Chart upgrades restart them only if their own images or pod settings change.
+
+The first upgrade from chart 0.39.0 or earlier to 0.40.0 or later restarts both bundled components once. Plan for a database interruption and for Ollama to reload its model.
+
 ## Grafana adapter: 0.35.x to 0.36.0 or later
 
-The adapter moved to the upstream `grafana-mcp` subchart. Old keys are not automatically translated. Before upgrading an enabled adapter, migrate these values:
+Before upgrading an enabled Grafana adapter from chart 0.35.x, migrate these values. Old keys are not automatically translated:
 
 | Old key | Current key |
 |---|---|
@@ -138,11 +144,11 @@ Use only one entry if you use one source. Lists replace rather than append. An I
 
 ## Native machine authentication: release prerequisite
 
-The generated runner login requires application [v0.76.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.76.0) or later and chart [0.39.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.39.0) or later. The application accepts native configured `client_credentials` clients; the chart provisions and connects the runner client. Application [v0.77.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.77.0) with chart 0.39.0 is the verified release pair for this guide. Chart 0.38.0 does not provision the native client.
+The generated runner login requires application [v0.76.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.76.0) or later and chart [0.39.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.39.0) or later.
 
 Chart 0.39.0 also permits monitoring-only or Slack-requested investigations without an alert receiver token. With no alert sender, keep `runner.detection.enabled` or `runner.destinations.slackApp.enabled` true. Preserve credentials for receivers that are still in use; removing an Alertmanager or Datadog token disables that receiver.
 
-With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once to record the stored credential's revision. It keeps the same client ID and secret and does not revoke tokens.
+With generated machine credentials, the first upgrade of a new installation restarts both MCP instances and the runner once. Credentials stay unchanged and existing tokens remain valid.
 
 For an existing installation, preserve its provider, declared clients, client IDs, and `runner.tokoMcp.oauthClientSecretRef`. Remove obsolete copies of the runner credential variables from `mcp.extraEnv`; the read-only UI needs no sign-in or machine credential setup. Remove `runner.extraEnv` entries only when they duplicate the runner's chart-managed credential references. Preserve other environment overrides. Follow the normal configuration-change procedure with a compatible released chart and application, then verify the runner.
 
@@ -167,7 +173,7 @@ For installations predating these changes, review the complete target values wit
 
 ## Retired meeting capture: charts 0.16.0 through 0.17.1
 
-The target chart removes the Google Meet and Zoom attendee. A pre-upgrade cleanup hook stops active attendees and deletes their labeled Jobs, Pods, and per-meeting Secrets. Those deleted resources cannot be recovered by Helm rollback.
+The target chart removes the Google Meet and Zoom attendee. Upgrading stops active attendees and deletes their Jobs, Pods, and per-meeting Secrets. Those deleted resources cannot be recovered by Helm rollback.
 
 Notify participants before upgrading. Keep the old `meetingCapture.enabled` and namespace settings in the supplied values for this upgrade so automatic cleanup can find them. If you remove those settings, explicitly supply the old namespace and enable cleanup:
 

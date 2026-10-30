@@ -1,6 +1,6 @@
 # Set up the Tokonoma Slack app
 
-`@Tokonoma` runs inside your MCP server. Slack Socket Mode lets it connect from a private cluster without a public callback URL or ingress. The separate [`@Claude` integration](claude-in-slack.md) has different network requirements.
+`@Tokonoma` uses Slack Socket Mode to connect from a private cluster without a public callback URL or ingress. The separate [`@Claude` integration](claude-in-slack.md) has different network requirements.
 
 Create the Slack app and prepare its tokens before [installation](install.md#3-install). For an existing deployment, apply the settings with the [upgrade guide](upgrading.md#before-changing-configuration).
 
@@ -15,9 +15,11 @@ Follow [credential setup](credentials.md#supply-credentials-in-commands) when su
 3. Under **Basic Information > App-Level Tokens**, generate an `xapp-` token with the `connections:write` scope.
 4. Under **Install App**, install the app to your workspace and obtain the **Bot User OAuth Token** (`xoxb-`).
 
-For an existing app, update **App Manifest** with this manifest and reinstall the app to grant any added permissions. Save the current bot token; keep the app-level token unless you are rotating it.
+For an existing app, update **App Manifest** with this manifest. Reinstall if the change adds required permissions that are not already granted. Save the current bot token; keep the app-level token unless you are rotating it.
 
-The manifest enables Socket Mode, mentions, channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
+Channel-join welcomes require [Tokonoma v0.78.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.78.0) or newer. The manifest above includes `member_joined_channel` for new apps. For an existing app, add and save it under **Event Subscriptions > Subscribe to bot events**. Updating Tokonoma alone does not update an existing Slack app's subscriptions. Saving this subscription takes effect without reinstalling when the relevant permission is already granted: `channels:read` for public channels or `groups:read` for private channels. See Slack's [subscription and reinstall rules](https://docs.slack.dev/app-management/distribution/#when-is-a-reinstall-required).
+
+The manifest enables Socket Mode, mentions, membership and channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
 ## Save the connection settings
 
@@ -30,7 +32,7 @@ In `values.yaml`, uncomment the Slack settings from the [example](../examples/va
 
 For existing Secrets, use `mcp.slack.tokenSecret` instead of the two Slack arguments.
 
-In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default results channel; set `mcp.slack.investigationsChannel` only for a different channel name.
+Choose an existing or new public or private `#tokonoma-investigations` channel for monitoring and runner results. Set `mcp.slack.investigationsChannel` only for a different channel name. Invite the app after it connects, as described below.
 
 For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration), including any changed token arguments and preserving other credentials.
 
@@ -42,12 +44,13 @@ When Slack is enabled, read the MCP logs on the administration workstation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Add the app to the designated monitoring channel to [receive its welcome](#receive-the-monitoring-welcome), and invite it to other channels where you want to use it. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |
 | `Slack listener NOT started` | Both tokens and the database must be configured. |
 | No reply in one channel | Invite the app to that channel. |
+| No welcome after adding the app | Check that Tokonoma is v0.78.0 or newer, the `member_joined_channel` subscription is saved, and the app joined the configured monitoring channel after the listener connected. Follow the [welcome checks](#receive-the-monitoring-welcome) below. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
 | Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `llm.serverFeatures` unset; see [server model features](server-features.md). |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
@@ -55,26 +58,33 @@ Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited
 
 For token changes, follow [credential rotation](credentials.md#renew-and-rotate), then repeat the Slack reply check above.
 
+### Receive the monitoring welcome
+
+After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. Only the app's own join to this configured channel triggers the welcome; another person joining or adding the app elsewhere does not.
+
+If a completed monitoring plan is available, Tokonoma posts an introduction first, then the formatted setup report as a second channel message. The full saved plan attaches to the report's thread. The report combines saved setup findings with current monitoring counts and coverage; its date identifies the plan. The attached plan remains a saved snapshot, so its detector statuses may differ from their current enable/disable state.
+
+If setup is incomplete, the saved plan is unavailable, or Tokonoma cannot read or prepare the report, it posts one standalone message containing its introduction and a paragraph saying the report is not ready. That message directs you to `@Tokonoma admin status` to check progress and anything that needs fixing. No report or plan is attached.
+
+If the runner cannot answer, the not-ready message can take about three minutes. A restart or Slack delivery failure can leave the welcome missing. Check `@Tokonoma admin status` and the connection checks above; once the listener is connected, remove and re-add the app to retry.
+
+The welcome does not start monitoring setup or generate a new plan. Later setup and daily reports arrive separately. Restarting Tokonoma does not welcome an app already in the channel, and a missed join does not produce a welcome later.
+
 ## Use Tokonoma in a channel
 
 Mention the app in a channel where it has been invited. Run `@Tokonoma help` for the commands supported by your installed version.
 
-With `mcp.slack.multiplayerEnabled: false`, mentions run only supported exact commands. Unknown commands, incomplete or malformed commands, and ordinary questions return normal help without model interpretation or memory recall. The normal help contains only these five entries:
-
-- `help` shows available commands
-- `investigate` or `investigate <what to look into>` asks Tokonoma to investigate an alert; use this command in an alert’s Slack thread
-- `monitoring summary` requests a fresh monitoring report for the last 24 hours
-- `enable detector <detector_id; separate multiple IDs with spaces>` turns detectors on
-- `disable detector <detector_id; separate multiple IDs with spaces>` stops future checks until you enable them again
+With `mcp.slack.multiplayerEnabled: false`, use the exact commands below. Other input, including ordinary questions and incomplete commands, returns help without model interpretation or memory recall.
 
 | Task | Command and expected behavior |
 | --- | --- |
+| Get help | `@Tokonoma help` lists available commands. |
 | Request a monitoring summary | `@Tokonoma monitoring summary` composes a fresh summary for the last 24 hours and posts it in the investigations channel. It does not replace the scheduled daily report. Requests within 10 minutes of the last manual summary, or while one is being composed, are refused. |
-| Change detector activity | `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID` stops future checks; `@Tokonoma enable detector REPLACE_WITH_DETECTOR_ID` starts or resumes them. Copy complete IDs from a report or saved plan; use `enable detector <detector_id; separate multiple IDs with spaces>` or `disable detector <detector_id; separate multiple IDs with spaces>`. Review its scope and query before enabling it. |
+| Change detector activity | `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID` stops future checks; `@Tokonoma enable detector REPLACE_WITH_DETECTOR_ID` starts or resumes them. Copy complete IDs from a report or saved plan; separate multiple IDs with spaces. Review the scope and query before enabling a detector. |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-In scheduled and requested summaries, each Recurring finding and any **Full record** button appear before the `disable detector` command. The command appears in a code block below the italic text "To stop future checks for this detector:" (or "these detectors" for multiple IDs). Use the complete detector IDs shown in that command; consult the full plan for IDs that do not fit.
+Recurring findings show how to stop future checks. Use the complete detector IDs in the command, or consult the saved plan for IDs that do not fit.
 
 Use `disable detector` for unwanted or unhelpful monitoring and `enable detector` to resume the same checks. The choice is kept when the detector is carried into a new plan. Repeated commands are safe; obsolete or superseded IDs are unavailable. Work already in flight may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
 
@@ -82,26 +92,21 @@ When multiplayer is enabled, ask ordinary questions with `@Tokonoma <question>` 
 
 ### Operator commands
 
-Use `@Tokonoma admin` for operator help. These commands run in invited channels with no additional permission check. Normal help, setup reports, refresh reports, and daily summaries do not advertise them. The admin help contains:
-
-- `admin` shows this help
-- `admin status` shows what is connected and what needs attention; only you see it
-- `admin get plan` attaches the full current monitoring plan
-- `admin replan` runs monitoring discovery and builds a new plan
+Use `@Tokonoma admin` for operator help. Anyone in an invited channel can run these commands.
 
 | Task | Command and expected behavior |
 | --- | --- |
 | Check readiness | `@Tokonoma admin status` reports connections, missing access, and runner readiness. Only the requester sees the reply. |
 | Run monitoring setup | `@Tokonoma admin replan` requests discovery again. The completed report posts in the investigations channel. |
-| Read the monitoring plan | `@Tokonoma admin get plan` attaches the full saved current plan document with a short label in the request's thread, without running setup. If no current plan is available, it says so. |
+| Read the monitoring plan | `@Tokonoma admin get plan` attaches the saved monitoring plan in the request's thread without running setup. If no plan is available, it says so. |
 
 The plan includes detector IDs for `enable detector` and `disable detector`. It is a saved setup or refresh snapshot: its statuses may differ from live detector state after those commands.
 
 ### Optional incident sessions
 
-With compatible chart and application builds, Slack multiplayer incident coordination is off by default. The single chart setting `mcp.slack.multiplayerEnabled` applies to the primary MCP service, its unattended sibling, and the runner. MCP and the runner each enforce the setting.
+Incident coordination is off by default. Enable it with `mcp.slack.multiplayerEnabled`.
 
-Use [application 0.77.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.77.0) and [chart 0.39.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.39.0) or newer compatible releases for the help, command replies, summary format, and multiplayer setting described here. These public releases include the exact-command behavior and concise summary controls. Application 0.76.0 does not include those follow-up changes. Older application images may ignore the flag and expose incident coordination; a chart change alone does not enforce it.
+The commands and settings in this guide require [application 0.77.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.77.0) and [chart 0.39.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.39.0) or newer compatible releases. Older application images may ignore the multiplayer setting and expose incident coordination; upgrading only the chart is insufficient.
 
 Remove any `SLACK_MULTIPLAYER_ENABLED` entry from `mcp.extraEnv` and `runner.extraEnv`, preserving other entries. The chart rejects these entries, including matching values and `valueFrom`. If Helm has saved an old list, explicitly replace it with the remaining entries, or `[]` when none remain; deleting a line from the file alone can retain saved values. See [configuration changes](upgrading.md#before-changing-configuration).
 
@@ -117,11 +122,11 @@ mcp:
 
 To disable incident coordination, explicitly set `mcp.slack.multiplayerEnabled: false` and apply the configuration change again. Removing the key alone can preserve a saved `true` when Helm reuses values. Confirm that `@Tokonoma help` omits session commands. Requests for those commands return the normal help while coordination is off.
 
-While disabled, session lookup, agent check-ins, progress updates, discussion tracking, expiry, and timelines do not run. The `investigation-session` skill and `get_investigation_session` tool are unavailable. The runner does not receive coordination instructions and refuses requests to join a `TKNM-<N>` session. Session cleanup and metadata backfills also stop; session tables remain installed and existing data is not deleted.
+While disabled, incident sessions, timelines, and agent check-ins are unavailable, including the `investigation-session` skill and `get_investigation_session` tool. Existing session data is retained.
 
-Ordinary investigations, memory reads and writes, and saved outcomes remain available through coding agents. In Slack, use the supported exact commands while coordination is off. You can still mark an investigation `resolved`, `dead_end`, or `wont_fix` and save its `resolution_summary`. The Slack `investigate` command still requests an ordinary runner investigation.
+Ordinary investigations, saved records, and their outcomes remain available through coding agents. The Slack `investigate` command also remains available.
 
-Existing session-linked investigations can still be edited, resolved, and archived under the ordinary memory rules. Keep their session metadata exactly unchanged, including older formats. These updates do not access coordination tables. Adding, changing, or removing session metadata, or publishing a private check-in into a shared session, is refused while coordination is off.
+Existing session-linked investigations can still be edited, resolved, and archived under the normal access rules. Their session information must stay unchanged, and private check-ins cannot be published to a shared session while coordination is off.
 
 | Task | Command and expected behavior when enabled |
 | --- | --- |
@@ -142,7 +147,7 @@ Automatic recall is separate from runner investigations. Investigation results u
 
 ## Channel access and shared records
 
-The app receives channel messages where it is invited. With incident sessions enabled, it can read channel history for sessions. It can post shared records into invited channels. Its memory identity can access organization-wide records, not an individual user's private records or records shared only with named identity-provider groups. New records are shared with everyone by default; choose private sharing when needed. See [data flows](data-flows.md).
+The app receives channel messages where it is invited. With incident sessions enabled, it can read channel history for sessions. It can post shared records into invited channels. It can access organization-wide records, not an individual user's private records or records shared only with named identity-provider groups. New records are shared with everyone by default; choose private sharing when needed. See [data flows](data-flows.md).
 
 The manifest requests channel and user read scopes, `chat:write`, `reactions:write`, and `channels:join`. It also uses `reactions:read` for monitoring feedback and `files:write` for setup reports. Tokonoma does not automatically join channels; invite it explicitly. It does not request `chat:write.public` or direct-message history.
 
