@@ -72,7 +72,7 @@ helm --kube-context REPLACE_WITH_KUBE_CONTEXT upgrade tokonoma oci://public.ecr.
 
 Expect Helm to report status `deployed`. Unchanged credentials are preserved; add `--set-literal` arguments only for new or changed values. Keep existing Secret references. Helm 3.14+ is required for `--reset-then-reuse-values`: it starts from new chart defaults, reapplies the previous supplied values, and then applies this command's overrides. Plain `--reuse-values` can retain old chart defaults. When intentionally removing obsolete keys, use a complete replacement values file and all required credential inputs with `--reset-values` after reviewing the effect.
 
-An unchanged image reference does not trigger a Helm rollout. If the requested upgrade includes pulling the newest application behind `latest`, restart its Deployments after Helm finishes:
+An unchanged image reference alone does not trigger a Helm rollout. If the requested upgrade includes pulling the newest application behind `latest`, restart its Deployments after Helm finishes:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma rollout restart \
@@ -87,6 +87,12 @@ Use the Deployment names in your release. Restart only workloads whose rolling i
 Confirm readiness and `/health` with the [installation checks](install.md#4-verify). Restart the MCP deployments after a license change; see [credentials](credentials.md). Optional integration checks can then verify model requests, Slack permissions, and alert delivery; Helm's wait does not test these.
 
 Helm rollback restores chart resources and values, not database state, deleted objects, or revoked credentials. Review application and database compatibility before rolling back; use your backups when a state migration cannot be reversed.
+
+## PostgreSQL and Ollama restarts
+
+With chart [0.40.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.40.0) or later, updating only the MCP image leaves bundled PostgreSQL and Ollama running. Chart upgrades restart them only if their own images or pod settings change.
+
+The first upgrade from chart 0.39.0 or earlier to 0.40.0 or later restarts both bundled components once. Plan for a database interruption and for Ollama to reload its model.
 
 ## Grafana adapter: 0.35.x to 0.36.0 or later
 

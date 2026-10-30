@@ -1,8 +1,8 @@
 # External PostgreSQL
 
-If you need an external database, choose and prepare it before the first installation. It stores MCP memory and, when enabled, the telemetry metastore. The server must be reachable from the cluster by DNS name on port `5432`.
+Tokonoma supports an external PostgreSQL database with pgvector. Prepare it before installation and allow connections from the cluster to its DNS name on port `5432`. It stores saved records and application state.
 
-This setup has not been validated on managed services such as Amazon RDS or Cloud SQL. The chart is tested against its bundled PostgreSQL 18 with pgvector 0.8.6. Talk to Tokonoma before using an external database in production.
+The bundled database uses PostgreSQL 18 with pgvector 0.8.6. Amazon RDS and Cloud SQL have not been validated; provider certificate verification and snapshot recovery remain untested. Contact Tokonoma before using an external database in production.
 
 Run `kubectl` from a workstation with cluster access and SQL in an administrative database session. Edit the `values.yaml` prepared during [installation](install.md), following [input conventions](install.md#inputs-and-placeholders).
 
@@ -12,7 +12,7 @@ Run `kubectl` from a workstation with cluster access and SQL in an administrativ
 | `REPLACE_WITH_DATABASE_HOST` | DNS name supplied by the database administrator; required in `values.yaml`. |
 | `REPLACE_WITH_POSTGRES_PASSWORD` | Password for the `tokonoma` database role and its Kubernetes Secret. |
 
-With `telemetryPlatform: true`, keep database `tokonoma`, user `tokonoma`, Secret name `toko-postgres`, and Secret key `password`. These match the bundled search backend. Use a URL-safe password containing letters, digits, `.`, `_`, `~`, or `-` because the search backend places it in a PostgreSQL URI.
+With `telemetryPlatform: true`, use database and user `tokonoma`, Secret `toko-postgres`, and key `password`. The password must contain only letters, digits, `.`, `_`, `~`, or `-`, including passwords supplied through an existing Secret.
 
 Changing the database host does not migrate existing records. For an existing installation, back up and migrate the data before switching hosts, then use the [upgrade guide](upgrading.md) with the updated `values.yaml`. Do not run the new-database SQL against an existing database without reviewing it.
 
@@ -29,9 +29,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 Confirm the role, database, and `vector` extension exist before starting Tokonoma; the server does not create the extension. Protect the password in database session history.
 
-The `tokonoma` role must own the database and be able to create schemas and tables. Tokonoma creates and updates its schema at startup. On PostgreSQL 15 and later, only the database owner can create tables in `public` by default.
+The `tokonoma` role must own the database and be able to create schemas and tables. Tokonoma creates and updates its schema at startup.
 
-After a PostgreSQL or pgvector upgrade, the server also tries to update the extension and rebuild indexes. If the role lacks those rights, it logs the required commands and continues starting. Run those commands as an administrative user.
+When Tokonoma starts after a PostgreSQL or pgvector upgrade, it checks for required extension updates and index rebuilds. If startup logs list commands that need administrator privileges, have the database administrator run them.
 
 ## 2. Create the password Secret
 
@@ -58,8 +58,6 @@ postgres:
     existingSecret: toko-postgres
     secretKey: password
 ```
-
-The chart creates an `ExternalName` Service called `toko-postgres` that points to `postgres.host`. The MCP server and optional telemetry backend use it to reach the same database.
 
 [Install Tokonoma](install.md#3-install) with the updated `values.yaml`; no prior bundled database installation is needed.
 
