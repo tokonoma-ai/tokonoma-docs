@@ -54,6 +54,14 @@ Use the local connection from [installation](install.md#4-verify), then open [th
 
 Keep these views on the direct localhost connection. Opening a view does not start setup or activate checks. Use Slack for finding feedback.
 
+## Ongoing monitoring and maintenance
+
+Tokonoma refreshes the monitoring plan on `runner.detection.refreshEvery`, every 7 days by default. It checks the current services and telemetry, proposes monitoring for newly discovered services, and records changes in the saved plan and refresh report. Use `@Tokonoma admin replan` when you need fresh discovery before the next scheduled refresh.
+
+Refresh can retune detectors that were degraded after repeated negative feedback. It validates revised checks and tests them against history before they can run. An unusable proposal leaves the detector degraded, so retuning does not guarantee restored coverage. This is separate from your choice to disable a detector; that choice is preserved when the detector carries into a new plan.
+
+With Slack delivery and `runner.digest.enabled` configured, the daily monitoring summary lists investigations worth a look and detectors repeatedly firing on known behavior. Open **Full record** for evidence or **Why these?** for the selection reasons. `@Tokonoma monitoring summary` requests a fresh report for the last 24 hours without replacing the scheduled report. See [Slack commands](slack-app.md#use-tokonoma-in-a-channel) for controls and request limits.
+
 ## Verify monitoring
 
 A ready runner pod does not prove monitoring is working. When Agentic Monitoring is enabled, confirm that setup completed for the intended scope and detector evaluations are running. Report missing telemetry access, incomplete setup, and inactive or degraded checks as coverage limitations.
