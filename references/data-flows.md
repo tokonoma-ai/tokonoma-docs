@@ -34,9 +34,9 @@ Your coding agent uses its own model provider. Tokonoma's MCP services and runne
 
 | Caller or feature | Destination | Data and purpose |
 | --- | --- | --- |
-| Tokonoma MCP services: memory analysis | Anthropic API when `credentials.anthropicApiKey` or `mcp.memoryLlm.apiKeySecret` is supplied and `mcp.memoryLlm.enabled` is true | Relevant saved record content to check for duplicates |
+| Tokonoma MCP services: duplicate review | Anthropic API when an Anthropic key is supplied (`credentials.anthropicApiKey` or `llm.apiKeySecret`) and `llm.serverFeatures` is not `false` | Record titles, summaries, bodies, and reference URLs to check for duplicates |
 | Native `@Tokonoma` Slack app | Slack API and Socket Mode; the interactive MCP service opens outbound connections | Invited-channel messages and history come in; requested records, session updates, and investigation results go to Slack |
-| Tokonoma MCP services: model-backed Slack features | Anthropic API through the memory model configuration | Relevant channel messages, session evidence, and memory content for questions, relevance checks, and timelines |
+| Tokonoma MCP services: model-backed Slack features | Anthropic API with the same key and `llm.serverFeatures` setting | Relevant channel messages, session evidence, and memory content for questions, relevance checks, and timelines |
 | Runner: monitoring and automatic investigations | Anthropic API | Service metadata, selected telemetry, alerts, retrieved records, and tool results used to configure monitoring, assess findings, and investigate; results are saved in Tokonoma and sent to configured Slack destinations |
 | Runner: external MCP connections | Configured Datadog, Axiom, or other compatible MCP endpoints | Permitted queries and returned telemetry or code context; query access is separate from incoming alert webhooks |
 | Grafana MCP adapter | Your existing Grafana, which can be private or externally hosted | Read-only queries and telemetry allowed by the Grafana service account; the runner connects to the adapter inside your cluster, and the agent and model receive the results |
@@ -44,7 +44,7 @@ Your coding agent uses its own model provider. Tokonoma's MCP services and runne
 | Operational telemetry | Configured Prometheus scrape targets or OpenTelemetry (OTLP) endpoint | Process metrics and traces; an external endpoint receives operational data |
 | Optional external authentication | The identity provider you configure | Human login or selected provider-backed machine verification; native internal machine login stays inside the cluster. Tokonoma holds OAuth tokens and related state |
 
-See [analysis configuration](memory-llm.md) for setup and maintenance controls.
+See [server model features](server-features.md) for setup and maintenance controls.
 
 Agentic monitoring is enabled in the example. It can query telemetry, make model calls, and start investigations without an incoming alert. Review [monitoring scope and access](agentic-monitoring.md) before installing.
 

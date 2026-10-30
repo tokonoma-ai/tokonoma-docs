@@ -9,6 +9,15 @@
 # references. See references/install.md and references/credentials.md.
 # Replace placeholders with verified values; agents ask for missing inputs.
 # PostgreSQL, local search embeddings and application images use chart defaults.
+llm:
+  # One Anthropic key serves the runner and the MCP server's model features
+  # (duplicate review, Slack triage, timelines); see references/server-features.md.
+  # Supply credentials.anthropicApiKey in the command, or an existing Secret:
+  # apiKeySecret:
+  #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
+  #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
+  # Leave serverFeatures unset; set false only to pause those features for maintenance.
+
 mcp:
   # Supply your issued license with --set-literal 'mcp.license=...', or use this existing Secret:
   # licenseSecret:
@@ -30,13 +39,6 @@ mcp:
   sibling:
     # Required: the runner's dedicated MCP instance, sharing your database.
     enabled: true
-  memoryLlm:
-    # Required. Uses the Anthropic API; the same key also serves the runner.
-    enabled: true
-    # Alternative to credentials.anthropicApiKey: an existing Anthropic key Secret.
-    # apiKeySecret:
-    #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
-    #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
   slack:
     # Optional incident coordination is off with compatible chart and application builds.
     # Applies to MCP, its sibling, and the runner; see references/slack-app.md.
@@ -78,13 +80,6 @@ runner:
   #   maxRunsPerDayCritical: 0
   # Includes monitoring findings; manual investigations remain available.
   # Details and resuming: references/alert-investigations.md#pause-automatic-investigations.
-
-  # The runner uses the Anthropic API only; credentials.anthropicApiKey serves both.
-  # For an existing Secret, configure this AND mcp.memoryLlm.apiKeySecret above:
-  # engine:
-  #   apiKeySecret:
-  #     name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
-  #     key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
 
   # Alert sources: the walkthrough supplies credentials.alertmanagerToken in the command.
   # Uncomment sources and only selected entries. Datadog needs no Alertmanager Secret.
