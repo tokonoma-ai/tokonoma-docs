@@ -33,6 +33,7 @@ settings:
   event_subscriptions:
     bot_events:
       - app_mention
+      - member_joined_channel
       - message.channels
       - message.groups
       - reaction_added

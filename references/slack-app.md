@@ -15,9 +15,11 @@ Follow [credential setup](credentials.md#supply-credentials-in-commands) when su
 3. Under **Basic Information > App-Level Tokens**, generate an `xapp-` token with the `connections:write` scope.
 4. Under **Install App**, install the app to your workspace and obtain the **Bot User OAuth Token** (`xoxb-`).
 
-For an existing app, update **App Manifest** with this manifest and reinstall the app to grant any added permissions. Save the current bot token; keep the app-level token unless you are rotating it.
+For an existing app, update **App Manifest** with this manifest. Reinstall if the change adds required permissions that are not already granted. Save the current bot token; keep the app-level token unless you are rotating it.
 
-The manifest enables Socket Mode, mentions, channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
+Channel-join welcomes require [Tokonoma v0.78.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.78.0) or newer. The manifest above includes `member_joined_channel` for new apps. For an existing app, add and save it under **Event Subscriptions > Subscribe to bot events**. Updating Tokonoma alone does not update an existing Slack app's subscriptions. Saving this subscription takes effect without reinstalling when the relevant permission is already granted: `channels:read` for public channels or `groups:read` for private channels. See Slack's [subscription and reinstall rules](https://docs.slack.dev/app-management/distribution/#when-is-a-reinstall-required).
+
+The manifest enables Socket Mode, mentions, membership and channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
 ## Save the connection settings
 
@@ -30,7 +32,7 @@ In `values.yaml`, uncomment the Slack settings from the [example](../examples/va
 
 For existing Secrets, use `mcp.slack.tokenSecret` instead of the two Slack arguments.
 
-In each public or private channel where you want Tokonoma, run `/invite @Tokonoma`. Create `#tokonoma-investigations` and invite the app there for runner results. This is the default results channel; set `mcp.slack.investigationsChannel` only for a different channel name.
+Choose an existing or new public or private `#tokonoma-investigations` channel for monitoring and runner results. Set `mcp.slack.investigationsChannel` only for a different channel name. Invite the app after it connects, as described below.
 
 For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration), including any changed token arguments and preserving other credentials.
 
@@ -42,18 +44,31 @@ When Slack is enabled, read the MCP logs on the administration workstation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Add the app to the designated monitoring channel to [receive its welcome](#receive-the-monitoring-welcome), and invite it to other channels where you want to use it. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |
 | `Slack listener NOT started` | Both tokens and the database must be configured. |
 | No reply in one channel | Invite the app to that channel. |
+| No welcome after adding the app | Check that Tokonoma is v0.78.0 or newer, the `member_joined_channel` subscription is saved, and the app joined the configured monitoring channel after the listener connected. Follow the [welcome checks](#receive-the-monitoring-welcome) below. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
 | Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `mcp.memoryLlm.enabled: true`. |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
 | Connection fails behind a proxy | Allow Slack API traffic and Socket Mode WebSocket upgrades. |
 
 For token changes, follow [credential rotation](credentials.md#renew-and-rotate), then repeat the Slack reply check above.
+
+### Receive the monitoring welcome
+
+After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. Only the app's own join to this configured channel triggers the welcome; another person joining or adding the app elsewhere does not.
+
+If a completed monitoring plan is available, Tokonoma posts an introduction first, then the formatted setup report as a second channel message. The full saved plan attaches to the report's thread. The report combines saved setup findings with current monitoring counts and coverage; its date identifies the plan. The attached plan remains a saved snapshot, so its detector statuses may differ from their current enable/disable state.
+
+If setup is incomplete, the saved plan is unavailable, or Tokonoma cannot read or prepare the report, it posts one standalone message containing its introduction and a paragraph saying the report is not ready. That message directs you to `@Tokonoma admin status` to check progress and anything that needs fixing. No report or plan is attached.
+
+If the runner cannot answer, the not-ready message can take about three minutes. A restart or Slack delivery failure can leave the welcome missing. Check `@Tokonoma admin status` and the connection checks above; once the listener is connected, remove and re-add the app to retry.
+
+The welcome does not start monitoring setup or generate a new plan. Later setup and daily reports arrive separately. Restarting Tokonoma does not welcome an app already in the channel, and a missed join does not produce a welcome later.
 
 ## Use Tokonoma in a channel
 
