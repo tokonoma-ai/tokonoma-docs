@@ -15,7 +15,7 @@ The bundled `grafanaMcp` adapter queries an existing Grafana. The separate `graf
 
 There is no bundled CloudWatch adapter. A separately supplied MCP server must meet the connection requirements below; enabling telemetry storage does not connect it.
 
-Memory analysis and the runner both use the Anthropic API. Verify model identifiers before changing them. See [memory analysis](memory-llm.md) and [data flows](data-flows.md).
+The MCP server's model features and the runner both use the Anthropic API. Verify model identifiers before changing them. See [server model features](server-features.md) and [data flows](data-flows.md).
 
 ## MCP connections
 

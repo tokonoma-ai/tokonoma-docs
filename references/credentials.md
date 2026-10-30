@@ -7,7 +7,7 @@ Prepare the credentials needed for your [installation](install.md#2-prepare-your
 | Credential | Where it comes from | Chart input | Needed for |
 | --- | --- | --- | --- |
 | Tokonoma license | [support@tokonoma.ai](mailto:support@tokonoma.ai) | `mcp.license` | Reading a memory's full body, including full-record reads in Slack and the UI |
-| Anthropic API key | Your Anthropic account | `credentials.anthropicApiKey` | Server-side memory analysis, Slack questions and timelines, and the runner |
+| Anthropic API key | Your Anthropic account | `credentials.anthropicApiKey` | The runner and the MCP server's model features: duplicate review, Slack triage, and timelines |
 | Slack bot token (`xoxb-`) | Your Slack app's **Install App** page | `credentials.slackBotToken` | Reading invited channels and posting as `@Tokonoma` |
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
 | TypeSafe API key (optional) | Your TypeSafe administrator | `runner.detection.judge.apiKeySecretRef` | The optional TypeSafe/Jev monitoring Judge; the runner uses its Anthropic engine instead when this reference is unset |
@@ -18,7 +18,7 @@ For alert delivery, generate an [Alertmanager receiver token](alert-investigatio
 
 Cluster names, endpoints, provider IDs and scopes are configuration, not additional secrets. Obtain them from the selected service's owner; keep nonsecret settings in `values.yaml`.
 
-The MCP server and runner share the Anthropic key unless you configure separate Secret references. Keep analysis enabled for normal operation. See [analysis maintenance](memory-llm.md#temporarily-stop-analysis) for temporary controls and [data flows](data-flows.md) for what reaches the provider.
+The MCP server and runner share one Anthropic key, supplied inline or through `llm.apiKeySecret`. Keep the server model features on for normal operation. See [maintenance](server-features.md#temporarily-stop-the-features) for temporary controls and [data flows](data-flows.md) for what reaches the provider.
 
 A valid Tokonoma license is required for full-body recalls, but not search, saving, or skill discovery. An API key cannot replace it and does not enable the runner.
 
@@ -56,9 +56,9 @@ install -d -m 700 "REPLACE_WITH_SECRET_DIRECTORY"
 
 ## Use existing Kubernetes Secrets
 
-Existing Secrets must be in the release namespace. Replace example names and keys with those supplied by the secret owner. Uncomment the matching Secret references in [values.yaml](../examples/values.yaml), preserving other settings. For license, analysis, Slack, and runner credentials, references override direct inputs. The example notes the separate Grafana precedence rule.
+Existing Secrets must be in the release namespace. Replace example names and keys with those supplied by the secret owner. Uncomment the matching Secret references in [values.yaml](../examples/values.yaml), preserving other settings. For license, Anthropic, Slack, and runner credentials, references override direct inputs. The example notes the separate Grafana precedence rule.
 
-References do not create Secrets. Prepare them before installing, using the namespace check below. `mcp.memoryLlm.apiKeySecret` does not configure the runner; supply both references when sharing that key.
+References do not create Secrets. Prepare them before installing, using the namespace check below. `llm.apiKeySecret` configures the Anthropic key for both the runner and the MCP server.
 
 ## Prepare the namespace for Secrets
 

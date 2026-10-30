@@ -49,7 +49,7 @@ Look for `slack socket mode connected`. Then send `@Tokonoma help` in an invited
 | `Slack listener NOT started` | Both tokens and the database must be configured. |
 | No reply in one channel | Invite the app to that channel. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
-| Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `mcp.memoryLlm.enabled: true`. |
+| Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `llm.serverFeatures` unset; see [server model features](server-features.md). |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
 | Connection fails behind a proxy | Allow Slack API traffic and Socket Mode WebSocket upgrades. |
 

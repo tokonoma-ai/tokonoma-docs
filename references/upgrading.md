@@ -88,6 +88,25 @@ Confirm readiness and `/health` with the [installation checks](install.md#4-veri
 
 Helm rollback restores chart resources and values, not database state, deleted objects, or revoked credentials. Review application and database compatibility before rolling back; use your backups when a state migration cannot be reversed.
 
+## One Anthropic key: 0.40.x to 0.41.0 or later
+
+From chart [0.41.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.41.0), one Anthropic key serves the whole installation. Supply it with `credentials.anthropicApiKey`, or name an existing Secret with `llm.apiKeySecret`. The runner and the MCP server both use it. `llm.serverFeatures: false` stops the [server model features](server-features.md) and keeps the key.
+
+Values from 0.40.x keep working. The install notes printed by Helm name each older field in use and its replacement. Move them when convenient:
+
+| Field | Replacement |
+|---|---|
+| `runner.engine.apiKeySecret` | `llm.apiKeySecret` |
+| `mcp.memoryLlm.apiKeySecret` | `llm.apiKeySecret` |
+| `mcp.memoryLlm.enabled: false` | `llm.serverFeatures: false` |
+| `mcp.memoryLlm.model` | `llm.model` |
+
+If both older Secret fields name different Secrets, each component keeps its own until you replace them with `llm.apiKeySecret`.
+
+If the key is set only in `runner.engine.apiKeySecret` with the runner enabled, the MCP server now uses it too: duplicate review and Slack features turn on, and both MCP deployments restart once. Set `llm.serverFeatures: false` to keep them off.
+
+Without an Anthropic API key, for example when the runner's only model credential is in `runner.extraEnv`, the server model features stay off and the install notes say so.
+
 ## Grafana adapter: 0.35.x to 0.36.0 or later
 
 The adapter moved to the upstream `grafana-mcp` subchart. Old keys are not automatically translated. Before upgrading an enabled adapter, migrate these values:

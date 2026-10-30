@@ -146,7 +146,7 @@ Record the target, versions, saved configuration, credential locations without s
 
 ### Check monitoring and integrations
 
-Check [analysis configuration](memory-llm.md), then complete these checks for enabled features:
+Check the [server model features](server-features.md#verify-after-installation), then complete these checks for enabled features:
 
 1. Confirm [monitoring setup and coverage](agentic-monitoring.md#verify-monitoring): setup completed for the intended scope, checks are active, and evaluation counters advance. Report inactive or degraded checks as coverage gaps.
 2. Complete the [Slack connection checks](slack-app.md#verify-the-connection) if enabled.
