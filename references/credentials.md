@@ -32,7 +32,7 @@ With generated machine credentials, the first upgrade of a new installation rest
 
 The default machine Secret is `toko-runner-oauth`, with keys `clientId` and `clientSecret`. It authenticates the runner to Tokonoma; it is not an employee login or an integration credential. Do not distribute it to coding agents. Changing its client ID changes the identity that owns private investigation records.
 
-Preserve a recoverable copy of this Secret. If it is lost, restore it before the next Helm run: an absent Secret follows the initial-install path and gets a new credential. An existing retained Secret with missing keys, a mismatched client ID, or an empty or whitespace-padded secret is rejected until repaired or restored.
+Preserve a recoverable copy of this Secret. If it is lost, restore it before the next Helm run to avoid generating a new credential. An existing retained Secret with missing keys, a mismatched client ID, or an empty or whitespace-padded secret is rejected until repaired or restored.
 
 The Grafana caller token authenticates the runner to the adapter. It does not replace the customer-supplied Grafana Viewer token. [Offline rendering](#offline-rendering) needs stable credentials supplied separately.
 
@@ -98,7 +98,7 @@ runner:
         key: apiKey
 ```
 
-The chart supplies `TOKO_RUNNER_TYPESAFE_API_KEY` to the runner from that Secret. [Apply the configuration change](upgrading.md#before-changing-configuration), allow HTTPS to `api.typesafe.ai`, and repeat [monitoring verification](agentic-monitoring.md#verify-monitoring). Changing the contents of this external Secret requires a runner restart; it does not rotate the Anthropic key.
+[Apply the configuration change](upgrading.md#before-changing-configuration), allow HTTPS to `api.typesafe.ai`, and repeat [monitoring verification](agentic-monitoring.md#verify-monitoring). Changing the contents of this external Secret requires a runner restart; it does not rotate the Anthropic key.
 
 ## Offline rendering
 
@@ -110,7 +110,7 @@ For external references, use `postgres.auth.existingSecret` with `postgres.auth.
 
 For direct inputs, [apply the configuration change](upgrading.md#before-changing-configuration) with a `--set-literal` argument for each changed credential. Changed `credentials.anthropicApiKey`, `credentials.slackBotToken`, `credentials.slackAppToken`, and `credentials.alertmanagerToken` values trigger their consumers' rollouts automatically. Externally managed Secrets require explicit restarts.
 
-To rotate the generated machine login, keep its Secret name and `clientId`, replace only `clientSecret` through your secret-management workflow, then [apply the configuration change](upgrading.md#before-changing-configuration). Use a nonempty secret without leading or trailing whitespace. Helm reads the retained Secret and rolls both MCP instances and the runner. Do not delete the Secret to rotate it. For an explicit native client, update its `secretRef.checksum` and follow [configured-client rotation](oauth.md#choose-oauth-client-admission).
+To rotate the generated machine login, keep its Secret name and `clientId`, replace only `clientSecret` through your secret-management workflow, then [apply the configuration change](upgrading.md#before-changing-configuration). Use a nonempty secret without leading or trailing whitespace. The configuration change restarts both MCP instances and the runner. Do not delete the Secret to rotate it. For an explicit native client, update its `secretRef.checksum` and follow [configured-client rotation](oauth.md#choose-oauth-client-admission).
 
 Use this table for changes that need a manual restart. Names shown are the defaults; substitute any configured overrides.
 

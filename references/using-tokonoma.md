@@ -22,7 +22,7 @@ The `investigate` skill looks for prior investigations and applicable procedures
 
 Expect an affected service and time window, evidence for the conclusion, its confidence, remaining gaps, a recommended action, and a saved or cited record identifier. A result may conclude that the cause is still unknown. In Slack, the runner posts its result in a thread with a record reference and **Full record** button when a record is available.
 
-The following is an **illustrative summary**, not output from a real incident or an exact UI template:
+Illustrative summary:
 
 ```text
 Scope: checkout, 14:00–14:30 UTC
@@ -55,7 +55,7 @@ To retrieve it later, ask `What has the team learned about checkout connection-p
 
 ## Work with teammates in Slack
 
-Use [Slack commands](slack-app.md#use-tokonoma-in-a-channel) to request a runner investigation or read a saved result. [Incident coordination](slack-app.md#optional-incident-sessions) is optional and off by default for Slack, coding agents, and the runner. Ordinary investigations and their saved outcomes remain available. With incident coordination off, `@Tokonoma` mentions run only supported exact commands; other input returns help. When enabled, start a shared session, see its timeline, and save the closed session. Give the posted `TKNM-<N>` handoff to each teammate's coding agent so their work joins the same session.
+Use [Slack commands](slack-app.md#use-tokonoma-in-a-channel) to request an investigation or read a saved result. [Incident coordination](slack-app.md#optional-incident-sessions) is optional and off by default. When enabled, start a shared session, review its timeline, and save it when closed. Give the posted `TKNM-<N>` handoff to each teammate's coding agent to join the session.
 
 Review a detector's scope, query, and findings before enabling it. When evidence supports a recurrence, Tokonoma links the finding to the earlier investigation. Other eligible findings can start a new investigation within your configured limits. [Monitoring verification](agentic-monitoring.md#verify-monitoring) explains how to identify coverage gaps.
 
@@ -66,9 +66,9 @@ Review a detector's scope, query, and findings before enabling it. When evidence
 | Record or memory | A saved item, such as an investigation or procedure, with a searchable summary and detailed body. |
 | Investigation | Evidence, hypotheses, dead ends, and a diagnostic outcome for a particular incident or question. |
 | Procedure | Reusable troubleshooting or remediation steps, with a scope and trigger for when to use them. |
-| Recall | A licensed read of a record body. Search summaries and full-body reads are distinct; body reads pass through the license meter. |
+| Recall | Reading a record's full body rather than its search summary; requires a valid license. |
 | Detector | A configured check that the runner evaluates against telemetry to find significant changes. |
 | Runner | The service that runs Agentic Monitoring and automatic investigations using connected tools. |
-| Judge | The decision step that compares grouped detector signals with known issues and assesses recurrence and severity. It helps decide whether to investigate or reuse a prior record. |
+| Judge | Checks whether monitoring findings repeat a known issue and assesses their severity. Helps decide whether to investigate or link to an earlier investigation. |
 
-New records are shared with everyone in the organization by default (`toko:everyone`). Choose private or an available identity-provider group when needed. The Slack app can access organization-wide records, with the [sharing limits described in its guide](slack-app.md#channel-access-and-shared-records). Keep secrets out of records.
+New records are shared with everyone in the organization by default. Choose private or an available identity-provider group when needed. The Slack app can access organization-wide records, with the [sharing limits described in its guide](slack-app.md#channel-access-and-shared-records). Keep secrets out of records.

@@ -36,7 +36,7 @@ After Helm reports `deployed`, use the [installation health checks](install.md#4
 
 The chart's application image default is `latest`, with image pull policy `Always`. A restarted pod can therefore pull a newer application build even when the chart version stays the same. Configuration changes that restart workloads can have this effect too. The unattended MCP and runner inherit the primary MCP image unless overridden.
 
-Use the chart's application image defaults. Record the deployed chart version and actual image digest in the installation report so changes can be traced without fixing an installation version in these commands.
+Use the chart's application image defaults. Record the deployed chart version and actual image digest in the installation report.
 
 ## Before upgrading
 
@@ -96,7 +96,7 @@ The first upgrade from chart 0.39.0 or earlier to 0.40.0 or later restarts both 
 
 ## Grafana adapter: 0.35.x to 0.36.0 or later
 
-The adapter moved to the upstream `grafana-mcp` subchart. Old keys are not automatically translated. Before upgrading an enabled adapter, migrate these values:
+Before upgrading an enabled Grafana adapter from chart 0.35.x, migrate these values. Old keys are not automatically translated:
 
 | Old key | Current key |
 |---|---|
@@ -125,7 +125,7 @@ Use only one entry if you use one source. Lists replace rather than append. An I
 
 ## Native machine authentication: release prerequisite
 
-The generated runner login requires application [v0.76.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.76.0) or later and chart [0.39.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.39.0) or later. The application accepts native configured `client_credentials` clients; the chart provisions and connects the runner client. Application [v0.77.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.77.0) with chart 0.39.0 is the verified release pair for this guide. Chart 0.38.0 does not provision the native client.
+The generated runner login requires application [v0.76.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.76.0) or later and chart [0.39.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.39.0) or later.
 
 Chart 0.39.0 also permits monitoring-only or Slack-requested investigations without an alert receiver token. With no alert sender, keep `runner.detection.enabled` or `runner.destinations.slackApp.enabled` true. Preserve credentials for receivers that are still in use; removing an Alertmanager or Datadog token disables that receiver.
 
@@ -154,7 +154,7 @@ For installations predating these changes, review the complete target values wit
 
 ## Retired meeting capture: charts 0.16.0 through 0.17.1
 
-The target chart removes the Google Meet and Zoom attendee. A pre-upgrade cleanup hook stops active attendees and deletes their labeled Jobs, Pods, and per-meeting Secrets. Those deleted resources cannot be recovered by Helm rollback.
+The target chart removes the Google Meet and Zoom attendee. Upgrading stops active attendees and deletes their Jobs, Pods, and per-meeting Secrets. Those deleted resources cannot be recovered by Helm rollback.
 
 Notify participants before upgrading. Keep the old `meetingCapture.enabled` and namespace settings in the supplied values for this upgrade so automatic cleanup can find them. If you remove those settings, explicitly supply the old namespace and enable cleanup:
 

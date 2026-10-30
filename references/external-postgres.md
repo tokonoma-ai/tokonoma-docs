@@ -29,9 +29,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 Confirm the role, database, and `vector` extension exist before starting Tokonoma; the server does not create the extension. Protect the password in database session history.
 
-The `tokonoma` role must own the database and be able to create schemas and tables. Tokonoma creates and updates its schema at startup.
+The `tokonoma` role must own the database and be able to create schemas and tables.
 
-When Tokonoma starts after a PostgreSQL or pgvector upgrade, it checks for required extension updates and index rebuilds. If startup logs list commands that need administrator privileges, have the database administrator run them.
+After a PostgreSQL or pgvector upgrade, restart the MCP deployments and check their startup logs. Have the database administrator run any listed commands that require administrator privileges.
 
 ## 2. Create the password Secret
 
