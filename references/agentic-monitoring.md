@@ -26,22 +26,26 @@ For a new release, finish preparation and use the [installation command](install
 
 ## Check setup and scope
 
-Monitoring starts setup automatically when first enabled. With Slack connected, send these commands in a channel where Tokonoma is invited:
+Monitoring starts setup automatically when first enabled. Operators can check it with these commands in a channel where Tokonoma is invited:
 
 ```text
-@Tokonoma setup
-@Tokonoma detectors
+@Tokonoma admin status
+@Tokonoma admin get plan
 ```
 
-The setup response reports progress, missing access, scope questions, or failures. Confirm that the reported cluster, namespaces, and services match your chosen scope. The detector list shows active and inactive checks; report coverage gaps rather than assuming every service is monitored.
+The status response reports progress, missing access, scope questions, or failures. Confirm that the reported cluster, namespaces, and services match your chosen scope. The plan lists checks and their IDs as a saved setup or refresh snapshot. Its statuses may differ from live detector state after `enable detector` or `disable detector`; report coverage gaps rather than assuming every service is monitored. `@Tokonoma admin` lists the operator commands.
 
 If setup stopped, correct the reported configuration or access problem. To request setup again:
 
 ```text
-@Tokonoma detectors setup
+@Tokonoma admin replan
 ```
 
 ## Read the monitoring views
+
+In Slack, `@Tokonoma monitoring summary` requests a fresh report for the last 24 hours in the investigations channel. Operators can retrieve the saved plan with `@Tokonoma admin get plan`. See [Slack commands](slack-app.md#use-tokonoma-in-a-channel).
+
+For unwanted or unhelpful monitoring, use `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID` with an ID from the report or plan. It stops future evaluations; an evaluation already running may finish. `enable detector` reverses a disable unless the detector has since been retired. Useful or not useful feedback on a result rates that investigation and is separate from disabling a detector.
 
 Use the local connection from [installation](install.md#4-verify), then open [the local UI](http://localhost:8000/ui/) and choose **Agentic Monitoring**:
 

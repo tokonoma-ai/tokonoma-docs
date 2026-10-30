@@ -37,16 +37,19 @@ mcp:
     # apiKeySecret:
     #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
     #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
-  # Slack: follow references/slack-app.md and supply both Slack tokens in the command.
-  # Uncomment this section and runner.destinations.slackApp below for Slack results.
-  # slack:
-  #   autoRecallEnabled: false # Immediate recall replies are separate from investigations.
-  #   investigationsChannel: tokonoma-investigations # Invite the app to this channel.
-  #   # Existing Secret alternative to the two token arguments:
-  #   # tokenSecret:
-  #   #   name: REPLACE_WITH_SLACK_SECRET_NAME
-  #   #   botTokenKey: REPLACE_WITH_SLACK_BOT_TOKEN_KEY
-  #   #   appTokenKey: REPLACE_WITH_SLACK_APP_TOKEN_KEY
+  slack:
+    # Optional incident coordination is off with compatible chart and application builds.
+    # Applies to MCP, its sibling, and the runner; see references/slack-app.md.
+    # Remove SLACK_MULTIPLAYER_ENABLED entries from both extraEnv lists.
+    multiplayerEnabled: false
+    # For Slack, supply both tokens and enable runner.destinations.slackApp below.
+    # autoRecallEnabled: false # Immediate recall replies are separate from investigations.
+    # investigationsChannel: tokonoma-investigations # Invite the app to this channel.
+    # Existing Secret alternative to the two token arguments:
+    # tokenSecret:
+    #   name: REPLACE_WITH_SLACK_SECRET_NAME
+    #   botTokenKey: REPLACE_WITH_SLACK_BOT_TOKEN_KEY
+    #   appTokenKey: REPLACE_WITH_SLACK_APP_TOKEN_KEY
 
 runner:
   # Required: needs the sibling, model credentials, and monitoring, Slack requests, or an alert source.

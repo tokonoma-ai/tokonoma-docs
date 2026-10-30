@@ -251,7 +251,7 @@ Use one operator-approved test monitor that matches the notification rule. It mu
 4. With Slack configured, find the test alert's announcement and result thread. Confirm the summary and linked memory record correspond to the test. Without Slack, find the saved investigation through your connected coding agent as described in [runner verification](alert-investigations.md#send-one-controlled-alert-and-verify-its-result). Accepted delivery alone does not prove completion.
 5. Return the test monitor to its normal state and verify the recovery path you selected. Stop the port-forward with Ctrl-C.
 
-`unauthorized`, `too_large`, `malformed` and `intake_error` count rejected deliveries. The runner logs rejected deliveries only. Use metrics to check accepted deliveries. `@Tokonoma setup` also shows the last Datadog delivery and its rejection reason, if any.
+`unauthorized`, `too_large`, `malformed` and `intake_error` count rejected deliveries. The runner logs rejected deliveries only. Use metrics to check accepted deliveries. `@Tokonoma admin status` also shows the last Datadog delivery and its rejection reason, if any.
 
 ## Rotating the token
 
@@ -286,7 +286,7 @@ your users out of the MCP.
 ## Troubleshooting
 
 The runner answers each rejected delivery with a status code and counts it in
-`runner_deliveries_total{source="datadog"}`; `@Tokonoma setup` shows the last rejection's reason.
+`runner_deliveries_total{source="datadog"}`; `@Tokonoma admin status` shows the last rejection's reason.
 
 | Symptom | Cause |
 |---|---|

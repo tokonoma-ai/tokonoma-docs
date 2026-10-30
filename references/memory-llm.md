@@ -3,7 +3,7 @@
 Memory analysis is required for a complete Tokonoma installation. The [values example](../examples/values.yaml) enables `mcp.memoryLlm.enabled: true`; supply an Anthropic key before installation. Analysis supports:
 
 - Duplicate review: search groups redundant records and warns when records disagree.
-- Slack features: interpreting `@Tokonoma` questions and, when automatic recall is enabled, deciding which memories to post in response to alerts.
+- Slack features: interpreting `@Tokonoma` questions when [multiplayer is enabled](slack-app.md#optional-incident-sessions) and, when automatic recall is enabled, deciding which memories to post in response to alerts. With multiplayer off, unmatched mentions return help without model interpretation or memory recall.
 
 Both send relevant content to Anthropic and share this switch. Only Anthropic API credentials are supported.
 
@@ -28,7 +28,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deploy toko-mcp \
   -o jsonpath='{.spec.template.spec.containers[?(@.name=="mcp")].env[?(@.name=="MEMORY_LLM_PROVIDER")].value}'
 ```
 
-Expected output: `anthropic`. This confirms the configured provider, not a successful model request. Check `@Tokonoma setup` if the [Slack app](slack-app.md) is installed.
+Expected output: `anthropic`. This confirms the configured provider, not a successful model request. Check `@Tokonoma admin status` if the [Slack app](slack-app.md) is installed.
 
 ## Temporarily stop analysis
 
