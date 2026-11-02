@@ -84,7 +84,11 @@ With `mcp.slack.multiplayerEnabled: false`, use the exact commands below. Other 
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-Recurring findings show how to stop future checks. Use the complete detector IDs in the command, or consult the saved plan for IDs that do not fit.
+Daily monitoring summaries separate **Findings to review** from **Recurring detections**. Findings use saved investigation titles where available, with **Full record** beside linked entries. Slack summaries omit detector-ID captions; detector details remain in the web views and saved records, and IDs remain in the stop commands. **Why?** beside the findings heading explains the selection. Recurring entries retain cadence, occurrence counts and first/latest times when available; their explanation can combine current signals with dated conclusions from earlier investigations. Recurring does not mean resolved, human-triaged, or newly investigated on every occurrence. The web Summaries tab uses the same saved recurring titles.
+
+Oversized daily and setup/monitoring reports continue directly in the same Slack thread. They keep complete finding groups together when possible, without repeating the report title or Why button or adding page-count labels. A single group or entry that exceeds Slack's limits can span replies; supplied evidence and remediation are not discarded to fit the layout.
+
+Recurring detections show how to stop future checks. Use the complete detector IDs in the command, or consult the saved plan for IDs that do not fit.
 
 Use `disable detector` for unwanted or unhelpful monitoring and `enable detector` to resume the same checks. The choice is kept when the detector is carried into a new plan. Repeated commands are safe; obsolete or superseded IDs are unavailable. Work already in flight may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
 
@@ -101,6 +105,8 @@ Use `@Tokonoma admin` for operator help. Anyone in an invited channel can run th
 | Read the monitoring plan | `@Tokonoma admin get plan` attaches the saved monitoring plan in the request's thread without running setup. If no plan is available, it says so. |
 
 The plan includes detector IDs for `enable detector` and `disable detector`. It is a saved setup or refresh snapshot: its statuses may differ from live detector state after those commands.
+
+If Slack cannot attach the saved plan because app permissions are incomplete, check `@Tokonoma admin status`, apply the full [Slack app manifest](#create-the-app), and reinstall the app to authorize its permissions before retrying `@Tokonoma admin get plan`. Do not add isolated scopes as a substitute for the complete manifest.
 
 ### Optional incident sessions
 
