@@ -110,8 +110,6 @@ Use `@Tokonoma admin` for operator help. Anyone in an invited channel can run th
 
 The plan includes detector IDs for `enable detector` and `disable detector`. It is a saved setup or refresh snapshot: its statuses may differ from live detector state after those commands.
 
-If Slack cannot attach the saved plan because app permissions are incomplete, check `@Tokonoma admin status`, apply the full [Slack app manifest](#create-the-app), and reinstall the app to authorize its permissions before retrying `@Tokonoma admin get plan`. Do not add isolated scopes as a substitute for the complete manifest. Any inline findings and coverage remain visible with an upload warning; the complete plan is not pasted into the report.
-
 ### Optional incident sessions
 
 Incident coordination is off by default. Enable it with `mcp.slack.multiplayerEnabled`.
