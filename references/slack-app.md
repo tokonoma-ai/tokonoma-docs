@@ -74,7 +74,7 @@ The welcome does not start monitoring setup or generate a new plan. Later setup 
 
 Mention the app in a channel where it has been invited. Run `@Tokonoma help` for the commands supported by your installed version.
 
-Absolute report times and record dates display in each reader's device time zone, independently of the runner machine's time zone. Stored timestamps, telemetry query windows, and configured schedules remain UTC. Attached documents and timestamp fallback text remain UTC; time-of-day patterns without a specific date remain in UTC.
+Slack app replies and incoming webhook messages display complete UTC or offset timestamps in each reader's device time zone, independently of the runner. Stored timestamps, telemetry query windows, and schedules remain UTC. Downloaded files, code samples, and URLs stay literal. Incomplete or undated time patterns retain their source time zone; timestamp fallback text stays UTC.
 
 With `mcp.slack.multiplayerEnabled: false`, use the exact commands below. Other input, including ordinary questions and incomplete commands, returns help without model interpretation or memory recall.
 
