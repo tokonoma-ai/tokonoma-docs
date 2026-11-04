@@ -66,7 +66,7 @@ For token changes, follow [credential rotation](credentials.md#renew-and-rotate)
 
 After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. Tokonoma requests one welcome when it first observes the app in the configured channel, including membership already present at startup or recognized after a channel rename. Another person joining or adding the app elsewhere does not trigger it.
 
-Automatic messages from before that membership is recognized are dropped from Slack delivery, including results for older firings that finish later. After the welcome, new firings and daily summaries post as they come.
+Automatic messages from before the app joined are dropped from Slack delivery, including results for older firings that finish later. If Slack has not provided a join time, Tokonoma uses the time it first recognized membership. After the welcome, new firings and daily summaries post as they come.
 
 If a completed monitoring plan is available, Tokonoma posts an introduction first, then the formatted setup report as a second channel message. The full saved plan attaches to the report's thread. The report combines saved setup findings with current monitoring counts and coverage; its date identifies the plan. The attached plan remains a saved snapshot, so its detector statuses may differ from their current enable/disable state.
 
