@@ -45,6 +45,20 @@ REPLACE_WITH_CLUSTER / REPLACE_WITH_NAMESPACE over the last hour.
 
 `check-health` produces a service table with **Healthy**, **Concerns**, or **Unknown** and a reason for each. It compares current signals with baselines from procedures and prior investigations where available. It reports missing evidence, including when no metric tool is available to assess saturation. This is a read-only snapshot; it does not save a new investigation. Ask for `investigate` on a concern that needs diagnosis.
 
+## Review monitoring in your coding agent
+
+When your connected server lists `list_daily_summaries` and `get_detector_review`, ask:
+
+```text
+Show the latest stored monitoring summary from Tokonoma. Review the detectors
+and saved firings for the services it mentions, then explain what needs a
+look and any gaps in coverage. Distinguish saved evidence from current health.
+```
+
+`list_daily_summaries` returns the latest stored scheduled or requested summary by default, with its reporting window in UTC. To browse older summaries, request up to 30 with `limit` and pass the returned `next` value as `before`. These reads do not generate a new summary. If a source investigation is unavailable to your login, the summary returns metadata without its prose.
+
+`get_detector_review` returns saved detector configuration, status, and firings. It lists available scopes; use `scope_key` to choose one. These reads do not evaluate detectors or change their state. An empty findings list does not establish that a service is healthy. Ask a follow-up about a finding or use `check-health` for current evidence. See [monitoring controls and verification](agentic-monitoring.md#read-the-monitoring-views).
+
 ## Add and reuse team knowledge
 
 Run `Run Tokonoma onboard.` to select historical incidents, prior agent sessions, or runbooks to import. A runbook becomes a procedure; an incident becomes an investigation. You can skip any step. See [coding-agent onboarding](coding-agents.md#3-onboard-your-coding-agent).
