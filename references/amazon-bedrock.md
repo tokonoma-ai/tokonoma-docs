@@ -72,7 +72,9 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deploy toko-mcp \
 
 Expected output: `bedrock`. This confirms the configuration, not a successful model call, so run a test investigation.
 
-`@Tokonoma admin status` cannot probe Bedrock access. Its Models section shows **Needs attention** with lines saying access is not probed. That is expected on a healthy installation. A missing credential reads differently: it says model access is not configured.
+Then send `@Tokonoma admin status`. With toko-mcp 0.85.0 or later, the runner and the MCP server each check access by asking the model for one token, and a healthy installation shows **Models: Ready**. The runner checks hourly and the MCP server checks on each status request. AWS bills these small calls.
+
+On toko-mcp 0.84.0, status cannot check Bedrock access. Its Models section shows **Needs attention** with lines saying access is not checked, which is expected on that version. A missing credential reads differently: it says model access is not configured.
 
 ## Troubleshooting
 
@@ -81,6 +83,9 @@ Expected output: `bedrock`. This confirms the configuration, not a successful mo
 | `Invocation of model ID anthropic.claude-… with on-demand throughput isn't supported` | The `anthropic.` form of a model identifier | Use the bare identifier, or a region-prefixed profile such as `us.anthropic.claude-sonnet-5-5` |
 | `The provided model identifier is invalid` | The identifier doesn't exist in this region | Check it with the command above |
 | Runner works, Slack questions and duplicate review don't | toko-mcp image older than 0.84.0, or a model older than Claude 4.7 | Upgrade the image or choose a newer model |
+| Status says Bedrock rejected the credentials | The key expired, was revoked, or isn't allowed to use the model | [Rotate the key](credentials.md#renew-and-rotate) or fix its permissions |
+| Status says Bedrock cannot call or invoke the model | The region doesn't offer it, or the MCP server's model is older than Claude 4.7 | Check it with the command above, or choose a newer model |
+| Status says access could not be verified | Throttling, a Bedrock error, or no network path to Bedrock | Check the pod's connectivity to Bedrock and your quota, then check status again |
 | Failures start after working for a while | The key expired | [Rotate the key](credentials.md#renew-and-rotate) |
 | Throttling errors | Your account's Bedrock quota | Request a quota increase from AWS |
 
