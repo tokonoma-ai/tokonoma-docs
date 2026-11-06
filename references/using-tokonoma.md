@@ -55,7 +55,7 @@ and recurring detections, and include the source investigation IDs so we can
 discuss any item. Distinguish saved evidence from current health.
 ```
 
-`list_daily_summaries` returns the latest stored scheduled or requested summary by default, with its reporting window in UTC. Set `limit` to request up to 30 recent reports, newest first. Reading them does not generate a new summary or change monitoring state. If a source investigation is unavailable to your login, the summary returns metadata without its prose.
+`list_daily_summaries` returns the latest stored scheduled or requested summary by default, with its reporting window in UTC. Set `limit` to request up to 30 recent reports, newest first. It is available on the end-user MCP instance and excluded from the runner's unattended instance. Reading reports does not generate a new summary or change monitoring state. If a source investigation is unavailable to your login, the summary returns metadata without its prose.
 
 Findings and recurring detections include source investigation IDs when retained. Ask your agent to fetch a source with `memory_fetch_body` for a follow-up; normal record access checks and recall metering apply. An empty findings list does not establish that a service is healthy. Use `check-health` for current evidence. See [monitoring controls and verification](agentic-monitoring.md#read-the-monitoring-views).
 
