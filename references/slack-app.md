@@ -74,7 +74,7 @@ If setup is incomplete, the saved plan is unavailable, or Tokonoma cannot read o
 
 If the runner cannot answer, the not-ready message can take about three minutes. Check `@Tokonoma admin status` and the connection checks above. Transient Slack delivery failures retain the existing retries.
 
-The welcome does not start monitoring setup, call a model, or generate a new plan. Later setup and daily reports arrive separately. An ordinary server or runner restart resumes pending output without another startup welcome and retains any recorded activation cutoff. Upgrades preserve pending output when retained delivery records or Tokonoma messages show prior Slack activity; without either, the connection is treated as first activation.
+The welcome does not start monitoring setup, call a model, or generate a new plan. Later setup and daily reports arrive separately. After the first activation, ordinary server and runner restarts resume pending output using the same cutoff. Restarting alone does not trigger another welcome.
 
 ## Use Tokonoma in a channel
 
