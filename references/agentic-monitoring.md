@@ -45,7 +45,7 @@ If setup stopped, correct the reported configuration or access problem. To reque
 
 In Slack, `@Tokonoma monitoring summary` requests a fresh report for the last 24 hours in the investigations channel. Operators can retrieve the saved plan with `@Tokonoma admin get plan`. See [Slack commands](slack-app.md#use-tokonoma-in-a-channel).
 
-For a brief in your coding agent, use [the monitoring review tools](using-tokonoma.md#review-monitoring-in-your-coding-agent) when your connected server lists them. They read stored summaries, detector configuration, and saved firings without starting a new report or evaluation.
+For a brief in your coding agent, use [`list_daily_summaries`](using-tokonoma.md#review-monitoring-in-your-coding-agent) when your connected server lists it. It reads stored reports and their source investigation IDs without starting a new report or evaluation.
 
 For unwanted or unhelpful monitoring, use `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID` with an ID from the report or plan. It stops future evaluations; an evaluation already running may finish. `enable detector` reverses a disable unless the detector has since been retired. Useful or not useful feedback on a result rates that investigation and is separate from disabling a detector.
 

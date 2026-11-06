@@ -47,17 +47,17 @@ REPLACE_WITH_CLUSTER / REPLACE_WITH_NAMESPACE over the last hour.
 
 ## Review monitoring in your coding agent
 
-When your connected server lists `list_daily_summaries` and `get_detector_review`, ask:
+When your connected server lists `list_daily_summaries`, ask:
 
 ```text
-Show the latest stored monitoring summary from Tokonoma. Review the detectors
-and saved firings for the services it mentions, then explain what needs a
-look and any gaps in coverage. Distinguish saved evidence from current health.
+Show the latest stored monitoring summary from Tokonoma. Explain its findings
+and recurring detections, and include the source investigation IDs so we can
+discuss any item. Distinguish saved evidence from current health.
 ```
 
-`list_daily_summaries` returns the latest stored scheduled or requested summary by default, with its reporting window in UTC. To browse older summaries, request up to 30 with `limit` and pass the returned `next` value as `before`. These reads do not generate a new summary. If a source investigation is unavailable to your login, the summary returns metadata without its prose.
+`list_daily_summaries` returns the latest stored scheduled or requested summary by default, with its reporting window in UTC. Set `limit` to request up to 30 recent reports, newest first. Reading them does not generate a new summary or change monitoring state. If a source investigation is unavailable to your login, the summary returns metadata without its prose.
 
-`get_detector_review` returns saved detector configuration, status, and firings. It lists available scopes; use `scope_key` to choose one. These reads do not evaluate detectors or change their state. An empty findings list does not establish that a service is healthy. Ask a follow-up about a finding or use `check-health` for current evidence. See [monitoring controls and verification](agentic-monitoring.md#read-the-monitoring-views).
+Findings and recurring detections include source investigation IDs when retained. Ask your agent to fetch a source with `memory_fetch_body` for a follow-up; normal record access checks and recall metering apply. An empty findings list does not establish that a service is healthy. Use `check-health` for current evidence. See [monitoring controls and verification](agentic-monitoring.md#read-the-monitoring-views).
 
 ## Add and reuse team knowledge
 
