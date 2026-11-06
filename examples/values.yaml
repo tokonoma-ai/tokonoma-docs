@@ -16,6 +16,12 @@ llm:
   # apiKeySecret:
   #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
   #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
+  # On Amazon Bedrock, see references/amazon-bedrock.md:
+  # provider: bedrock
+  # region: REPLACE_WITH_REGION
+  # apiKeySecret:
+  #   name: REPLACE_WITH_BEDROCK_SECRET_NAME
+  #   key: REPLACE_WITH_BEDROCK_SECRET_KEY
   # Leave serverFeatures unset; set false only to pause those features for maintenance.
 
 mcp:

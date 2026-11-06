@@ -1,12 +1,12 @@
 # Server model features
 
-The MCP server makes its own Anthropic API calls for these features:
+The MCP server makes its own model calls for these features, to the Anthropic API or [Amazon Bedrock](amazon-bedrock.md):
 
 - Duplicate review: search groups redundant records and warns when records disagree.
 - Slack triage: interpreting `@Tokonoma` questions when [multiplayer is enabled](slack-app.md#optional-incident-sessions) and, when automatic recall is enabled, deciding which memories to post in response to alerts. With multiplayer off, unmatched mentions return help without model interpretation or memory recall.
 - Slack incident timelines, when multiplayer is enabled.
 
-These features are required for a complete Tokonoma installation. They use the same Anthropic API key as the runner and turn on whenever the installation has that key. Only Anthropic API credentials are supported. This guide applies to chart [0.41.0](upgrading.md#one-anthropic-key-040x-to-0410-or-later) or later.
+These features are required for a complete Tokonoma installation. They use the same key as the runner and turn on whenever the installation has that key. Only Anthropic API and Amazon Bedrock credentials are supported. This guide applies to chart [0.41.0](upgrading.md#one-anthropic-key-040x-to-0410-or-later) or later.
 
 ## If the features are off
 
@@ -16,7 +16,7 @@ The features are also off when the installation has no Anthropic API key, for ex
 
 ## Configure the key
 
-One Anthropic key serves the whole installation. Supply it in one of two ways:
+One key serves the whole installation. On Bedrock, follow [Amazon Bedrock](amazon-bedrock.md). For an Anthropic key, use one of two ways:
 
 - Inline: follow [credential setup](credentials.md#supply-credentials-in-commands) and pass `--set-literal 'credentials.anthropicApiKey=REPLACE_WITH_ANTHROPIC_API_KEY'` through the [installation command](install.md#3-install) or [configuration change](upgrading.md#before-changing-configuration). The chart creates the Secret. Fill the key placeholder locally, not in chat.
 - Existing Secret: set `llm.apiKeySecret` as shown in [values.yaml](../examples/values.yaml); see [existing Secret setup](credentials.md#use-existing-kubernetes-secrets). `llm.apiKeySecret` takes precedence over `credentials.anthropicApiKey`.
@@ -32,7 +32,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deploy toko-mcp \
   -o jsonpath='{.spec.template.spec.containers[?(@.name=="mcp")].env[?(@.name=="MEMORY_LLM_PROVIDER")].value}'
 ```
 
-Expected output: `anthropic`. Empty output means the features are off. This confirms the configured provider, not a successful model request. Check `@Tokonoma admin status` if the [Slack app](slack-app.md) is installed.
+Expected output: `anthropic`, or `bedrock` on Amazon Bedrock. Empty output means the features are off. This confirms the configured provider, not a successful model request. Check `@Tokonoma admin status` if the [Slack app](slack-app.md) is installed.
 
 ## Temporarily stop the features
 
@@ -42,7 +42,7 @@ Remove the setting, or set it back to unset (`null`), and repeat the upgrade whe
 
 ## Choosing a model
 
-The MCP server and the runner use the chart-wide `llm.model`. Use an Anthropic model identifier supported by your account and test its results before changing production.
+The MCP server and the runner use the chart-wide `llm.model`. Use a bare Anthropic model identifier supported by your account and test its results before changing production.
 
 ## What it costs
 
