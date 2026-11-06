@@ -45,6 +45,20 @@ REPLACE_WITH_CLUSTER / REPLACE_WITH_NAMESPACE over the last hour.
 
 `check-health` produces a service table with **Healthy**, **Concerns**, or **Unknown** and a reason for each. It compares current signals with baselines from procedures and prior investigations where available. It reports missing evidence, including when no metric tool is available to assess saturation. This is a read-only snapshot; it does not save a new investigation. Ask for `investigate` on a concern that needs diagnosis.
 
+## Review monitoring in your coding agent
+
+When your connected server lists `list_daily_summaries`, ask:
+
+```text
+Show the latest stored monitoring summary from Tokonoma. Explain its findings
+and recurring detections, and include the source investigation IDs so we can
+discuss any item. Distinguish saved evidence from current health.
+```
+
+`list_daily_summaries` returns the latest stored scheduled or requested summary by default, with its reporting window in UTC. Set `limit` to request up to 30 recent reports, newest first. It is available on the end-user MCP instance and excluded from the runner's unattended instance. Reading reports does not generate a new summary or change monitoring state. If a source investigation is unavailable to your login, the summary returns metadata without its prose.
+
+Findings and recurring detections include source investigation IDs when retained. Ask your agent to fetch a source with `memory_fetch_body` for a follow-up; normal record access checks and recall metering apply. An empty findings list does not establish that a service is healthy. Use `check-health` for current evidence. See [monitoring controls and verification](agentic-monitoring.md#read-the-monitoring-views).
+
 ## Add and reuse team knowledge
 
 Run `Run Tokonoma onboard.` to select historical incidents, prior agent sessions, or runbooks to import. A runbook becomes a procedure; an incident becomes an investigation. You can skip any step. See [coding-agent onboarding](coding-agents.md#3-onboard-your-coding-agent).
