@@ -54,7 +54,7 @@ Look for `slack socket mode connected`. Add the app to the designated monitoring
 | No reply in one channel | Invite the app to that channel. |
 | No welcome after adding the app | Check that Tokonoma is v0.78.0 or newer, the `member_joined_channel` subscription is saved, and the app joined the configured monitoring channel after the listener connected. Follow the [welcome checks](#receive-the-monitoring-welcome) below. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
-| Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `llm.serverFeatures` unset; see [server model features](server-features.md). |
+| Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key or configure [Amazon Bedrock](amazon-bedrock.md), and leave `llm.serverFeatures` unset; see [server model features](server-features.md). |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
 | Connection fails behind a proxy | Allow Slack API traffic and Socket Mode WebSocket upgrades. |
 
@@ -90,7 +90,15 @@ With `mcp.slack.multiplayerEnabled: false`, use the exact commands below. Other 
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-Recurring findings show how to stop future checks. Use the complete detector IDs in the command, or consult the saved plan for IDs that do not fit.
+Daily monitoring summaries separate **Findings to review** from **Recurring detections**. Findings use saved investigation titles where available, with **Full record** beside linked entries. Slack summaries omit detector-ID captions; detector details remain in the web views and saved records, and IDs remain in the stop commands. **Why?** beside the findings heading explains the selection. Recurring entries retain cadence, occurrence counts and first/latest times when available; their explanation can combine current signals with dated conclusions from earlier investigations. Recurring does not mean resolved, human-triaged, or newly investigated on every occurrence. The web Summaries tab uses the same saved recurring titles.
+
+Initial monitoring reports show **Backtest findings** with the configured backtest lookback, supplied activity times, and complete selected findings, followed by **Coverage and telemetry**. The context identifies the plan's last-update time, not its replay boundary; exact checked-window bounds are not inferred from that timestamp. Detector-ID captions, setup usage/cost, command rows, and the stats strip are omitted. The saved plan retains detector details. Backtest findings describe historical observations, not a claim about current incidents.
+
+**Why?** replies use the same readable hierarchy: bold section headings and native bullet entries with a title above each complete saved explanation, without selection-count labels. Daily replies distinguish findings shown from investigations not shown; setup replies distinguish cited findings from watched checks that were not cited. Setup entries use entity names and saved monitoring labels instead of detector IDs. Why reads the stored selection reasons; it does not run another investigation or model call. Long answers use the same continuation handling as reports, preserving the response's existing visibility.
+
+Oversized daily and setup/monitoring reports continue directly in the same Slack thread. They keep complete finding groups together when possible, without repeating the report title or Why button or adding page-count labels. Setup reports show all ranked items and their lines rather than hiding the rest behind a “more items” count. A single group or entry that exceeds Slack's limits can span replies; supplied evidence and remediation are not discarded to fit the layout.
+
+Recurring detections show how to stop future checks. Use the complete detector IDs in the command, or consult the saved plan for IDs that do not fit.
 
 Use `disable detector` for unwanted or unhelpful monitoring and `enable detector` to resume the same checks. The choice is kept when the detector is carried into a new plan. Repeated commands are safe; obsolete or superseded IDs are unavailable. Work already in flight may finish. Useful or not useful feedback rates an investigation result; it is separate from disabling its detectors.
 
@@ -145,7 +153,7 @@ A Slack session coordinates teammates and their agents. Starting one does not it
 
 ## Choose what to enable
 
-Questions and session timelines require multiplayer to be enabled. They and automatic alert relevance checks use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Full record buttons need a valid Tokonoma license.
+Questions and session timelines require multiplayer to be enabled. They and automatic alert relevance checks use the required model key and send relevant content to the model provider. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Full record buttons need a valid Tokonoma license.
 
 Automatic memory recall on alerts is off by default. To make the app reply to alerts from other apps, set `mcp.slack.autoRecallEnabled: true` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration).
 

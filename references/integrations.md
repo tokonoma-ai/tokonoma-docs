@@ -15,7 +15,7 @@ The bundled `grafanaMcp` adapter queries an existing Grafana. The separate `graf
 
 CloudWatch requires a separately supplied MCP server that meets the connection requirements below.
 
-The MCP server's model features and the runner both use the Anthropic API. Verify model identifiers before changing them. See [server model features](server-features.md) and [data flows](data-flows.md).
+The MCP server's model features and the runner both use the Anthropic API or [Amazon Bedrock](amazon-bedrock.md). Verify model identifiers before changing them. See [server model features](server-features.md) and [data flows](data-flows.md).
 
 ## MCP connections
 
