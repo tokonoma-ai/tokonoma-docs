@@ -66,7 +66,7 @@ For token changes, follow [credential rotation](credentials.md#renew-and-rotate)
 
 After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. When Slack delivery is first activated for this configured channel, Tokonoma posts the welcome before new automatic output. This also covers monitoring that started before Slack was connected. Another person joining or adding the app elsewhere does not trigger a welcome.
 
-Automatic messages queued before this first activation are not posted. Results for firings that started before activation are also skipped, even if their investigations finish later. New firings and daily summaries wait until the welcome finishes, then post as they come.
+Automatic messages queued before this first activation are not posted. Results for firings that started before activation are also skipped, even if their investigations finish later. The activation cutoff is established before Tokonoma waits for new output. Firings and daily summaries that arrive while the welcome is being prepared remain queued until it finishes, then post as they come.
 
 If a completed monitoring plan is available, Tokonoma posts an introduction first, then the formatted setup report as a second channel message. The full saved plan attaches to the report's thread. The report combines saved setup findings with current monitoring counts and coverage; its date identifies the plan. The attached plan remains a saved snapshot, so its detector statuses may differ from their current enable/disable state.
 
@@ -74,7 +74,7 @@ If setup is incomplete, the saved plan is unavailable, or Tokonoma cannot read o
 
 If the runner cannot answer, the not-ready message can take about three minutes. Check `@Tokonoma admin status` and the connection checks above. Transient Slack delivery failures retain the existing retries.
 
-The welcome does not start monitoring setup, call a model, or generate a new plan. Later setup and daily reports arrive separately. An ordinary server or runner restart resumes pending output and keeps the original activation cutoff. It does not trigger another welcome.
+The welcome does not start monitoring setup, call a model, or generate a new plan. Later setup and daily reports arrive separately. An ordinary server or runner restart resumes pending output without another startup welcome and retains any recorded activation cutoff. Upgrading an installation already using Slack preserves pending output without applying a new cutoff.
 
 ## Use Tokonoma in a channel
 
