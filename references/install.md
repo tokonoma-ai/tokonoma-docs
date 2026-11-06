@@ -46,7 +46,7 @@ Inspect the package defaults for resource requests and configuration:
 helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma
 ```
 
-Use Anthropic API credentials. Bedrock, Vertex, and Foundry are unsupported.
+Use Anthropic API credentials, or follow [Amazon Bedrock](amazon-bedrock.md). Vertex and Foundry are unsupported.
 
 If the registry reports an expired token, follow [registry troubleshooting](troubleshooting.md#public-ecr-reports-an-expired-token), then return here.
 

@@ -17,7 +17,7 @@ The installation runs in your Kubernetes cluster and includes:
 
 Agentic Monitoring checks telemetry without waiting for an alert. Automatic investigations use the full alert stream from connected sources. Both are enabled by default; your agent will ask whether you want either turned off. You choose which systems Tokonoma can access and where it posts in Slack. Existing paging destinations stay in place.
 
-Tokonoma connects to the Anthropic API for analysis and investigations, to Slack, and to each connected system's MCP or the bundled adapter for an existing Grafana. Investigation content and retrieved telemetry are sent to Anthropic. Code access and cloud telemetry storage are optional additions.
+Tokonoma connects to the Anthropic API or [Amazon Bedrock](references/amazon-bedrock.md) for analysis and investigations, to Slack, and to each connected system's MCP or the bundled adapter for an existing Grafana. Investigation content and retrieved telemetry are sent to that model provider. Code access and cloud telemetry storage are optional additions.
 
 ```mermaid
 flowchart LR
@@ -33,7 +33,7 @@ flowchart LR
   end
   subgraph Connections["Services you configure"]
     Slack["Slack"]
-    Models["Anthropic API"]
+    Models["Anthropic API or Amazon Bedrock"]
     Tools["Integrations<br/>(Telemetry, Alerting, Code)"]
   end
   Agents --> Tokonoma

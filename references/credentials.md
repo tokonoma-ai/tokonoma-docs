@@ -18,7 +18,7 @@ For alert delivery, generate an [Alertmanager receiver token](alert-investigatio
 
 Cluster names, endpoints, provider IDs and scopes are configuration, not additional secrets. Obtain them from the selected service's owner; keep nonsecret settings in `values.yaml`.
 
-The MCP server and runner share one Anthropic key, supplied inline or through `llm.apiKeySecret`. Keep the server model features on for normal operation. See [maintenance](server-features.md#temporarily-stop-the-features) for temporary controls and [data flows](data-flows.md) for what reaches the provider.
+The MCP server and runner share one Anthropic key, supplied inline or through `llm.apiKeySecret`. To use a Bedrock API key instead, follow [Amazon Bedrock](amazon-bedrock.md). Keep the server model features on for normal operation. See [maintenance](server-features.md#temporarily-stop-the-features) for temporary controls and [data flows](data-flows.md) for what reaches the provider.
 
 A valid Tokonoma license is required for full-body recalls, but not search, saving, or skill discovery. An API key cannot replace it and does not enable the runner.
 

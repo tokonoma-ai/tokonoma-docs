@@ -14,7 +14,7 @@ Check the [native-auth release prerequisite](references/upgrading.md#native-mach
 - Use the guides' own `helm` and `kubectl` commands. Do not wrap them in scripts or use shell exports.
 - Replace every `REPLACE_WITH_...` marker with a verified value. Never invent identifiers or credentials.
 - Prepare credential commands with placeholders for the customer to fill and run locally. Reuse existing Secret references or supplied credential files when available. Never ask for secret contents or filled commands in chat, and never print or log secrets. Leave provider template variables, such as Datadog's `$ID`, intact.
-- The MCP server's model features and the runner use the Anthropic API only, and one Anthropic API key serves both. The chart's defaults mention Bedrock, Vertex, and Foundry through `runner.extraEnv`. These are not supported, so do not offer or configure them.
+- The MCP server's model features and the runner use the Anthropic API or [Amazon Bedrock](references/amazon-bedrock.md), set by `llm.provider`, and one key serves both. The chart's defaults mention Vertex and Foundry through `runner.extraEnv`. These are not supported, so do not offer or configure them.
 - The customer's request authorizes the installation or change it describes. Ask first before anything outside it: destructive changes, wider network access, or sending data to a new destination. Check [data flows](references/data-flows.md) before changing access or data destinations.
 - Restarting a workload that uses a mutable image tag such as `latest` can pull newer application code. Get the customer's approval before changing the chart version or an image tag.
 

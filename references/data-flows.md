@@ -30,7 +30,7 @@ License checks run locally, and usage is recorded in your database. No external 
 
 ## Model and integration connections
 
-Your coding agent uses its own model provider. Tokonoma's MCP services and runner use the Anthropic API. Allow the connections required by the features you enable:
+Your coding agent uses its own model provider. Tokonoma's MCP services and runner use the Anthropic API. With [Amazon Bedrock](amazon-bedrock.md), they use Bedrock instead: read Amazon Bedrock wherever this page says Anthropic API. Allow the connections required by the features you enable:
 
 | Caller or feature | Destination | Data and purpose |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ The generated runner login is verified inside Tokonoma and needs no external ide
 
 The installation pulls images from public ECR and Docker Hub and the embedding model from `registry.ollama.ai`. Optional self-monitoring components can also pull from `quay.io` and `registry.k8s.io`; Grafana downloads its configured data-source plugin from GitHub at startup.
 
-Allow the Anthropic API for analysis and the runner. Add only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, Grafana and configured MCP endpoints, your identity provider, and object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
+Allow the Anthropic API, or the Bedrock endpoint in your region, for analysis and the runner. Add only the integrations you enable: Slack's API and Socket Mode WebSocket destinations, Grafana and configured MCP endpoints, your identity provider, and object-storage endpoints. Object-storage workloads may also need the cloud provider's identity/token services. Workload identity, bucket access, and private routing must be set up by your platform team before installation.
 
 Image and model downloads need network access during startup unless you have supplied compatible mirrors and preloaded assets. A fully disconnected installation is not validated by this guide.
 

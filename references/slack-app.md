@@ -52,7 +52,7 @@ Look for `slack socket mode connected`. Add the app to the designated monitoring
 | No reply in one channel | Invite the app to that channel. |
 | No welcome after adding the app | Check that Tokonoma is v0.78.0 or newer, the `member_joined_channel` subscription is saved, and the app joined the configured monitoring channel after the listener connected. Follow the [welcome checks](#receive-the-monitoring-welcome) below. |
 | `missing_scope` | Apply this version's manifest in Slack's **App Manifest** page and reinstall the app. |
-| Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key and leave `llm.serverFeatures` unset; see [server model features](server-features.md). |
+| Questions or timelines unavailable | These features require [incident sessions](#optional-incident-sessions). When enabled, supply an Anthropic API key or configure [Amazon Bedrock](amazon-bedrock.md), and leave `llm.serverFeatures` unset; see [server model features](server-features.md). |
 | Runner results wait | Invite the app to the configured investigations channel and enable `runner.destinations.slackApp.enabled`. |
 | Connection fails behind a proxy | Allow Slack API traffic and Socket Mode WebSocket upgrades. |
 
@@ -139,7 +139,7 @@ A Slack session coordinates teammates and their agents. Starting one does not it
 
 ## Choose what to enable
 
-Questions and session timelines require multiplayer to be enabled. They and automatic alert relevance checks use the required Anthropic key and send relevant content to Anthropic. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Full record buttons need a valid Tokonoma license.
+Questions and session timelines require multiplayer to be enabled. They and automatic alert relevance checks use the required model key and send relevant content to the model provider. During an analysis outage, `help` remains available. With incident sessions enabled, exact session commands such as `state`, `stop`, and `resume` also remain available. Full record buttons need a valid Tokonoma license.
 
 Automatic memory recall on alerts is off by default. To make the app reply to alerts from other apps, set `mcp.slack.autoRecallEnabled: true` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration).
 
