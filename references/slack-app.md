@@ -34,6 +34,8 @@ For existing Secrets, use `mcp.slack.tokenSecret` instead of the two Slack argum
 
 Choose an existing or new public or private `#tokonoma-investigations` channel for monitoring and runner results. Set `mcp.slack.investigationsChannel` only for a different channel name. Invite the app after it connects, as described below.
 
+The configured name must match the channel in the workspace where the app is installed. Slack Connect can show the same channel under a different name in your workspace. See [Slack's channel settings](https://docs.slack.dev/apis/slack-connect/#channel-settings).
+
 For an existing deployment, [apply the configuration change](upgrading.md#before-changing-configuration), including any changed token arguments and preserving other credentials.
 
 ## Verify the connection
@@ -60,15 +62,19 @@ For token changes, follow [credential rotation](credentials.md#renew-and-rotate)
 
 ### Receive the monitoring welcome
 
-After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. Only the app's own join to this configured channel triggers the welcome; another person joining or adding the app elsewhere does not.
+**Unreleased update:** The welcome-first delivery rules below require an upcoming release. Published v0.78.0+ versions trigger the welcome only when the app joins the configured channel after the listener connects, and can deliver previously queued messages.
+
+After the listener connects, open the designated monitoring channel and add the installed app. For its default name, use `/invite @Tokonoma`. Only the app's own join to this configured channel enables automatic Slack delivery and requests the welcome. Another person joining or adding the app elsewhere does neither.
+
+Before this join, automatic Slack messages are not queued. Monitoring continues and saves its reports. After the join, new firings and daily summaries can queue, but wait until the welcome delivery, including any available setup report and attachment, finishes. Results for firings that started before the join are not queued, even if their investigations finish later.
 
 If a completed monitoring plan is available, Tokonoma posts an introduction first, then the formatted setup report as a second channel message. The full saved plan attaches to the report's thread. The report combines saved setup findings with current monitoring counts and coverage; its date identifies the plan. The attached plan remains a saved snapshot, so its detector statuses may differ from their current enable/disable state.
 
 If setup is incomplete, the saved plan is unavailable, or Tokonoma cannot read or prepare the report, it posts one standalone message containing its introduction and a paragraph saying the report is not ready. That message directs you to `@Tokonoma admin status` to check progress and anything that needs fixing. No report or plan is attached.
 
-If the runner cannot answer, the not-ready message can take about three minutes. A restart or Slack delivery failure can leave the welcome missing. Check `@Tokonoma admin status` and the connection checks above; once the listener is connected, remove and re-add the app to retry.
+If the runner cannot answer, the not-ready message can take about three minutes. Check `@Tokonoma admin status` and the connection checks above. Transient Slack delivery failures retain the existing retries.
 
-The welcome does not start monitoring setup or generate a new plan. Later setup and daily reports arrive separately. Restarting Tokonoma does not welcome an app already in the channel, and a missed join does not produce a welcome later.
+The welcome does not start monitoring setup, call a model, or generate a new plan. Later setup and daily reports arrive separately. Once the channel join has been recorded, ordinary server and runner restarts resume pending output. Starting or restarting the server does not activate automatic Slack delivery or trigger another welcome.
 
 ## Use Tokonoma in a channel
 
