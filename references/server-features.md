@@ -12,7 +12,7 @@ These features are required for a complete Tokonoma installation. They use the s
 
 Search can still collapse identical re-saves, but model-based duplicate review, Slack triage, and timelines stop. Existing reviewed records stay collapsed; other similar records remain separate.
 
-The features are also off when the installation has no Anthropic API key, for example when the runner's only model credential is in `runner.extraEnv`. The install notes printed by Helm say so.
+The features are also off when the server has no credential for the selected model provider, for example when a legacy setup puts its only credential in `runner.extraEnv`. The install notes printed by Helm say so.
 
 ## Configure the key
 
@@ -38,18 +38,18 @@ Expected output: `anthropic`, or `bedrock` on Amazon Bedrock. Empty output means
 
 To stop them for maintenance, set `llm.serverFeatures: false` in `values.yaml` and [apply the configuration change](upgrading.md#before-changing-configuration). The runner keeps the key.
 
-Remove the setting, or set it back to unset (`null`), and repeat the upgrade when maintenance ends.
+Set `llm.serverFeatures: true` and repeat the upgrade when maintenance ends. Omitting the setting can preserve the saved `false`; an explicit `true` also takes precedence over the legacy `mcp.memoryLlm.enabled` setting.
 
 ## Choosing a model
 
-The MCP server and the runner use the chart-wide `llm.model`. Use a bare Anthropic model identifier supported by your account and test its results before changing production.
+The MCP server and the runner use the chart-wide `llm.model`. Use a supported bare Claude model identifier and test it before changing production. For Bedrock, follow its [model and region requirements](amazon-bedrock.md#check-the-model-is-available).
 
 ## What it costs
 
-Usage depends on the selected model, record activity, and Slack features. Check Anthropic's current pricing and usage dashboard before installation.
+Usage depends on the selected model, record activity, and Slack features. Check the selected Anthropic API or Amazon Bedrock provider's current pricing and usage dashboard before installation.
 
 ## Data handling
 
-Duplicate review sends record titles, summaries, bodies and reference URLs to Anthropic. With the Slack app on, triage also sends the text of messages it triages, and timelines send session messages and evidence. If your deployment forbids these outbound calls, resolve that restriction before completing installation.
+Duplicate review sends record titles, summaries, bodies and reference URLs to your selected Anthropic API or Amazon Bedrock endpoint. With the Slack app on, triage also sends the text of messages it triages, and timelines send session messages and evidence. If your deployment forbids these outbound calls, resolve that restriction before completing installation.
 
 Return to [integrations](integrations.md) or continue with the [Slack app](slack-app.md).
