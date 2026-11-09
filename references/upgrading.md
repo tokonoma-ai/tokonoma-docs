@@ -107,6 +107,16 @@ If the key is set only in `runner.engine.apiKeySecret` with the runner enabled, 
 
 Without an Anthropic API key, for example when the runner's only model credential is in `runner.extraEnv`, the server model features stay off and the install notes say so.
 
+## Bundled Grafana: 0.42.x to 0.43.0 or later
+
+This applies only when `grafana.enabled` is `true`. Chart 0.43.0 moves the bundled Grafana from 12.3 to 13.3, from the `grafana-community` Helm chart.
+
+- Back up Grafana's database before upgrading. On first start, Grafana 13 migrates dashboards and folders to a new storage format, so `helm rollback` alone does not restore Grafana 12. With `grafana.persistence.enabled`, copy `grafana.db` from the Grafana volume.
+- Move any `grafana.env.GF_INSTALL_PLUGINS` override to `grafana.plugins`. The new default image ignores `GF_INSTALL_PLUGINS`. Entries use the form `PLUGIN_ID@VERSION@URL`.
+- Check value types in your `grafana` settings. The subchart validates them, so a quoted number or boolean, or an unquoted numeric `image.tag`, now fails the upgrade.
+
+The same release updates the bundled PostgreSQL image, which restarts it once; see [PostgreSQL and Ollama restarts](#postgresql-and-ollama-restarts).
+
 ## PostgreSQL and Ollama restarts
 
 With chart 0.40.0 or later, updating only the MCP image leaves bundled PostgreSQL and Ollama running. Chart upgrades restart them only if their own images or pod settings change.
