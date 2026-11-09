@@ -30,7 +30,7 @@ These settings default to `false`. Set the selected keys to `true` in your insta
 
 - `otelCollector.enabled` collects Tokonoma's own logs and traces. It mounts `/var/log/pods` from each node as a read-only `hostPath` volume. Namespaces enforcing Baseline Pod Security reject that mount. Enable the collector only where your platform owner has approved the mount and the namespace policy permits it.
 - `prometheus.enabled` adds metrics collection with cluster-wide scrape targets, including workloads, nodes, and the Kubernetes API. Review scope and permissions before enabling it, or use [existing Prometheus](prometheus.md).
-- `grafana.enabled` adds [dashboards](endpoints.md#self-monitoring-grafana-ui) backed by the bundled Prometheus and collector. The pinned Quickwit plugin requires amd64 nodes. See [troubleshooting](troubleshooting.md) if Grafana fails to start on ARM nodes.
+- `grafana.enabled` adds [dashboards](endpoints.md#self-monitoring-grafana-ui) backed by the bundled Prometheus and collector. Grafana downloads its Quickwit plugin from GitHub at startup; see [troubleshooting](troubleshooting.md) if Grafana fails to start.
 
 These components add resources and storage beyond the table. Customer application collection uses a [separate collector](customer-telemetry.md).
 
