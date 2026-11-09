@@ -1,75 +1,41 @@
 # Install and use Tokonoma
 
-This guide uses the application and chart versions described in [native machine authentication](references/upgrading.md#native-machine-authentication-release-prerequisite). Check those requirements before using an older installation.
+Tokonoma monitors your services, investigates changes and alerts, and shares findings in Slack. It saves evidence and procedures so your team can build on earlier investigations. It runs in your Kubernetes cluster and can query telemetry you already collect.
 
 ## What to expect
 
-Tokonoma monitors your services, detects significant changes, and automatically investigates findings and alerts using your observability tools. Engineers can work with it through Slack and coding agents, using saved findings and procedures to build on what the team has learned.
+The quickest setup uses your existing telemetry provider, required Slack connection, and a private MCP service. It needs no shared MCP hostname or ingress. The installer creates the runner's internal machine login; engineers can add their own MCP query access later.
 
-New to Tokonoma? [Start here](references/start-here.md) for use cases, deployment choices, and a first investigation. The [product website](https://tokonoma.ai/) has the broader feature tour.
+Choose these two options before installation:
 
-The installation runs in your Kubernetes cluster and includes:
+| Choice | What to prepare |
+| --- | --- |
+| Use Tokonoma's telemetry platform? | Use the [telemetry platform](references/telemetry-platform.md) to store and query logs and traces in your cloud. Prepare [AWS](references/cloud-providers/aws.md) or [Google Cloud](references/cloud-providers/google-cloud.md) storage and identity. You can keep using existing telemetry providers. |
+| Expose MCP for queries from coding agents? | Choose a private or public HTTPS hostname, routing, TLS, and human authentication using [shared access](references/team-access.md). This is independent of the telemetry platform. |
 
-- **Tokonoma MCP service:** investigation tools, saved findings and procedures, the Slack connection, and a local read-only UI. MCP means Model Context Protocol, which lets coding agents use these tools.
-- **Tokonoma runner and its dedicated MCP instance:** Agentic Monitoring and automatic investigations using your connected telemetry and alert sources.
-- **PostgreSQL:** bundled storage for records and application state. Helm creates its credentials.
-- **Ollama:** local search embeddings, which turn text into numeric representations for search.
+Select either, both, or neither. The guide completes every option you select during the same installation. You can add options later using your saved configuration. When you choose the telemetry platform, finish setting up Tokonoma first, then use the [example OpenTelemetry collector](references/customer-telemetry.md) to connect your applications. The bundled collector only collects Tokonoma's own telemetry.
 
-Agentic Monitoring checks telemetry without waiting for an alert. Automatic investigations use the full alert stream from connected sources. Both are enabled by default; your agent will ask whether you want either turned off. You choose which systems Tokonoma can access and where it posts in Slack. Existing paging destinations stay in place.
+The installation includes the MCP service, a runner with its dedicated MCP instance, PostgreSQL for records and state, and Ollama for local search embeddings. Agentic Monitoring and automatic investigations are enabled unless you opt out. Existing paging destinations stay in place. Alert senders are optional; Slack and telemetry query access support investigations without them.
 
-Tokonoma connects to the Anthropic API or [Amazon Bedrock](references/amazon-bedrock.md) for analysis and investigations, to Slack, and to each connected system's MCP or the bundled adapter for an existing Grafana. Investigation content and retrieved telemetry are sent to that model provider. Code access and cloud telemetry storage are optional additions.
-
-```mermaid
-flowchart LR
-  accTitle: Tokonoma in your environment
-  accDescr: Coding agents connect to Tokonoma. All customer alerts from connected sources reach the required Tokonoma runner for automatic investigations. The runner also queries integrations for Agentic Monitoring independently of incoming alerts. Tokonoma runs on Kubernetes; monitored services can run elsewhere. Tokonoma connects to Slack and the Anthropic API. The runner connects to the Anthropic API and permitted integrations. Arrows show who opens each external connection.
-  subgraph Inputs["Incoming connections"]
-    Agents["Coding agents"]
-    Alerts["Incoming alerts<br/>All customer alerts"]
-  end
-  subgraph Cluster["Tokonoma installation (Kubernetes)"]
-    Tokonoma["Tokonoma<br/>Investigation tools and memory"]
-    Runner["Tokonoma runner<br/>Agentic Monitoring<br/>Automatic investigations"]
-  end
-  subgraph Connections["Services you configure"]
-    Slack["Slack"]
-    Models["Anthropic API or Amazon Bedrock"]
-    Tools["Integrations<br/>(Telemetry, Alerting, Code)"]
-  end
-  Agents --> Tokonoma
-  Alerts --> Runner
-  Tokonoma -->|"Messages"| Slack
-  Tokonoma -->|"Analysis"| Models
-  Runner -->|"Model calls"| Models
-  Runner -->|"Monitor and investigate"| Tools
-
-  classDef service fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e,stroke-width:2px
-  classDef external fill:#fff,stroke:#64748b,color:#0f172a
-  class Tokonoma,Runner service
-  class Agents,Alerts,Slack,Tools,Models external
-  style Cluster fill:#eff6ff,stroke:#0369a1,color:#0c4a6e
-  style Inputs fill:#f8fafc,stroke:#cbd5e1,color:#334155
-  style Connections fill:#f8fafc,stroke:#cbd5e1,color:#334155
-```
-
-First, get Tokonoma healthy, detectors running, and connected alerts automatically investigated with saved results and Slack delivery. MCP stays authenticated inside the cluster, with local operator access. The installer generates the [runner's machine login](references/alert-investigations.md#prepare-runner-credentials-when-mcp-authentication-is-enabled); no Cognito pool or separate client credentials are needed. Shared engineer access comes afterward, with human sign-in and the chosen HTTPS route.
+Analysis and investigations use the Anthropic API or [Amazon Bedrock](references/amazon-bedrock.md). Retrieved telemetry and investigation context reach that model provider. Review [data flows](references/data-flows.md) and [capacity and costs](references/planning.md) with your platform team.
 
 ## Give these instructions to your agent
 
 Use a coding agent on a workstation with access to your Kubernetes cluster. Paste this request and provide any configuration files you already have:
 
-> Help me install Tokonoma using https://github.com/tokonoma-ai/tokonoma-docs. Fetch the complete repository, read SKILL.md, and follow its installation guides. Inspect supplied configuration and any existing installation, then ask for all currently missing inputs and choices in one batch before changing the cluster. Preserve existing configuration, credentials, authentication, and paging destinations. Guide me through account setup and administrator actions as they are needed. Continue through verification until Tokonoma is healthy, detectors are actively checking the intended services, and connected alerts produce completed automatic investigations with saved results and Slack delivery. Report any blockers or explicit opt-outs. Set up shared engineer access afterward if I request it.
+> Help me install Tokonoma using https://github.com/tokonoma-ai/tokonoma-docs. Fetch the complete repository, read SKILL.md, and follow the installation guides. Inspect supplied configuration and any existing installation. Ask up front whether I want the telemetry platform and whether I want MCP query access for coding agents, along with missing cluster, Slack, monitoring, and credential inputs. Use the quickest private monitoring setup unless I select additions, and complete every selected option. Preserve existing configuration, authentication, credentials, and paging destinations. Guide me through administrator actions and verify the setup. If I choose the telemetry platform, provide an example OpenTelemetry collector with my ingest endpoints after Tokonoma setup is complete. Report pending customer telemetry separately from installation health, and do not claim untested monitoring or alert delivery works.
 
-## Follow along with the agent
+Your agent brings the relevant commands into the conversation. Fill secret placeholders and run credential commands locally, or use existing Kubernetes Secrets. Do not paste secrets or filled commands into chat.
 
-1. **Answer its setup questions.** The agent checks what is already configured and asks for the remaining cluster, monitoring, integration, and alert details together. If a later answer reveals another requirement, it explains what changed.
-2. **Complete account and credential steps when prompted.** The agent explains how to obtain the license, API keys, and Slack tokens, and which permissions each connection needs. Fill secret placeholders and run those commands locally, or use existing Kubernetes Secret references. Do not paste secrets or filled commands into chat.
-3. **Stay with it through the checks.** The agent installs the services, connects the selected alert senders, and verifies monitoring and investigations. Expect active detectors and an approved test alert producing a completed investigation, a saved record, and a Slack result. Continue with the agent until any failures are resolved; ready pods alone do not complete the installation.
+## Follow the installation
 
-The agent should finish with the saved configuration locations, the checks it ran and their results, and any remaining actions. If no alert sender is configured, it should say so explicitly rather than claim alert delivery was verified.
+1. [Plan capacity and access](references/planning.md), identify the cluster and monitoring scope, and prepare a license and model credentials.
+2. [Install Tokonoma](references/install.md), including Slack and every selected option. Existing telemetry providers can supply query access immediately; a new platform can receive application data after setup.
+3. Review the verification results. Ready workloads establish deployment health; working Slack, telemetry queries, active monitoring checks, and connected alert senders each have their own checks. Keep any pending collection or verification work explicit.
+4. Use [Tokonoma in Slack](references/slack-app.md#use-tokonoma-in-a-channel), or connect a [coding agent](references/coding-agents.md) if you selected MCP access.
 
 ## Reference documentation
 
-The agent uses [SKILL.md](SKILL.md) and the [detailed guides](references/) for installation commands, provider setup, and operation. You can read them to inspect a particular step; the agent will bring the relevant instructions into your conversation. After installation, follow [Using Tokonoma](references/using-tokonoma.md) to investigate an issue, share knowledge, and take findings into a code review.
+[Start here](references/start-here.md) covers use cases and deployment alternatives. The [reference guides](references/) cover integrations, authentication, operations, and troubleshooting. [SKILL.md](SKILL.md) contains instructions for the installing agent, and [values.yaml](examples/values.yaml) explains the configuration fields.
 
 Use your Tokonoma contact for a license or deployment help. Keep credentials, issued licenses, customer data, and unredacted diagnostics out of this repository and public issues.
