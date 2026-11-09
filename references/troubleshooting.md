@@ -34,7 +34,7 @@ In your complete [installation command](install.md#3-install), replace the OCI U
 
 **Helm times out on `--wait`.** Check pod status: `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods`. Common causes: missing StorageClass, image pull failures (egress to ECR/Docker Hub/`registry.ollama.ai`; add-ons also use `quay.io`/`registry.k8s.io`), or insufficient node resources for the telemetry platform. For Pending PVCs, run `kubectl --context REPLACE_WITH_KUBE_CONTEXT get storageclass` and confirm one row includes `(default)`, then run `kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma describe pvc REPLACE_WITH_PVC_NAME`. On EKS, follow the [persistent-volume setup](cloud-providers/aws.md#persistent-volumes) to configure the EBS CSI add-on, its IAM role, and a default StorageClass.
 
-**Grafana crash-loops at startup.** Grafana downloads the Quickwit datasource plugin from GitHub when it starts, and a failed plugin install stops Grafana. Check the Grafana logs for the plugin error, then allow [egress to GitHub](data-flows.md#network-destinations) or clear `grafana.env.GF_INSTALL_PLUGINS`. The plugin ships amd64 and arm64 builds.
+**Grafana crash-loops at startup.** Grafana downloads the Quickwit datasource plugin from GitHub when it starts, and a failed plugin install stops Grafana. Check the Grafana logs for the plugin error, then allow [egress to GitHub](data-flows.md#network-destinations) or clear `grafana.plugins` (`grafana.env.GF_INSTALL_PLUGINS` before chart 0.43.0). The plugin ships amd64 and arm64 builds.
 
 **`mcp.ingress.enabled=true` fails template render.** Set top-level `domain`, `mcp.domain`, or `mcp.ingress.host`. If `tls.enabled=true`, set `mcp.ingress.tls.secretName`.
 
