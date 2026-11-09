@@ -88,6 +88,8 @@ Daily summaries separate **Findings to review** from **Recurring detections**. O
 
 Initial reports show historical **Backtest findings**, followed by **Coverage and telemetry**. They do not establish that an incident is still happening. The saved plan contains detector details; its last-update time is not the boundary of the checked time window.
 
+Refresh reports identify telemetry checks that previously returned data but now return none. Missing data alone does not establish a service outage.
+
 Choose **Why?** to read the saved selection reasons, including why some investigations or checks were not cited. This does not run another investigation or model call. Long reports and explanations continue in the same Slack thread.
 
 Recurring detections show how to stop future checks. Use the complete detector IDs in the command, or consult the saved plan for IDs that do not fit.
