@@ -10,7 +10,7 @@ Tokonoma connects to compatible remote Model Context Protocol (MCP) servers for 
 | Existing Grafana | Private OSS Grafana MCP adapter queries permitted data sources for monitoring and investigations | [Alert investigations](alert-investigations.md#install-with-oss-grafana-mcp) |
 | Alert webhooks | Deliver alerts to the runner; separate from MCP query access | [Alertmanager or Grafana Alerting](alert-investigations.md), [Datadog alerts](datadog-alerts.md) |
 | Slack | Use the native Tokonoma app, or connect Claude to Tokonoma | [Tokonoma app](slack-app.md), [Claude in Slack](claude-in-slack.md) |
-| Tokonoma telemetry platform | Stores and searches ingested logs, traces, and Kubernetes inventory/events | [EKS](cloud-providers/aws.md), [GKE](cloud-providers/google-cloud.md), [endpoints](endpoints.md) |
+| Tokonoma telemetry platform | Stores and searches logs and traces; inventory/events need separate collection and index configuration | [Platform setup](telemetry-platform.md), [customer collection](customer-telemetry.md) |
 
 The bundled `grafanaMcp` adapter queries an existing Grafana. The separate `grafana.enabled` setting installs a UI for Tokonoma's own monitoring. They are independent options.
 
@@ -31,7 +31,7 @@ Uncomment the matching `runner.mcpServers` entries in [values.yaml](../examples/
 - Set `kind: telemetry` for monitoring sources or `kind: source-control` for code access.
 - Set `expectedTools` to exact tool names advertised by that server, without an `mcp__` prefix. Empty or missing entries permit no calls. Every listed tool is available to unattended monitoring setup, refreshes, and investigations. Permit read-only tools only, with credentials restricted to the required read access.
 
-Automatic investigations and Agentic Monitoring require telemetry query access. Monitoring tools must also cover the selected cluster and namespaces. Alert webhooks and code-only connections do not supply telemetry access. Results are sent to the Anthropic API; review [data flows](data-flows.md).
+Automatic investigations and Agentic Monitoring require telemetry query access. Monitoring tools must also cover the selected cluster and namespaces. Alert webhooks and code-only connections do not supply telemetry access. Results are sent to the selected model provider; review [data flows](data-flows.md).
 
 ### 2. Prepare credentials
 

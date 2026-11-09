@@ -23,19 +23,15 @@ These guides cover the full monitoring and investigation workflow on an existing
 | --- | --- | --- |
 | Helm in your Kubernetes cluster | Your platform team owns a cluster and can operate the workloads | Use the [agent-led installation](../README.md#give-these-instructions-to-your-agent) and [planning guide](planning.md). This is the workflow maintained in this repository. |
 | Single-VM AWS AMI | You want a prebuilt single-node environment instead of supplying a cluster | Ask your Tokonoma contact for the current AMI, region, profile, and customer launch guide. The AMI's default **lite** profile provides memory and skills; **full** adds the telemetry stack. Neither profile alone proves monitoring, alert investigations, or Slack are configured. |
-| `tokonoma-setup` Terraform | You need to provision AWS networking, EKS, storage, and Cognito before installing workloads | Use the [infrastructure repository](https://github.com/tokonoma-ai/tokonoma-setup), then reconcile its generated values with these installation requirements. Infrastructure provisioning and a healthy MCP alone do not verify monitoring or investigations. Preserve its existing authentication and routing. |
+| `tokonoma-setup` Terraform | You need to provision AWS networking, EKS, storage, and Cognito before installing workloads | Ask your Tokonoma contact for the supported infrastructure package and access, then reconcile its generated values with these installation requirements. Infrastructure provisioning and a healthy MCP alone do not verify monitoring or investigations. Preserve its existing authentication and routing. |
 | Tokonoma-operated AWS deployment (BYOC) | You want Tokonoma to operate the deployment in your AWS account | Agree with your Tokonoma contact on account access, operating responsibilities, feature scope, and the current BYOC onboarding guide. Do not apply the self-managed commands alongside the operator's deployment. |
 
 AMI and infrastructure recipes are separate delivery workflows, not a drop-in substitute for this repository's values file. Confirm the delivered chart and application versions and which features are configured. Do not assume a lightweight memory deployment meets the full installation completion checks.
 
 ## Follow the installation
 
-Use one coding agent on an authorized workstation; it brings commands and selected provider instructions into the conversation. A person can also follow this order:
+Start with the [upfront choices and agent request](../README.md#what-to-expect), then follow [Install Tokonoma](install.md). Select the telemetry platform and MCP query access independently; the fastest setup uses existing telemetry and Slack with MCP private. The guide completes selected options during the same installation and supports adding them later.
 
-1. Read [planning](planning.md) and identify the target, integration owners, and secure credential sources.
-2. Follow [Install Tokonoma](install.md) in order: prerequisites, saved values, install, then verification. Read provider references only for the choices you make.
-3. Require active monitoring evaluations and a completed investigation with a saved result and configured Slack delivery. Record explicit opt-outs and **none configured** alert senders accurately.
-4. If requested, follow the [shared access checklist](team-access.md) after installation verification.
-5. Continue with [Using Tokonoma](using-tokonoma.md), then [upgrading](upgrading.md) and [backup and recovery](backup.md) for ongoing operation.
+For a new telemetry platform, the [customer collector example](customer-telemetry.md) comes after Tokonoma setup. Application data and monitoring coverage have separate checks. Preserve existing authentication, routes, and paging destinations when adding capabilities.
 
-The initial operator connection stays local. The installer manages the runner's machine login; human sign-in and a shared HTTPS route come later. Preserve existing authentication and routes. See [data flows](data-flows.md) before granting access to a new system or sending content to a new destination.
+After setup, use [Using Tokonoma](using-tokonoma.md), [upgrading](upgrading.md), and [backup and recovery](backup.md) for ongoing operation.

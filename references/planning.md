@@ -25,13 +25,13 @@ The chart targets **baseline Pod Security**. The bundled PostgreSQL and Ollama i
 
 The core chart declares no Kubernetes version support range. The optional Grafana adapter requires Kubernetes 1.25 or later; that is an adapter prerequisite, not a claim that every Kubernetes release from 1.25 onward is supported. Confirm the chosen cluster version, storage driver, and ingress controller with your platform owner and Tokonoma. Check [network destinations](data-flows.md#network-destinations), a default StorageClass, and volume provisioning before Helm installation.
 
-Resource and admission details come from the released [chart values](https://github.com/tokonoma-ai/tokonoma-charts/blob/v0.40.0/charts/tokonoma/values.yaml) and [chart metadata](https://github.com/tokonoma-ai/tokonoma-charts/blob/v0.40.0/charts/tokonoma/Chart.yaml). Optional components add their own requests, storage, and policy requirements.
+Inspect the distributed chart with `helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma`. Optional components add their own requests, storage, and policy requirements.
 
 ## Model and infrastructure cost
 
-Budget for the Tokonoma license, cluster compute and volumes, any load balancers and storage, observability-provider query charges, and Anthropic API usage. Reusing your telemetry provider avoids deploying Tokonoma's optional telemetry storage; it does not remove that provider's query costs.
+Budget for the Tokonoma license, cluster compute and volumes, any load balancers and storage, observability-provider query charges, and usage of your selected Anthropic API or Amazon Bedrock model provider. Reusing your telemetry provider avoids deploying Tokonoma's optional telemetry storage; it does not remove that provider's query costs.
 
-There is no fixed price per investigation. Model choice, input and output tokens, cache use, tool results, and the number of turns change the bill. Run an approved representative investigation, inspect usage in your Anthropic account, and measure a sample of ordinary and critical investigations before forecasting a daily cost. Missing usage data is not zero usage.
+There is no fixed price per investigation. Model choice, input and output tokens, cache use, tool results, and the number of turns change the bill. Run an approved representative investigation, inspect usage in your selected model-provider account, and measure a sample of ordinary and critical investigations before forecasting a daily cost. Missing usage data is not zero usage.
 
 Default runner controls are five concurrent runs, 40 turns per investigation, and a 900-second run timeout. Automatic intake has two independent daily counters: 200 non-critical starts and 200 critical starts. Their sum permits up to 400 automatic starts per runner process per day. The counters reset on restart and are not a durable spending limit.
 
@@ -45,10 +45,10 @@ Line up these owners before the operator starts; one person may hold several rol
 | --- | --- |
 | Platform operator | Authorized cluster context and namespace, capacity, StorageClass, admission policy, egress, and any webhook route |
 | Tokonoma contact | Issued license, deployment choice, sizing or compatibility questions |
-| Anthropic account owner | API key supplied securely, model access, spend monitoring and budget controls |
+| Model-provider account owner | API key supplied securely, model access, spend monitoring and budget controls |
 | Telemetry owner | Query endpoint, approved read-only tools, credentials, cluster and namespace scope |
 | Alerting owner | Receiver token, sender configuration, preserved paging routes, approved test alert |
-| Slack administrator, when selected | App approval, tokens supplied securely, channel and app membership |
-| Identity and network owners, for later shared access | Human login, hostname, TLS, and routing; preserve the runner's installed machine identity |
+| Slack administrator | App approval, tokens supplied securely, channel and app membership |
+| Identity and network owners, when MCP query access is selected | Human login, hostname, TLS, and routing; preserve the runner's installed machine identity |
 
-Hands-on setup and calendar lead time are separate. Configuration and checks need an operator session; account approvals, network changes, and administrator availability can span days. There is no measured install-duration guarantee. Arrange the approved alert test and integration owners in advance, and allow time to resolve failed checks. A healthy Helm release alone does not complete installation: require active monitoring, completed investigations, saved results, and configured Slack delivery before moving to shared team access.
+Hands-on setup and calendar lead time are separate. Configuration and checks need an operator session; account approvals, network changes, and administrator availability can span days. There is no measured install-duration guarantee. Arrange the approved alert test and integration owners in advance, and allow time to resolve failed checks. A healthy Helm release alone does not complete installation: require active monitoring, completed investigations, saved results, and configured Slack delivery for the features and data sources that are connected. Complete selected MCP access during the same setup. A new telemetry backend can be ready before application collection; keep data-dependent checks pending until the [collector connection](customer-telemetry.md) is in place.

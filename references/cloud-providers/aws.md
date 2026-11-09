@@ -48,7 +48,9 @@ Return to [prepare your installation files](../install.md#2-prepare-your-files).
 
 ## Optional: telemetry and self-monitoring
 
-This recipe adds telemetry with S3 storage and self-monitoring. Grafana requires **amd64 nodes** because the pinned Quickwit datasource plugin has no linux-arm64 build. On Graviton-only groups, Grafana crash-loops; see [troubleshooting](../troubleshooting.md).
+Review [platform capacity and retention](../telemetry-platform.md#capacity-and-operating-choices) before enabling this configuration.
+
+This recipe adds the telemetry backend with S3 storage.
 
 ### 1. Prepare S3 and IAM access
 
@@ -76,11 +78,9 @@ objectStorage:
   serviceAccountCreate: true  # Create the annotated Kubernetes account; default is false.
   serviceAccountAnnotations:
     eks.amazonaws.com/role-arn: REPLACE_WITH_IRSA_ROLE_ARN
-# Optional self-monitoring components; all are disabled by default.
-otelCollector: { enabled: true }
-prometheus:    { enabled: true }
-grafana:       { enabled: true }
 ```
+
+Add [optional self-monitoring](../telemetry-platform.md#optional-self-monitoring) only if selected.
 
 For a first installation, finish preparing `values.yaml` and credentials, then [install Tokonoma](../install.md#3-install) with that file.
 
@@ -96,8 +96,6 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get pods,pvc,jobs
 
 Confirm workloads are ready and claims are `Bound`. Helm removes the index-creation Job after success; investigate it if it remains and has failed. If telemetry workloads fail, check the S3 bucket and IAM access.
 
-For dashboards, [open the self-monitoring Grafana UI](../endpoints.md#self-monitoring-grafana-ui).
-
-Send OpenTelemetry Protocol (OTLP) data using the [ingest endpoint and headers](../endpoints.md#otlp-ingest). Choose CPU, memory, storage, and retention settings for your workload. Verify capacity with a representative ingestion test.
+After completing Tokonoma setup and any selected MCP access, use the [customer collector example](../customer-telemetry.md) with your ingest endpoint and index names. The bundled collector collects Tokonoma telemetry only; your applications need their own collection configuration. Choose CPU, memory, storage, and retention settings for your workload. Verify capacity with a representative ingestion test.
 
 For the `alb` IngressClass and ACM certificate flow, see [public MCP](../public-mcp-ingress.md).

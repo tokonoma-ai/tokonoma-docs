@@ -1,0 +1,33 @@
+# Customer-managed collector example, not Helm values and not auto-deployed.
+# Receive instrumented application logs and traces over OTLP/gRPC.
+# Run in the same cluster, on an approved private network. Replace the namespace
+# in the endpoint if Tokonoma is installed outside tokonoma.
+# See references/customer-telemetry.md before deploying.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+  batch: {}
+exporters:
+  otlp/tokonoma:
+    endpoint: toko-indexer.tokonoma.svc.cluster.local:7281
+    tls:
+      insecure: true # Internal plaintext gRPC only; do not use for public transport.
+    headers:
+      qw-otel-logs-index: REPLACE_WITH_CUSTOMER-logs
+      qw-otel-traces-index: REPLACE_WITH_CUSTOMER-traces
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tokonoma]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tokonoma]

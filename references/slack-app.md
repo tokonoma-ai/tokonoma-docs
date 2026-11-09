@@ -17,7 +17,7 @@ Follow [credential setup](credentials.md#supply-credentials-in-commands) when su
 
 For an existing app, update **App Manifest** with this manifest. Reinstall if the change adds required permissions that are not already granted. Save the current bot token; keep the app-level token unless you are rotating it.
 
-Channel-join welcomes require [Tokonoma v0.78.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.78.0) or newer. The manifest above includes `member_joined_channel` for new apps. For an existing app, add and save it under **Event Subscriptions > Subscribe to bot events**. Updating Tokonoma alone does not update an existing Slack app's subscriptions. Saving this subscription takes effect without reinstalling when the relevant permission is already granted: `channels:read` for public channels or `groups:read` for private channels. See Slack's [subscription and reinstall rules](https://docs.slack.dev/app-management/distribution/#when-is-a-reinstall-required).
+Channel-join welcomes require Tokonoma v0.78.0 or newer. The manifest above includes `member_joined_channel` for new apps. For an existing app, add and save it under **Event Subscriptions > Subscribe to bot events**. Updating Tokonoma alone does not update an existing Slack app's subscriptions. Saving this subscription takes effect without reinstalling when the relevant permission is already granted: `channels:read` for public channels or `groups:read` for private channels. See Slack's [subscription and reinstall rules](https://docs.slack.dev/app-management/distribution/#when-is-a-reinstall-required).
 
 The manifest enables Socket Mode, mentions, membership and channel message events, feedback reactions, report uploads, and interactive buttons. See Slack's [manifest instructions](https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests/) if needed.
 
@@ -38,13 +38,13 @@ For an existing deployment, [apply the configuration change](upgrading.md#before
 
 ## Verify the connection
 
-When Slack is enabled, read the MCP logs on the administration workstation:
+Read the MCP logs on the administration workstation:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Add the app to the designated monitoring channel to [receive its welcome](#receive-the-monitoring-welcome), and invite it to other channels where you want to use it. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Add the app to the designated monitoring channel to [receive its welcome](#receive-the-monitoring-welcome), and invite it to other channels where you want to use it. Send `@Tokonoma admin status` in an invited channel. The report is visible only to you and shows Slack scopes, model availability, and runner readiness. For each configured alert sender, verify automatic investigation delivery separately using the [runner checks](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |
@@ -84,13 +84,11 @@ With `mcp.slack.multiplayerEnabled: false`, use the exact commands below. Other 
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
 
-Daily monitoring summaries separate **Findings to review** from **Recurring detections**. Findings use saved investigation titles where available, with **Full record** beside linked entries. Slack summaries omit detector-ID captions; detector details remain in the web views and saved records, and IDs remain in the stop commands. **Why?** beside the findings heading explains the selection. Recurring entries retain cadence, occurrence counts and first/latest times when available; their explanation can combine current signals with dated conclusions from earlier investigations. Recurring does not mean resolved, human-triaged, or newly investigated on every occurrence. The web Summaries tab uses the same saved recurring titles.
+Daily summaries separate **Findings to review** from **Recurring detections**. Open **Full record** for evidence. Recurring entries show cadence, counts, and first/latest times when available, and may refer to earlier investigations. A recurrence does not mean the issue was resolved or investigated again.
 
-Initial monitoring reports show **Backtest findings** with the configured backtest lookback, supplied activity times, and complete selected findings, followed by **Coverage and telemetry**. The context identifies the plan's last-update time, not its replay boundary; exact checked-window bounds are not inferred from that timestamp. Detector-ID captions, setup usage/cost, command rows, and the stats strip are omitted. The saved plan retains detector details. Backtest findings describe historical observations, not a claim about current incidents.
+Initial reports show historical **Backtest findings**, followed by **Coverage and telemetry**. They do not establish that an incident is still happening. The saved plan contains detector details; its last-update time is not the boundary of the checked time window.
 
-**Why?** replies use the same readable hierarchy: bold section headings and native bullet entries with a title above each complete saved explanation, without selection-count labels. Daily replies distinguish findings shown from investigations not shown; setup replies distinguish cited findings from watched checks that were not cited. Setup entries use entity names and saved monitoring labels instead of detector IDs. Why reads the stored selection reasons; it does not run another investigation or model call. Long answers use the same continuation handling as reports, preserving the response's existing visibility.
-
-Oversized daily and setup/monitoring reports continue directly in the same Slack thread. They keep complete finding groups together when possible, without repeating the report title or Why button or adding page-count labels. Setup reports show all ranked items and their lines rather than hiding the rest behind a “more items” count. A single group or entry that exceeds Slack's limits can span replies; supplied evidence and remediation are not discarded to fit the layout.
+Choose **Why?** to read the saved selection reasons, including why some investigations or checks were not cited. This does not run another investigation or model call. Long reports and explanations continue in the same Slack thread.
 
 Recurring detections show how to stop future checks. Use the complete detector IDs in the command, or consult the saved plan for IDs that do not fit.
 
@@ -114,7 +112,7 @@ The plan includes detector IDs for `enable detector` and `disable detector`. It 
 
 Incident coordination is off by default. Enable it with `mcp.slack.multiplayerEnabled`.
 
-The commands and settings in this guide require [application 0.77.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.77.0) and [chart 0.39.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.39.0) or newer compatible releases. Older application images may ignore the multiplayer setting and expose incident coordination; upgrading only the chart is insufficient.
+The commands and settings in this guide require application 0.77.0 and chart 0.39.0 or newer compatible releases. Older application images may ignore the multiplayer setting and expose incident coordination; upgrading only the chart is insufficient.
 
 Remove any `SLACK_MULTIPLAYER_ENABLED` entry from `mcp.extraEnv` and `runner.extraEnv`, preserving other entries. The chart rejects these entries, including matching values and `valueFrom`. If Helm has saved an old list, explicitly replace it with the remaining entries, or `[]` when none remain; deleting a line from the file alone can retain saved values. See [configuration changes](upgrading.md#before-changing-configuration).
 

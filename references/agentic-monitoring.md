@@ -12,13 +12,13 @@ Use the same `values.yaml` as the rest of the installation. For an existing depl
 
 | Input | What to configure |
 | --- | --- |
-| Telemetry access | Connect [Datadog, Axiom, or another compatible MCP server](integrations.md#mcp-connections), or the [Grafana adapter](alert-investigations.md#install-with-oss-grafana-mcp). Use `kind: telemetry` for external monitoring connections and permit the required read-only query tools. Monitoring runs unattended and can call every tool a connection lists, so [list read-only tools only](integrations.md#1-choose-the-connection-and-tools). Alert webhooks alone do not provide query access. |
-| Model credentials | Keep the Anthropic API key from [installation](install.md#2-prepare-your-files). It serves both analysis and the runner. |
+| Telemetry access | Use the selected telemetry platform's native tools, connect [Datadog, Axiom, or another compatible MCP server](integrations.md#mcp-connections), or the [Grafana adapter](alert-investigations.md#install-with-oss-grafana-mcp). Use `kind: telemetry` for external monitoring connections and permit the required read-only query tools. Monitoring runs unattended and can call every tool a connection lists, so [list read-only tools only](integrations.md#1-choose-the-connection-and-tools). Alert webhooks alone do not provide query access. |
+| Model credentials | Keep the selected [model credentials](credentials.md): Anthropic API or Amazon Bedrock. One credential serves analysis and the runner. |
 | Cluster | Set `runner.detection.scope.cluster` to the cluster name in your telemetry source. It may differ from the Kubernetes context name. Ask the source owner when unsure; a source containing multiple clusters needs an explicit choice. |
 | Namespaces | Set `runner.detection.scope.namespaces` to exact namespace names. An empty list watches all namespaces, including system namespaces. Choose that scope deliberately. |
 | Alert source (optional) | Monitoring does not require an alert receiver. To investigate incoming Alertmanager or Datadog alerts too, configure that receiver's credential using [runner setup](alert-investigations.md#before-you-start). |
 
-Check telemetry access with the source owner before deploying. Configure [Slack](slack-app.md) for setup reports, status commands, investigation results, and feedback.
+Check existing telemetry access with the source owner before deploying. For a new telemetry platform, connect [application collection](customer-telemetry.md) after Tokonoma setup; monitoring coverage stays pending until it has data. Configure required [Slack](slack-app.md) for setup reports, status commands, investigation results, and feedback.
 
 Setup and investigations can make model calls and query your integrations. Review the chosen scope and [data flows](data-flows.md) before enabling them.
 
@@ -85,6 +85,6 @@ curl --fail --show-error --silent http://localhost:8080/metrics | grep runner_de
 
 Compare the counters across the configured evaluation interval. Investigate repeated degraded or insufficient evaluations; a static coverage list is not evidence of current execution.
 
-When a finding occurs, confirm its investigation completes and open the saved record. Check its Slack result too when enabled. An empty findings view does not prove the monitored systems are healthy. Do not force a production anomaly to test setup; any controlled test needs the system owner's approval.
+When a finding occurs, confirm its investigation completes and open the saved record. Check its result in the required Slack channel for the standard installation. An empty findings view does not prove the monitored systems are healthy. Do not force a production anomaly to test setup; any controlled test needs the system owner's approval.
 
 Verify external alert delivery separately with the [runner checks](alert-investigations.md#check-it-works).

@@ -22,7 +22,7 @@ Bundled PostgreSQL needs no additional setup. For external PostgreSQL (`postgres
 
 ## Before you start
 
-Prepare the runner in your saved `values.yaml`. Follow [credential setup](credentials.md#supply-credentials-in-commands) for the license and model key. Complete [Slack app setup](slack-app.md) if you want Slack results. Use the installation's [input conventions](install.md#inputs-and-placeholders).
+Prepare the runner in your saved `values.yaml`. Follow [credential setup](credentials.md#supply-credentials-in-commands) for the license and model key. Complete the required [Slack app setup](slack-app.md) for the standard installation. Use the installation's [input conventions](install.md#inputs-and-placeholders).
 
 | Input | Meaning and source | Required when |
 |---|---|---|
@@ -108,7 +108,7 @@ For `runner.tokoMcp.url` pointing to another MCP deployment, supply an explicit 
 
 To query an existing Grafana, uncomment `grafanaMcp` in your saved [values file](../examples/values.yaml). Replace the Grafana URL and prepare its Viewer token or an existing Secret reference. The private adapter requires Kubernetes 1.25+ and connects to the runner automatically.
 
-If you do not use Grafana, configure a [telemetry MCP connection](integrations.md#mcp-connections), such as Datadog or Axiom. Automatic investigations and Agentic Monitoring require telemetry query access; alert webhooks and code access alone are insufficient.
+Alternatively, use the selected telemetry platform's native tools or configure a [telemetry MCP connection](integrations.md#mcp-connections), such as Datadog or Axiom. These connections can coexist and do not require exposing MCP. Automatic investigations and Agentic Monitoring require telemetry query access; alert webhooks and code access alone are insufficient.
 
 ### Apply the configuration
 
@@ -314,7 +314,7 @@ Use an operator-approved test alert that can make model calls and post to any co
 2. Choose **Custom**. Use a fresh `alertname`, `severity: warning` and the service or namespace labels needed by your configured filters. State in the annotation that this is an installation test, not a production incident.
 3. Select **Send test notification** once. This uses the contact point's configured bearer token. Allow the source's `delaySeconds` and any queue wait before expecting a result.
 4. Repeat the metrics command in terminal 2. Check accepted delivery, then a completed run in `runner_run_total`. If the alert was skipped, read the reason in `runner_intake_skipped_total` and correct the test's labels or eligibility before another send.
-5. With Slack enabled, find this alert's announcement and result thread in the configured investigations channel. Confirm the summary and linked memory record describe the installation test. Without Slack, use your connected coding agent to find the saved investigation by its unique test alert name and fetch its full body. Require the record identifier and findings that describe this test. An accepted delivery without a completed investigation and saved record does not complete the check.
+5. For the standard installation, find this alert's announcement and result thread in the required Slack investigations channel. Confirm the summary and linked memory record describe the installation test. For an existing deployment intentionally operated without Slack, use your connected coding agent to find the saved investigation by its unique test alert name and fetch its full body. Require the record identifier and findings that describe this test. An accepted delivery without a completed investigation and saved record does not complete the check.
 
 Grafana's contact-point test is available only for Grafana Alertmanager. With raw or operator-managed Alertmanager, use your team's approved test alert through its existing rule and routing process. For Datadog, follow [its verification steps](datadog-alerts.md#4-verify). Do not change production thresholds or remove paging receivers to force a test.
 

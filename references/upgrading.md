@@ -90,7 +90,7 @@ Helm rollback restores chart resources and values, not database state, deleted o
 
 ## One Anthropic key: 0.40.x to 0.41.0 or later
 
-From chart [0.41.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.41.0), one Anthropic key serves the whole installation. Supply it with `credentials.anthropicApiKey`, or name an existing Secret with `llm.apiKeySecret`. The runner and the MCP server both use it. `llm.serverFeatures: false` stops the [server model features](server-features.md) and keeps the key.
+From chart 0.41.0, one Anthropic key serves the whole installation. Supply it with `credentials.anthropicApiKey`, or name an existing Secret with `llm.apiKeySecret`. The runner and the MCP server both use it. `llm.serverFeatures: false` stops the [server model features](server-features.md) and keeps the key.
 
 Values from 0.40.x keep working. The install notes printed by Helm name each older field in use and its replacement. Move them when convenient:
 
@@ -109,7 +109,7 @@ Without an Anthropic API key, for example when the runner's only model credentia
 
 ## PostgreSQL and Ollama restarts
 
-With chart [0.40.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.40.0) or later, updating only the MCP image leaves bundled PostgreSQL and Ollama running. Chart upgrades restart them only if their own images or pod settings change.
+With chart 0.40.0 or later, updating only the MCP image leaves bundled PostgreSQL and Ollama running. Chart upgrades restart them only if their own images or pod settings change.
 
 The first upgrade from chart 0.39.0 or earlier to 0.40.0 or later restarts both bundled components once. Plan for a database interruption and for Ollama to reload its model.
 
@@ -144,7 +144,7 @@ Use only one entry if you use one source. Lists replace rather than append. An I
 
 ## Native machine authentication: release prerequisite
 
-The generated runner login requires application [v0.76.0](https://github.com/tokonoma-ai/tokonoma-mcp/releases/tag/v0.76.0) or later and chart [0.39.0](https://github.com/tokonoma-ai/tokonoma-charts/releases/tag/v0.39.0) or later.
+The generated runner login requires application v0.76.0 or later and chart 0.39.0 or later.
 
 Chart 0.39.0 also permits monitoring-only or Slack-requested investigations without an alert receiver token. With no alert sender, keep `runner.detection.enabled` or `runner.destinations.slackApp.enabled` true. Preserve credentials for receivers that are still in use; removing an Alertmanager or Datadog token disables that receiver.
 

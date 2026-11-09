@@ -4,9 +4,9 @@ The integrations you enable and where your agent runs determine where data goes.
 
 ## Installed services
 
-Tokonoma runs the MCP service, its required runner and dedicated MCP instance, PostgreSQL, and Ollama. The runner monitors selected telemetry and automatically investigates findings and alerts using your configured tools and the Anthropic API. Your coding agent calls MCP over HTTP. PostgreSQL stores records, monitoring state, and search data. Ollama creates search embeddings locally; keyword search is available when embeddings are not.
+Tokonoma runs the MCP service, its required runner and dedicated MCP instance, PostgreSQL, and Ollama. The runner monitors selected telemetry and automatically investigates findings and alerts using your configured tools and the selected Anthropic API or Amazon Bedrock provider. Your coding agent calls MCP over HTTP. PostgreSQL stores records, monitoring state, and search data. Ollama creates search embeddings locally; keyword search is available when embeddings are not.
 
-The server returns requested records and tool results to your agent. If that agent uses a hosted model, its provider receives the content the agent sends to it. This path exists independently of Tokonoma's own Anthropic API key.
+The server returns requested records and tool results to your agent. If that agent uses a hosted model, its provider receives the content the agent sends to it. This path exists independently of Tokonoma's own model credentials.
 
 ```mermaid
 sequenceDiagram
@@ -36,8 +36,8 @@ Your coding agent uses its own model provider. Tokonoma's MCP services and runne
 | --- | --- | --- |
 | Tokonoma MCP services: duplicate review | Anthropic API when an Anthropic key is supplied (`credentials.anthropicApiKey` or `llm.apiKeySecret`) and `llm.serverFeatures` is not `false` | Record titles, summaries, bodies, and reference URLs to check for duplicates |
 | Native `@Tokonoma` Slack app | Slack API and Socket Mode; the interactive MCP service opens outbound connections | Invited-channel messages and history come in; requested records, session updates, and investigation results go to Slack |
-| Tokonoma MCP services: model-backed Slack features | Anthropic API with the same key and `llm.serverFeatures` setting | Relevant channel messages, session evidence, and memory content for questions, relevance checks, and timelines |
-| Runner: monitoring and automatic investigations | Anthropic API | Service metadata, selected telemetry, alerts, retrieved records, and tool results used to configure monitoring, assess findings, and investigate; results are saved in Tokonoma and sent to configured Slack destinations |
+| Tokonoma MCP services: model-backed Slack features | Selected Anthropic API or Amazon Bedrock provider and `llm.serverFeatures` setting | Relevant channel messages, session evidence, and memory content for questions, relevance checks, and timelines |
+| Runner: monitoring and automatic investigations | Selected Anthropic API or Amazon Bedrock provider | Service metadata, selected telemetry, alerts, retrieved records, and tool results used to configure monitoring, assess findings, and investigate; results are saved in Tokonoma and sent to configured Slack destinations |
 | Runner: external MCP connections | Configured Datadog, Axiom, or other compatible MCP endpoints | Permitted queries and returned telemetry or code context; query access is separate from incoming alert webhooks |
 | Native Prometheus metric tools | Configured Prometheus-compatible query endpoint | MCP pods send read-only queries and receive metric names, labels, and samples; the calling agent or runner and its model receive results. See [Prometheus setup](prometheus.md). |
 | Grafana MCP adapter | Your existing Grafana, which can be private or externally hosted | Read-only queries and telemetry allowed by the Grafana service account; the runner connects to the adapter inside your cluster, and the agent and model receive the results |
@@ -71,7 +71,7 @@ Image and model downloads need network access during startup unless you have sup
 
 ## Private access
 
-Keep MCP private and authenticated during initial setup, as configured in the installation example. Kubernetes `ClusterIP` is a routing choice, not a user-authentication boundary: workloads that can reach an open service share its access. Use network controls to restrict callers. The [installation port-forward](install.md#4-verify) lets an authorized cluster operator connect without publishing an ingress.
+The default installation keeps MCP private and authenticated. If shared query access is selected, configure its HTTPS route and human authentication during setup. Kubernetes `ClusterIP` is a routing choice, not a user-authentication boundary: workloads that can reach an open service share its access. Use network controls to restrict callers. The [installation port-forward](install.md#4-verify) lets an authorized cluster operator connect without publishing an ingress.
 
 The [local UI](endpoints.md) uses the same port-forward. It has no browser sign-in and accepts only direct localhost connections with a local hostname; it rejects forwarded and cross-origin requests. Read views use the local `internal-user` identity and record visibility rules. Use Slack for finding feedback. Do not expose it through a reverse proxy.
 

@@ -10,14 +10,15 @@
 # Replace placeholders with verified values; agents ask for missing inputs.
 # PostgreSQL, local search embeddings and application images use chart defaults.
 llm:
+  provider: anthropic
   # One Anthropic key serves the runner and the MCP server's model features
   # (duplicate review, Slack triage, timelines); see references/server-features.md.
   # Supply credentials.anthropicApiKey in the command, or an existing Secret:
   # apiKeySecret:
   #   name: REPLACE_WITH_ANTHROPIC_SECRET_NAME
   #   key: REPLACE_WITH_ANTHROPIC_SECRET_KEY
-  # On Amazon Bedrock, see references/amazon-bedrock.md:
-  # provider: bedrock
+  # For Amazon Bedrock, change provider above to bedrock and set region below.
+  # Use one apiKeySecret block, pointing to the Bedrock key; see references/amazon-bedrock.md.
   # region: REPLACE_WITH_REGION
   # apiKeySecret:
   #   name: REPLACE_WITH_BEDROCK_SECRET_NAME
@@ -50,9 +51,9 @@ mcp:
     # Applies to MCP, its sibling, and the runner; see references/slack-app.md.
     # Remove SLACK_MULTIPLAYER_ENABLED entries from both extraEnv lists.
     multiplayerEnabled: false
-    # For Slack, supply both tokens and enable runner.destinations.slackApp below.
+    # Required: supply both tokens and invite the app to your channels.
     # autoRecallEnabled: false # Immediate recall replies are separate from investigations.
-    # investigationsChannel: tokonoma-investigations # Invite the app to this channel.
+    investigationsChannel: tokonoma-investigations # Invite the app to this channel.
     # Existing Secret alternative to the two token arguments:
     # tokenSecret:
     #   name: REPLACE_WITH_SLACK_SECRET_NAME
@@ -77,7 +78,7 @@ runner:
       cluster: REPLACE_WITH_MONITORED_CLUSTER
       # Exact namespace names. Use [] only to intentionally watch all, including system ones.
       namespaces: [REPLACE_WITH_MONITORED_NAMESPACE]
-  # Both automatic features need telemetry query access, such as Grafana or telemetry MCP.
+  # Query access comes from the selected telemetry platform, Grafana, or telemetry MCP.
   # Alert webhooks and code-only connections do not supply that access.
 
   # Only if the customer asks to pause all automatic investigations:
@@ -110,9 +111,9 @@ runner:
 
   # Slack results: needs both Slack tokens and channel membership configured above.
   # Do not also enable the legacy webhook destination unless you want two deliveries.
-  # destinations:
-  #   slackApp:
-  #     enabled: true
+  destinations:
+    slackApp:
+      enabled: true
 
   # Leave tokoMcp.url and tokoMcp.oauthClientSecretRef unset for the generated local login.
   # Keep existing working credentials on upgrades. GitOps or an external MCP needs an
