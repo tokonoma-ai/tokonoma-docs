@@ -33,7 +33,11 @@ Use this organization-managed identity only in approved channels. Personal conne
 
 ## 2. Create a machine credential
 
-Claude Tag uses the OAuth 2.0 client credentials grant. Keep a working dedicated client, or create one in the Cognito pool configured by `mcp.auth.cognito.userPoolId` in [OAuth](oauth.md). Before creating one, check the AWS account:
+Claude Tag uses the OAuth 2.0 client credentials grant. Use a dedicated client for this connector; never copy the runner's credential.
+
+Tokonoma supports [native configured machine clients](oauth.md#choose-oauth-client-admission) with `mcp.auth.provider: none`, including alongside SAML. An external credential provider is not required by Tokonoma. If choosing that path, confirm the current Claude connector supports the configured client authentication method, then test the token grant and actual MCP connection before relying on it.
+
+For an existing Cognito installation, keep its working dedicated client or create one in the pool configured by `mcp.auth.cognito.userPoolId`. The following procedure covers that alternative. Check the AWS account:
 
 ```sh
 aws sts get-caller-identity
@@ -80,7 +84,7 @@ curl -sS https://REPLACE_WITH_MCP_HOSTNAME/token \
   | jq '{has_access_token: (.access_token | type == "string" and length > 0), token_type, expires_in, error}'
 ```
 
-Expect `has_access_token: true` and no error; the filter hides the token. This uses URL-encoded form fields (`client_secret_post`). Tokonoma also supports HTTP Basic (`client_secret_basic`); the connector and registered client must use matching methods. SAML-only deployments need a Cognito or Google credential provider for machine access.
+Expect `has_access_token: true` and no error; the filter hides the token. This uses URL-encoded form fields (`client_secret_post`). Tokonoma also supports HTTP Basic (`client_secret_basic`); the connector and registered client must use matching methods. SAML human login and machine credentials are independent.
 
 `toko-mcp/query` covers every MCP tool, including `memory_save` and `memory_update_status`. It is the only scope and permits writes.
 
