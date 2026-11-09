@@ -12,7 +12,7 @@ Prepare the credentials needed for your [installation](install.md#2-prepare-your
 | Slack app-level token (`xapp-`) | Your Slack app's **Basic Information** page, with `connections:write` | `credentials.slackAppToken` | Slack Socket Mode; supply both Slack tokens together |
 | TypeSafe API key (optional) | Your TypeSafe administrator | `runner.detection.judge.apiKeySecretRef` | The optional TypeSafe/Jev monitoring Judge; the runner uses its Anthropic engine instead when this reference is unset |
 
-Add only the credentials required by your selected [telemetry connection](integrations.md#mcp-connections), such as a Grafana Viewer token or a provider's API credentials. Telemetry query access is required while either automatic feature is enabled. Reuse existing working connections and Secrets.
+Add only the credentials required by your selected [telemetry connection](integrations.md#mcp-connections), such as a Grafana Viewer token or a provider's API credentials. Existing providers need query access while either automatic feature is enabled. A newly selected telemetry platform supplies native query tools; application collection and data-dependent checks follow [Tokonoma setup](customer-telemetry.md). Reuse existing working connections and Secrets.
 
 For alert delivery, generate an [Alertmanager receiver token](alert-investigations.md#before-you-start) or prepare the [Datadog token](datadog-alerts.md). With no alert sender, omit receiver credentials and record **none configured**; keep monitoring or Slack-requested investigations enabled instead. A configured receiver does not prove that any sender is connected.
 
@@ -58,7 +58,7 @@ install -d -m 700 "REPLACE_WITH_SECRET_DIRECTORY"
 
 Existing Secrets must be in the release namespace. Replace example names and keys with those supplied by the secret owner. Uncomment the matching Secret references in [values.yaml](../examples/values.yaml), preserving other settings. For license, Anthropic, Slack, and runner credentials, references override direct inputs. The example notes the separate Grafana precedence rule.
 
-References do not create Secrets. Prepare them before installing, using the namespace check below. `llm.apiKeySecret` configures the Anthropic key for both the runner and the MCP server.
+References do not create Secrets. Prepare them before installing, using the namespace check below. `llm.apiKeySecret` configures the selected provider's key for both the runner and the MCP server. Use the [Bedrock setup](amazon-bedrock.md) for its provider and region settings.
 
 ## Prepare the namespace for Secrets
 
