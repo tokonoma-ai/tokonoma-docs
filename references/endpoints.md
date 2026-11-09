@@ -27,7 +27,7 @@ Run `kubectl` on a workstation with cluster access. Follow [input conventions](i
 
 The local MCP URL is `http://127.0.0.1:8000/mcp`. Open it with the [installation port-forward and health check](install.md#4-verify), then follow the [coding agent guide](coding-agents.md) for Claude Code, Cursor, or Codex.
 
-The installation example enables MCP authentication with a generated internal machine login. Raw chart defaults do not enable authentication, and ClusterIP by itself does not restrict which other cluster workloads can connect. Keep MCP private for initial setup. Configure [human login](oauth.md) before engineers connect coding agents or use shared or [public access](public-mcp-ingress.md).
+The installation example enables MCP authentication with a generated internal machine login. Raw chart defaults do not enable authentication, and ClusterIP by itself does not restrict which other cluster workloads can connect. Keep MCP private unless shared query access is selected. Configure [human login](oauth.md) before engineers connect coding agents or use shared or [public access](public-mcp-ingress.md).
 
 The same direct local connection serves the customer UI at `http://localhost:8000/ui/`. Open **Agentic Monitoring** for coverage and significant findings; see [monitoring checks](agentic-monitoring.md#verify-monitoring). Keep the UI local as described in [data flows](data-flows.md#private-access).
 
@@ -44,7 +44,7 @@ or [Datadog setup](datadog-alerts.md).
 
 ## OTLP ingest
 
-Send OpenTelemetry Protocol (OTLP) logs and traces to `toko-indexer:7281` from inside the cluster with headers:
+After Tokonoma setup, use the [customer collector example](customer-telemetry.md). Send OpenTelemetry Protocol (OTLP) logs and traces over **gRPC** to `toko-indexer.tokonoma.svc.cluster.local:7281` from inside the cluster (replace the namespace if needed), with headers:
 
 - `qw-otel-logs-index: REPLACE_WITH_CUSTOMER-logs`
 - `qw-otel-traces-index: REPLACE_WITH_CUSTOMER-traces`
