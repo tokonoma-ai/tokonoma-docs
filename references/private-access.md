@@ -22,7 +22,7 @@ The local Setup/Monitoring UI is read-only and remains readable without MCP auth
 
 ## Team access
 
-For the full sequence from a verified installation to human and runner login, use the [shared access checklist](team-access.md).
+For human and runner login during installation or later, use the [shared access checklist](team-access.md).
 
 Preserve existing authentication, routes, and the runner's machine identity when configuring shared access. Adding human sign-in does not require replacing that identity.
 
