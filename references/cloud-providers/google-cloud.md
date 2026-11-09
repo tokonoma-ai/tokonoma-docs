@@ -25,6 +25,8 @@ Return to [prepare your installation files](../install.md#2-prepare-your-files).
 
 ## Optional: telemetry and self-monitoring
 
+Review [platform capacity, retention, and optional component scope](../telemetry-platform.md#capacity-and-operating-choices) before enabling this configuration.
+
 This recipe adds telemetry with `gs://` storage and self-monitoring. Telemetry uses Workload Identity without long-lived keys.
 
 The cluster needs [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity), with the `REPLACE_WITH_PROJECT.svc.id.goog` workload pool and GKE metadata server on the node pool. Autopilot enables it by default. Without it, IAM bindings can succeed but pod bucket access fails.
@@ -87,7 +89,9 @@ objectStorage:
   serviceAccountCreate: true  # Create the annotated Kubernetes account; default is false.
   serviceAccountAnnotations:
     iam.gke.io/gcp-service-account: tokonoma-sa@REPLACE_WITH_PROJECT.iam.gserviceaccount.com
-# Optional self-monitoring components; all are disabled by default.
+# Optional operational components; all are disabled by default.
+# The collector collects Tokonoma telemetry only. Prometheus defaults scrape
+# cluster-wide targets; review its scrape scope with your platform owner.
 otelCollector: { enabled: true }
 prometheus:    { enabled: true }
 grafana:       { enabled: true }
@@ -109,6 +113,6 @@ Confirm workloads are ready and claims are `Bound`. Helm removes the index-creat
 
 For dashboards, [open the self-monitoring Grafana UI](../endpoints.md#self-monitoring-grafana-ui).
 
-Send OpenTelemetry Protocol (OTLP) data using the [ingest endpoint and headers](../endpoints.md#otlp-ingest).
+After completing Tokonoma setup and any selected MCP access, use the [customer collector example](../customer-telemetry.md) with your ingest endpoint and index names. The bundled collector collects Tokonoma telemetry only; your applications need their own collection configuration.
 
 For the `gce` IngressClass and ManagedCertificate flow, see [public MCP](../public-mcp-ingress.md).
