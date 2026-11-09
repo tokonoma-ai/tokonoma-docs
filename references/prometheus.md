@@ -1,20 +1,18 @@
 # Connect an existing Prometheus
 
-Tokonoma's native `list_metrics` and `query_metrics` tools can query an existing Prometheus-compatible HTTP API. This is query access, not a scrape configuration, remote-write destination, or alert receiver. To receive alerts as well, configure [Alertmanager or Grafana Alerting](alert-investigations.md).
+Connect Tokonoma to your Prometheus-compatible service to query metrics during investigations and monitoring. To receive alerts too, configure [Alertmanager or Grafana Alerting](alert-investigations.md).
 
-## Check the deployment path first
+## Before you start
 
-The chart currently renders `mcp.telemetry.prometheusUrl` and its authentication settings **only when `telemetryPlatform: true`**. Setting a URL while the platform is off does not enable these tools. `mcp.disableTelemetryTools: true` also hides metric tools, even when the URL is configured.
+This connection requires **`telemetryPlatform: true`** and telemetry tools enabled (`mcp.disableTelemetryTools: false`). Do not enable the platform just to connect Prometheus: it also adds storage components and operating costs. If it is off, connect through your existing [Grafana](alert-investigations.md#install-with-oss-grafana-mcp) or a [compatible telemetry MCP server](integrations.md#mcp-connections).
 
-Use this guide for an installation already using the telemetry platform. Do not turn on the platform just to connect Prometheus: it also enables telemetry storage components and requires their cloud, storage, and capacity preparation. If the platform is off, use an existing [Grafana adapter](alert-investigations.md#install-with-oss-grafana-mcp) or a [compatible telemetry MCP server](integrations.md#mcp-connections) instead, or agree on a separately planned platform installation.
-
-Check the installed chart's values and application release for these settings and tools before applying changes. Follow [configuration preservation](upgrading.md#before-changing-configuration); do not silently upgrade the chart or application.
+Confirm your installed chart and application support these settings. Preserve your existing configuration when [applying changes](upgrading.md#before-changing-configuration).
 
 ## Choose the endpoint and monitored cluster
 
-Obtain the Prometheus **query base URL** from its owner. Include any provider path prefix, but not `/api/v1/query`: Tokonoma appends the API paths. For example, a service in another namespace might use `http://prometheus-server.monitoring.svc.cluster.local:9090`; confirm the actual service name and port. An Amazon Managed Prometheus URL includes `/workspaces/REPLACE_WITH_WORKSPACE_ID`. Never embed credentials in the URL.
+Ask your Prometheus owner for its **query base URL**, including any provider path prefix but not `/api/v1/query`. For an in-cluster service, confirm its service name, namespace, and port. Keep credentials out of the URL.
 
-The URL selects a backend, not a monitored cluster. Before enabling monitoring, [choose the cluster and namespaces](agentic-monitoring.md#choose-the-monitored-cluster). Use the cluster identity found in that source's telemetry, which may differ from the Kubernetes context or the cluster hosting Tokonoma. Do not assume a multi-cluster backend means all clusters will be monitored.
+Also [choose the cluster and namespaces to monitor](agentic-monitoring.md#choose-the-monitored-cluster). The URL alone does not select them.
 
 Merge this fragment into the existing values, preserving all other `mcp` and `telemetry` settings:
 
@@ -27,17 +25,17 @@ mcp:
       mode: none
 ```
 
-Use `none` only when the endpoint intentionally permits these queries without authentication. An explicit URL takes precedence over bundled Prometheus. If the URL is empty and `prometheus.enabled: true`, the chart uses `http://toko-prometheus-server`; with both absent, the metric tools are off. You do not need to enable bundled Prometheus to query an existing one, and should preserve any bundled instance used by other features.
+Use `none` only for an endpoint that permits unauthenticated queries. Otherwise choose an authentication mode below. You do not need to enable bundled Prometheus; this URL takes precedence over it.
 
 ## Prepare authentication
 
-Use read-only credentials limited to the intended tenant or workspace. These credentials authenticate Tokonoma **to Prometheus**; they are separate from [MCP caller authentication](oauth.md). Referenced Secrets must exist in the release namespace. Follow [credential setup](credentials.md#supply-credentials-in-commands) and [namespace preparation](credentials.md#prepare-the-namespace-for-secrets). Keep secret contents out of chat, values files, and this repository.
+Use read-only credentials for the intended tenant or workspace. [Create or reuse Secrets](credentials.md#supply-credentials-in-commands) in the release namespace; keep their contents out of chat and values files. Fill credential placeholders and run credential commands locally.
 
-Choose one authentication mode and merge it under the same `mcp.telemetry` block. Every mode other than `none` requires an explicit `prometheusUrl`.
+Keep `prometheusUrl` set and merge one of the following authentication options into the same `mcp.telemetry` block.
 
 ### Bearer token
 
-Store the raw token without the `Bearer ` prefix. Have the credential owner fill and run the placeholder command locally, or reuse a Secret supplied by your secret manager:
+Store the raw token without the `Bearer ` prefix:
 
 ```sh
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic REPLACE_WITH_PROMETHEUS_SECRET_NAME \
@@ -88,7 +86,7 @@ mcp:
       sigv4Region: REPLACE_WITH_AWS_REGION
 ```
 
-If `sigv4Region` is empty, the chart uses top-level `region`; a region is required. Signing uses the MCP pod's AWS credential chain, including IRSA or EKS Pod Identity, not a bearer-token Secret. Have the platform owner grant the MCP ServiceAccount's role `aps:QueryMetrics`, `aps:GetLabels`, `aps:GetSeries`, and `aps:GetMetricMetadata` for the intended workspace. The runner queries through its dedicated MCP instance, so check the identity of that pod too. Preserve existing IAM and ServiceAccount configuration; a URL alone does not provision access.
+Have your platform owner configure IRSA or EKS Pod Identity for both Tokonoma MCP instances. Their role needs `aps:QueryMetrics`, `aps:GetLabels`, `aps:GetSeries`, and `aps:GetMetricMetadata` on the intended workspace. SigV4 uses that identity, not a token Secret. If `sigv4Region` is omitted, the chart uses top-level `region`.
 
 ### Tenant headers
 
@@ -101,36 +99,20 @@ mcp:
       X-Scope-OrgID: "REPLACE_WITH_TENANT_ID"
 ```
 
-Quote all values, including numeric tenant IDs. Headers are rendered as plain environment values, not Secret references. Do not put passwords, tokens, or an `Authorization` header here; use `prometheusAuth`.
+Quote header values. Headers are stored as plain text: use `prometheusAuth` for credentials, not a header.
 
-## Allow the query connection
+## Allow network access
 
-The interactive MCP pod and the runner's dedicated MCP pod open connections to Prometheus. Allow DNS resolution and outbound traffic from those pods to the chosen host and port, plus any backend-side firewall or NetworkPolicy access. A URL reachable from your laptop or the runner alone is not enough. For private services, verify cluster DNS, routing, and any cross-cluster or VPC connectivity.
+Allow DNS and outbound access to the Prometheus host and port from both Tokonoma MCP instances, including the one used by the runner. Check backend firewall rules and private routing too; access from your laptop alone is not enough.
 
-Use HTTPS for external endpoints and credentials, with a certificate trusted by the MCP container. Do not bypass certificate verification or expose Prometheus or MCP publicly to fix a routing problem.
-
-The backend or proxy must allow the Prometheus query API: POST `/api/v1/query`, `/api/v1/query_range`, and `/api/v1/series`; GET `/api/v1/labels`, `/api/v1/label/<label>/values`, and `/api/v1/metadata`. Tokonoma also tries GET `/api/v1/status/config` for the scrape interval, falling back to 60 seconds when unavailable. SigV4 also needs the configured AWS identity mechanism to work.
-
-Queries and returned metrics are available to the calling agent and to the runner's model during investigations and monitoring. Review [data flows](data-flows.md) before granting access.
+Use HTTPS for external endpoints and credentials, with a certificate trusted by Tokonoma. Any proxy must permit Prometheus query, series, label, and metadata requests. Review [data flows](data-flows.md) before granting access: query results can reach your agent and the runner's model.
 
 ## Apply and verify
 
-1. Apply the saved configuration using the [existing-release workflow](upgrading.md#before-changing-configuration). Do not replace other integrations or authentication. After Secret rotation, follow [credential renewal](credentials.md#renew-and-rotate); these credentials are read through pod environment variables.
-2. [Connect your coding agent](coding-agents.md) and confirm that Tokonoma advertises `list_metrics` and `query_metrics`.
-3. Call the following tools through that connection. The arguments are JSON, not shell commands:
+1. [Apply the saved configuration](upgrading.md#before-changing-configuration), preserving existing settings.
+2. [Connect your coding agent](coding-agents.md) and confirm that it lists `list_metrics` and `query_metrics`.
+3. Ask the agent to call `list_metrics` with `{"match":"^up$"}`, then `query_metrics` with `{"query":"up","stats":["last","last_seen"],"top_k":5}`. Check the returned labels and recent sample times. These queries cover the last hour by default. If your source does not collect `up`, use a known gauge instead.
+4. Repeat with the source's actual cluster and namespace labels to confirm access to the systems you chose. An empty result is not proof of health; `up=0` means a scrape target is down.
+5. Complete the [monitoring checks](agentic-monitoring.md#verify-monitoring) to confirm the runner can query your telemetry and its checks are running.
 
-   `list_metrics`:
-   ```json
-   {"match":"^up$"}
-   ```
-
-   `query_metrics`:
-   ```json
-   {"query":"up","stats":["last","last_seen"],"top_k":5}
-   ```
-
-   These default to the last hour. Inspect the returned labels and recent sample times. `up=0` means a scrape target is down; it does not mean the connection failed. Empty results do not prove success or health: confirm that the backend collects `up`, or repeat with a known gauge and a time window with data.
-4. Use the discovered label names to narrow a query to the chosen cluster and namespace. Do not assume every source uses a label named `cluster` or `namespace`. Confirm that the returned series belong to the intended systems, including `common_labels` in the query result. Limit broad queries if the backend reports too many series.
-5. For unattended monitoring, verify the dedicated MCP connection and complete the [monitoring checks](agentic-monitoring.md#verify-monitoring). A successful interactive query does not prove the runner's access, detector coverage, or alert delivery.
-
-If tools are missing, check the platform gate, effective URL, application version, and telemetry-tool settings. For 401/403 responses, check the selected mode, Secret names and keys, tenant header, and provider permissions. For timeouts or TLS failures, check connectivity from the MCP pods and certificate trust. Report the failing check rather than disabling authentication or claiming monitoring is ready.
+If tools are missing, check the prerequisites and URL. For 401/403 errors, check credentials, tenant headers, and permissions. For timeouts or certificate errors, check routing and certificate trust from both MCP instances. Follow [credential renewal](credentials.md#renew-and-rotate) when rotating a Secret.
