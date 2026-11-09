@@ -44,7 +44,7 @@ Read the MCP logs on the administration workstation:
 kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma logs deployment/toko-mcp --tail=200
 ```
 
-Look for `slack socket mode connected`. Add the app to the designated monitoring channel to [receive its welcome](#receive-the-monitoring-welcome), and invite it to other channels where you want to use it. Then send `@Tokonoma help` in an invited channel and confirm that it replies. Send `@Tokonoma admin status` for a readiness report visible only to you. It reports Slack scopes, model availability, and runner readiness. When automatic investigations are enabled, also confirm investigation result delivery with [runner verification](alert-investigations.md#check-it-works).
+Look for `slack socket mode connected`. Add the app to the designated monitoring channel to [receive its welcome](#receive-the-monitoring-welcome), and invite it to other channels where you want to use it. Send `@Tokonoma admin status` in an invited channel. The report is visible only to you and shows Slack scopes, model availability, and runner readiness. For each configured alert sender, verify automatic investigation delivery separately using the [runner checks](alert-investigations.md#check-it-works).
 
 | Symptom | Check |
 | --- | --- |

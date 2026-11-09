@@ -42,7 +42,7 @@ Set `llm.serverFeatures: true` and repeat the upgrade when maintenance ends. Omi
 
 ## Choosing a model
 
-The MCP server and the runner use the chart-wide `llm.model`. Use a supported bare Claude model identifier and test it before changing production. For Bedrock, follow its [model and region requirements](amazon-bedrock.md#check-the-model-is-available).
+The MCP server and the runner use `llm.model` by default. A saved `mcp.memoryLlm.model` overrides the MCP server's model. `runner.engine.model` overrides the runner's model. Use a supported bare Claude model identifier for `llm.model` and test it before changing production. For Bedrock, check the [model and region requirements](amazon-bedrock.md#check-the-model-is-available).
 
 ## What it costs
 

@@ -29,8 +29,10 @@ Metrics need a Prometheus-compatible query source. This example sends logs and t
 
 ## Verify application data
 
-1. Send an approved sample log and trace from a known service. Confirm the collector reports successful exports and no authentication, index, or connection errors.
-2. Query the selected logs and traces through Tokonoma and confirm the expected service, timestamps, cluster, and namespace. With MCP private, send an explicit request such as `@Tokonoma investigate whether the approved sample log and trace from SERVICE at TIME arrived in the expected indexes`, replacing SERVICE and TIME. Review its evidence rather than treating a reply as success. Use a connected coding agent if you selected MCP access.
-3. Complete the [monitoring checks](agentic-monitoring.md#verify-monitoring) for the intended services. Revisit coverage after adding more applications.
+Use `@Tokonoma admin status` to check [Slack and runner readiness](slack-app.md#verify-the-connection). Verify application data separately.
 
-Keep application collection and data-dependent checks marked pending until these checks pass. Healthy backend pods alone do not prove that application data is arriving.
+1. Send an approved sample log and trace from a known service.
+2. Query both samples through MCP or, if you enabled [Grafana](endpoints.md#self-monitoring-grafana-ui), use Grafana Explore with data sources configured for your application indexes. The bundled Grafana data sources point to Tokonoma's own telemetry. Confirm the samples have the expected service, timestamps, cluster, and namespace.
+3. Complete the [monitoring checks](agentic-monitoring.md#verify-monitoring) for those services. Revisit coverage after adding more applications.
+
+Keep application ingestion pending until both samples are queryable. Track monitoring coverage separately.

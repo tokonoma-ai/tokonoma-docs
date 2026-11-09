@@ -29,7 +29,7 @@ Tokonoma adds the region's prefix itself: `us.` for `us-*`, `eu.` for `eu-*`, `a
 
 ## Configure
 
-Create the Secret in the release namespace. Paste the key at the silent prompt:
+[Prepare the release namespace](credentials.md#prepare-the-namespace-for-secrets), then create the Secret there. Paste the key at the silent prompt:
 
 ```bash
 read -rs BEDROCK_KEY
@@ -38,7 +38,7 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma create secret generic aw
 unset BEDROCK_KEY
 ```
 
-Set these values, then install or [apply the configuration change](upgrading.md#before-changing-configuration):
+Set these values in your Helm configuration:
 
 ```yaml
 llm:
@@ -55,15 +55,16 @@ To pin one profile for the runner, set `runner.engine.model`, for example to `us
 
 The render fails, naming the fix, if `llm.region` or `llm.apiKeySecret.name` is missing, or if an Anthropic key field is still set.
 
-## Move from `runner.extraEnv`
+For a new release, follow the [install command](install.md#3-install) and omit `--set-literal 'credentials.anthropicApiKey=...'`. For an existing release, follow the steps below before applying the new values.
 
-If you configured Bedrock for the runner through `runner.extraEnv`, it keeps working while `llm.provider` is `anthropic`, and the MCP server stays on its Anthropic key or off. To move:
+## Switch an existing release to Bedrock
 
-The standard upgrade command preserves saved values. Omitting an old field from your file does not clear it.
+Use these steps for a release using the Anthropic API or a runner configured for Bedrock through `runner.extraEnv`. The standard upgrade command preserves saved values. Omitting an old field from your file does not clear it.
 
-1. Replace `runner.extraEnv` with the complete list you intend to keep, excluding `CLAUDE_CODE_USE_BEDROCK`, `AWS_REGION`, `AWS_BEARER_TOKEN_BEDROCK`, and `ANTHROPIC_API_KEY`. Likewise remove `ANTHROPIC_API_KEY` from the complete `mcp.extraEnv` list. Use `extraEnv: []` only when no entries remain; preserve unrelated variables.
-2. Merge the explicit clearing values below with the Bedrock `llm` configuration above. Replace `llm.apiKeySecret` with the Bedrock Secret reference, never the old Anthropic Secret.
-3. [Apply the saved configuration](upgrading.md#before-changing-configuration) and verify both callers.
+1. Merge the clearing values below with the Bedrock `llm` configuration above. Set both the name and key of the Bedrock Secret in `llm.apiKeySecret`.
+2. If present, remove `CLAUDE_CODE_USE_BEDROCK`, `AWS_REGION`, `AWS_BEARER_TOKEN_BEDROCK`, and `ANTHROPIC_API_KEY` from `runner.extraEnv`. Remove `AWS_REGION`, `AWS_BEARER_TOKEN_BEDROCK`, and `ANTHROPIC_API_KEY` from `mcp.extraEnv` if present. Keep unrelated variables in each list and use `extraEnv: []` when clearing the entire list.
+3. Review `llm.model` and any overrides. A saved `mcp.memoryLlm.model` takes precedence for the MCP server and `runner.engine.model` takes precedence for the runner. Keep supported choices. Set an incompatible override to `""` to fall back to `llm.model`, or replace it with a supported model. The MCP server needs Claude 4.7 or later on Bedrock.
+4. [Apply the saved configuration](upgrading.md#before-changing-configuration) and verify both callers below.
 
 ```yaml
 credentials:
@@ -76,8 +77,6 @@ mcp:
     apiKeySecret: null
 ```
 
-For a first installation, use the Bedrock Secret configuration above and omit `--set-literal 'credentials.anthropicApiKey=...'` from the install command.
-
 ## Verify
 
 ```bash
@@ -85,11 +84,11 @@ kubectl --context REPLACE_WITH_KUBE_CONTEXT -n tokonoma get deploy toko-mcp \
   -o jsonpath='{.spec.template.spec.containers[?(@.name=="mcp")].env[?(@.name=="MEMORY_LLM_PROVIDER")].value}'
 ```
 
-Expected output: `bedrock`. This confirms the configuration, not a successful model call, so run a test investigation.
+Expect `bedrock` when [server model features](server-features.md) are enabled.
 
-Then send `@Tokonoma admin status`. With toko-mcp 0.85.0 or later, the runner and the MCP server each check access by asking the model for one token, and a healthy installation shows **Models: Ready**. The runner checks hourly and the MCP server checks on each status request. AWS bills these small calls.
+Then send `@Tokonoma admin status`. With toko-mcp 0.85.0 or later, look for **Models: Ready** and confirm the runner and MCP server show the Bedrock models you intended. Each check asks the model for one token. The runner checks hourly and the MCP server checks on each status request. AWS bills these calls.
 
-On toko-mcp 0.84.0, status cannot check Bedrock access. Its Models section shows **Needs attention** with lines saying access is not checked, which is expected on that version. A missing credential reads differently: it says model access is not configured.
+On toko-mcp 0.84.0, the **Models** section says that Bedrock access is unchecked. Use an approved test investigation to verify that the runner can call Bedrock on that version. If the report says model access is unconfigured, check the credential settings.
 
 ## Troubleshooting
 

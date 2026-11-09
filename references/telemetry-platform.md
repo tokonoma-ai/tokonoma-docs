@@ -24,13 +24,15 @@ Chart 0.42.1 adds these Quickwit requests to the [base installation](planning.md
 
 These are scheduling requests, not throughput or production sizing guarantees. Inspect the chart you install with `helm show values oci://public.ecr.aws/tokonoma/charts/tokonoma`. Budget for ingestion, queries, object storage requests, retention, and any network transfer. Measure representative traffic and leave room for bursts.
 
-The cloud examples also show optional components. Choose each deliberately:
+## Optional self-monitoring
 
-- `otelCollector.enabled` collects Tokonoma's own logs and traces.
-- `prometheus.enabled` adds metrics collection with upstream cluster-wide scrape targets, including workloads, nodes, and the Kubernetes API. Review scope and permissions before enabling it, or use [existing Prometheus](prometheus.md).
-- `grafana.enabled` adds dashboards. The pinned Quickwit plugin requires amd64 nodes on either AWS or Google Cloud. Review placement before enabling Grafana on ARM nodes.
+These settings default to `false`. Set the selected keys to `true` in your installation values after reviewing their requirements with the platform owner.
 
-These components add resources and storage beyond the table. They are separate from customer application collection.
+- `otelCollector.enabled` collects Tokonoma's own logs and traces. It mounts `/var/log/pods` from each node as a read-only `hostPath` volume. Namespaces enforcing Baseline Pod Security reject that mount. Enable the collector only where your platform owner has approved the mount and the namespace policy permits it.
+- `prometheus.enabled` adds metrics collection with cluster-wide scrape targets, including workloads, nodes, and the Kubernetes API. Review scope and permissions before enabling it, or use [existing Prometheus](prometheus.md).
+- `grafana.enabled` adds [dashboards](endpoints.md#self-monitoring-grafana-ui) backed by the bundled Prometheus and collector. The pinned Quickwit plugin requires amd64 nodes. See [troubleshooting](troubleshooting.md) if Grafana fails to start on ARM nodes.
+
+These components add resources and storage beyond the table. Customer application collection uses a [separate collector](customer-telemetry.md).
 
 ## Indexes and retention
 

@@ -149,14 +149,14 @@ Record the target, versions, saved configuration, credential locations without s
 
 Check the [server model features](server-features.md#verify-after-installation), then complete these checks for enabled features. If a new platform is awaiting application data, mark its data-dependent monitoring and investigation checks pending; complete Slack, backend, and selected MCP access checks before providing the collector example.
 
-1. Confirm [monitoring setup and coverage](agentic-monitoring.md#verify-monitoring): setup completed for the intended scope, checks are active, and evaluation counters advance. Report inactive or degraded checks as coverage gaps.
-2. Complete the required [Slack connection checks](slack-app.md#verify-the-connection). Once the listener connects, create or choose the configured monitoring channel and add the app to [receive its welcome](slack-app.md#receive-the-monitoring-welcome).
+1. Complete the required [Slack connection checks](slack-app.md#verify-the-connection), including `@Tokonoma admin status` for readiness.
+2. [Verify monitoring](agentic-monitoring.md#verify-monitoring) for the services you chose. Confirm that setup completed, checks are active, and evaluation counters advance. Report inactive or degraded checks as coverage gaps.
 3. Connect each selected [Alertmanager](alert-investigations.md#wire-up-alertmanager) or [Datadog](datadog-alerts.md) sender after the receiver is ready. Preserve existing paging routes.
-4. Follow [investigation verification](alert-investigations.md#check-it-works) with a real alert or approved source-side test. Confirm accepted delivery, a completed automatic investigation, its saved record, and configured Slack delivery. Do not create a production anomaly to test monitoring.
+4. For each selected alert sender, follow [investigation verification](alert-investigations.md#check-it-works) with a real alert or approved source-side test. Confirm accepted delivery, a completed automatic investigation, its saved record, and configured Slack delivery. Do not create a production anomaly to test monitoring.
 
 Report incomplete setup, unconnected senders, and unverified investigations separately from deployment health. If no sender is configured, report **none configured**; an unused receiver token does not verify delivery. Record explicit customer opt-outs separately.
 
-For a new telemetry platform awaiting application collection, verify backend workloads, storage access, and index creation using the selected cloud guide. Finish any selected MCP access setup below, then provide the [customer collector example](customer-telemetry.md) with the verified endpoints and index names. Report application telemetry and monitoring coverage as pending until data arrives; do not block delivery of the example on those checks.
+For a new telemetry platform, use your cloud guide to check backend workloads, persistent volumes, and index creation. Finish any shared MCP access setup below, then use the [customer collector example](customer-telemetry.md) with your verified endpoint and index names. Application ingestion and monitoring coverage remain pending until you verify them with data from your services.
 
 ## Shared engineer access
 
