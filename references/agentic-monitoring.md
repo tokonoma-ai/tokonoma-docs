@@ -24,6 +24,23 @@ Setup and investigations can make model calls and query your integrations. Revie
 
 For a new release, finish preparation and use the [installation command](install.md#3-install). For an existing release, [apply the configuration change](upgrading.md#before-changing-configuration).
 
+## Choose the monitored cluster
+
+Choose the cluster **before applying the monitoring configuration**. Ask the telemetry owner which cluster identity and exact namespace names the query source uses; do not copy the installation's kubeconfig context by default. Merge the choice into the existing runner configuration:
+
+```yaml
+runner:
+  detection:
+    scope:
+      cluster: REPLACE_WITH_MONITORED_CLUSTER
+      namespaces:
+        - REPLACE_WITH_MONITORED_NAMESPACE
+```
+
+Use `namespaces: []` only when you intend to include every namespace, including system namespaces. This setting selects one monitoring cluster, not every cluster reachable through a shared telemetry backend. It is a monitoring scope, not a replacement for provider-side access controls.
+
+If setup discovers multiple clusters without a configured choice, it stops and asks for `runner.detection.scope.cluster` rather than guessing. Confirm the choice, save and apply it, then use the setup checks below.
+
 ## Check setup and scope
 
 Monitoring starts setup automatically when first enabled. Operators can check it with these commands in a channel where Tokonoma is invited:

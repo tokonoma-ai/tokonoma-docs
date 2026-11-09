@@ -6,6 +6,7 @@ Tokonoma connects to compatible remote Model Context Protocol (MCP) servers for 
 |---|---|---|
 | MCP query tools | Connect Datadog, Axiom, or another compatible telemetry or code server | [MCP connections](#mcp-connections) |
 | GitHub | Read permitted source code and commit history during investigations | [GitHub example](#github-example) |
+| Existing Prometheus | Native metric queries for installations with the telemetry platform enabled | [Prometheus setup](prometheus.md) |
 | Existing Grafana | Private OSS Grafana MCP adapter queries permitted data sources for monitoring and investigations | [Alert investigations](alert-investigations.md#install-with-oss-grafana-mcp) |
 | Alert webhooks | Deliver alerts to the runner; separate from MCP query access | [Alertmanager or Grafana Alerting](alert-investigations.md), [Datadog alerts](datadog-alerts.md) |
 | Slack | Use the native Tokonoma app, or connect Claude to Tokonoma | [Tokonoma app](slack-app.md), [Claude in Slack](claude-in-slack.md) |
