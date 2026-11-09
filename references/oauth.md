@@ -2,7 +2,7 @@
 
 The standard installation enables OAuth for the runner without an external credential provider. Human sign-in is added before shared or public access. Without authentication, anyone who reaches the MCP endpoint can use its tools, including memory writes.
 
-Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Check the [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite). A stable HTTPS hostname and human sign-in come after the [installation checkpoint](install.md#check-monitoring-and-integrations). Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
+Start with `values.yaml` from the [installation guide](install.md#2-prepare-your-files), Helm 3.14+, and a workstation with cluster access. Check the [native-auth release prerequisite](upgrading.md#native-machine-authentication-release-prerequisite). Prepare a stable HTTPS hostname and human sign-in when MCP query access is selected, either during installation or later. Run commands from your working directory, following [input conventions](install.md#inputs-and-placeholders) and [credential handling](credentials.md#supply-credentials-in-commands).
 
 | Input | Where to get it | When needed |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ kubectl --context "REPLACE_WITH_KUBE_CONTEXT" -n tokonoma create secret generic 
 
 When using an external credential provider, merge these settings into `values.yaml`, preserving existing `mcp` settings and any SAML configuration. Choose `cognito` or `google` and remove the unused provider block. The standard internal machine login keeps `provider: none` instead.
 
-If selecting an external credential provider during initial setup, omit the `domain` field below, set `mcp.auth.baseUrl: http://localhost:8000`, and keep `mcp.ingress.enabled` and `runner.ingress.enabled` false. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Prepare an explicit runner reference only when using a provider-backed runner client. Add the shared HTTPS hostname, routing, and human sign-in before shared access. Preserve existing addresses and authentication on upgrades.
+For initial setup with MCP kept private, omit the `domain` field below, set `mcp.auth.baseUrl: http://localhost:8000`, and keep `mcp.ingress.enabled` and `runner.ingress.enabled` false. Leave `runner.tokoMcp.url` empty so the runner uses its private MCP service. Prepare an explicit runner reference only when using a provider-backed runner client. If MCP query access is selected now, instead prepare the final HTTPS hostname, routing, and human sign-in before installation; set `mcp.auth.baseUrl` to that HTTPS origin. Preserve existing addresses and authentication on upgrades.
 
 ```yaml
 domain: REPLACE_WITH_MCP_HOSTNAME
@@ -75,7 +75,7 @@ For public access, merge the [public MCP routing settings](public-mcp-ingress.md
 
 ## 3. Deploy and verify
 
-For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). During initial setup, use the installation's local port-forward and replace the HTTPS base URL in the checks below with `http://localhost:8000`. Once the deployment is healthy, check OAuth metadata:
+For a first installation, [install Tokonoma](install.md#3-install) with the prepared file and credentials. For an existing release, follow [the configuration-change procedure](upgrading.md#before-changing-configuration). For private MCP setup, use the installation's local port-forward and replace the HTTPS base URL in the checks below with `http://localhost:8000`. For selected shared access, verify the final HTTPS URL. Once the deployment is healthy, check OAuth metadata:
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' https://REPLACE_WITH_MCP_HOSTNAME/.well-known/oauth-protected-resource/mcp
