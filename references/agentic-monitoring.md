@@ -39,7 +39,7 @@ runner:
 
 Use `namespaces: []` only when you intend to include every namespace, including system namespaces. This setting selects one monitoring cluster, not every cluster reachable through a shared telemetry backend. It is a monitoring scope, not a replacement for provider-side access controls.
 
-If setup discovers multiple clusters without a configured choice, it stops and asks for `runner.detection.scope.cluster` rather than guessing. Confirm the choice, save and apply it, then use the setup checks below. When using [native Prometheus](prometheus.md), verify the source's cluster labels and query results too; its URL alone does not choose the cluster.
+If setup discovers multiple clusters without a configured choice, it stops and asks for `runner.detection.scope.cluster` rather than guessing. Confirm the choice, save and apply it, then use the setup checks below.
 
 ## Check setup and scope
 
