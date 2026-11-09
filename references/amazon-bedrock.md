@@ -59,9 +59,24 @@ The render fails, naming the fix, if `llm.region` or `llm.apiKeySecret.name` is 
 
 If you configured Bedrock for the runner through `runner.extraEnv`, it keeps working while `llm.provider` is `anthropic`, and the MCP server stays on its Anthropic key or off. To move:
 
-1. Delete `CLAUDE_CODE_USE_BEDROCK`, `AWS_REGION` and `AWS_BEARER_TOKEN_BEDROCK` from `runner.extraEnv`.
-2. Delete `credentials.anthropicApiKey` and any Anthropic key Secret reference.
-3. Set the values above.
+The standard upgrade command preserves saved values. Omitting an old field from your file does not clear it.
+
+1. Replace `runner.extraEnv` with the complete list you intend to keep, excluding `CLAUDE_CODE_USE_BEDROCK`, `AWS_REGION`, `AWS_BEARER_TOKEN_BEDROCK`, and `ANTHROPIC_API_KEY`. Likewise remove `ANTHROPIC_API_KEY` from the complete `mcp.extraEnv` list. Use `extraEnv: []` only when no entries remain; preserve unrelated variables.
+2. Merge the explicit clearing values below with the Bedrock `llm` configuration above. Replace `llm.apiKeySecret` with the Bedrock Secret reference, never the old Anthropic Secret.
+3. [Apply the saved configuration](upgrading.md#before-changing-configuration) and verify both callers.
+
+```yaml
+credentials:
+  anthropicApiKey: ""
+runner:
+  engine:
+    apiKeySecret: null
+mcp:
+  memoryLlm:
+    apiKeySecret: null
+```
+
+For a first installation, use the Bedrock Secret configuration above and omit `--set-literal 'credentials.anthropicApiKey=...'` from the install command.
 
 ## Verify
 
