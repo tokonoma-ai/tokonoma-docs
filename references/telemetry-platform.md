@@ -11,7 +11,7 @@ Choose the telemetry platform when you want Tokonoma to store and query logs and
 
 ## Capacity and operating choices
 
-Chart 0.43.0 adds these Quickwit requests to the [base installation](planning.md):
+Chart 0.45.0 adds these Quickwit requests to the [base installation](planning.md):
 
 | Component | CPU request | Memory request | Persistent volume |
 | --- | --- | --- | --- |
