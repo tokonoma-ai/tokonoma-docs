@@ -107,6 +107,12 @@ If the key is set only in `runner.engine.apiKeySecret` with the runner enabled, 
 
 Without an Anthropic API key, for example when the runner's only model credential is in `runner.extraEnv`, the server model features stay off and the install notes say so.
 
+## Bundled self-monitoring collector: 0.44.x to 0.45.0 or later
+
+This applies only when `otelCollector.enabled` is `true`. Chart 0.45.0 moves the bundled collector to the `opentelemetry-collector` chart 0.178.2 and collector image 0.165.0, and its built-in configuration uses the current component names: `file_log`, `k8s_attributes` and `otlp_grpc`. No values change is needed.
+
+If you supply your own `otelCollector.alternateConfig`, it keeps working, but the collector logs a deprecation warning for each old component name. Rename `filelog` to `file_log`, `k8sattributes` to `k8s_attributes`, `k8sobjects` to `k8s_objects`, and `otlp/NAME` exporters to `otlp_grpc/NAME`. The `otlp` receiver keeps its name.
+
 ## Bundled Grafana: 0.42.x to 0.43.0 or later
 
 This applies only when `grafana.enabled` is `true`. Chart 0.43.0 moves the bundled Grafana from 12.3 to 13.3, from the `grafana-community` Helm chart.
