@@ -34,7 +34,7 @@ Fluent Bit creates the Container Insights log groups without retention. Agree a 
 
 ### Query costs
 
-Monitoring evaluates every check about every five minutes. A check on Logs Insights scans the matching log data on each evaluation, and Logs Insights is billed per GB scanned. A check on metrics reads through `GetMetricData`, which costs far less for the same quantity. Application releases after 0.85.0 plan a quantity on metrics where CloudWatch has it both ways, and keep log-only signals, such as error lines and patterns, on Logs Insights. Earlier releases may plan CPU and memory checks on Logs Insights; review the plan with `@Tokonoma admin get plan`. Review the [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/) with the account owner.
+Monitoring evaluates every check about every five minutes. A check on Logs Insights scans the matching log data on each evaluation, and Logs Insights is billed per GB scanned. A check on metrics reads through `GetMetricData`, which costs far less for the same quantity. Setup plans a quantity on metrics where CloudWatch has it both ways, and keeps log-only signals, such as error lines and patterns, on Logs Insights. Review the [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/) with the account owner.
 
 ## 1. Build the image
 
