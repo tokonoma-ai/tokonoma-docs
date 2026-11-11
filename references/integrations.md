@@ -7,6 +7,7 @@ Tokonoma connects to compatible remote Model Context Protocol (MCP) servers for 
 | MCP query tools | Connect Datadog, Axiom, or another compatible telemetry or code server | [MCP connections](#mcp-connections) |
 | GitHub | Read permitted source code and commit history during investigations | [GitHub example](#github-example) |
 | Existing Prometheus | Native metric queries for installations with the telemetry platform enabled | [Prometheus setup](prometheus.md) |
+| Amazon CloudWatch | Metrics, alarms, and Logs Insights through a self-hosted AWS Labs MCP server | [CloudWatch setup](cloudwatch.md) |
 | Existing Grafana | Private OSS Grafana MCP adapter queries permitted data sources for monitoring and investigations | [Alert investigations](alert-investigations.md#install-with-oss-grafana-mcp) |
 | Alert webhooks | Deliver alerts to the runner; separate from MCP query access | [Alertmanager or Grafana Alerting](alert-investigations.md), [Datadog alerts](datadog-alerts.md) |
 | Slack | Use the native Tokonoma app, or connect Claude to Tokonoma | [Tokonoma app](slack-app.md), [Claude in Slack](claude-in-slack.md) |
@@ -14,7 +15,7 @@ Tokonoma connects to compatible remote Model Context Protocol (MCP) servers for 
 
 The bundled `grafanaMcp` adapter queries an existing Grafana. The separate `grafana.enabled` setting installs a UI for Tokonoma's own monitoring. They are independent options.
 
-CloudWatch requires a separately supplied MCP server that meets the connection requirements below.
+CloudWatch has no hosted MCP endpoint that the runner can use. Run the AWS Labs server in your cluster using the [CloudWatch guide](cloudwatch.md).
 
 The MCP server's model features and the runner both use the Anthropic API or [Amazon Bedrock](amazon-bedrock.md). Verify model identifiers before changing them. See [server model features](server-features.md) and [data flows](data-flows.md).
 
