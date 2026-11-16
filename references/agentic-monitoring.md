@@ -68,11 +68,12 @@ For unwanted or unhelpful monitoring, use `@Tokonoma disable detector REPLACE_WI
 
 When your connected MCP server lists `manage_detectors`, sign in over HTTP and use these arguments:
 
-- `{"action": "list"}` lists detector rows still in the registry, including retired detectors and detectors on plans that aren’t current. Each row shows its saved status.
-- `{"action": "list", "status": "disabled"}` lists only explicitly disabled detectors, whose saved status is `rejected`.
-- `{"action": "disable", "detector_id": "REPLACE_WITH_DETECTOR_ID"}` disables a current detector. Use `enable` to resume checks. Copy the exact ID from the list, Coverage, or the plan.
+- `{"action": "list"}` lists non-retired detectors on the newest current monitoring plan, with their saved statuses.
+- `{"action": "list", "status": "disabled"}` lists only explicitly disabled detectors on that plan. Their saved status is `rejected`.
+- `{"action": "list", "include_history": true}` also includes retained retired detectors and detectors on other plans. You can combine it with `"status": "disabled"`.
+- `{"action": "disable", "detector_id": "REPLACE_WITH_DETECTOR_ID"}` disables a detector from the default list. Use `enable` with the same ID to resume checks.
 
-Each list page returns up to 100 detectors. Pass `next_after_id` as `after_id` with the same status filter until it is `null`.
+Each list page returns up to 100 detectors. Pass `next_after_id` as `after_id` with the same filters until it is `null`.
 
 Use the local connection from [installation](install.md#4-verify), then open [the local UI](http://localhost:8000/ui/) and choose **Agentic Monitoring**:
 
