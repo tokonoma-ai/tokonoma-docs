@@ -66,6 +66,15 @@ For a brief in your coding agent, use [`list_daily_summaries`](using-tokonoma.md
 
 For unwanted or unhelpful monitoring, use `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID` with an ID from the report or plan. It stops future evaluations; an evaluation already running may finish. `enable detector` reverses a disable unless the detector has since been retired. Useful or not useful feedback on a result rates that investigation and is separate from disabling a detector.
 
+When your connected MCP server lists `manage_detectors`, sign in over HTTP and use these arguments:
+
+- `{"action": "list"}` lists non-retired detectors on the newest current monitoring plan, with their saved statuses.
+- `{"action": "list", "status": "disabled"}` lists only explicitly disabled detectors on that plan. Their saved status is `rejected`.
+- `{"action": "list", "include_history": true}` also includes retained retired detectors and detectors on other plans. You can combine it with `"status": "disabled"`.
+- `{"action": "disable", "detector_id": "REPLACE_WITH_DETECTOR_ID"}` disables a detector from the default list. Use `enable` with the same ID to resume checks.
+
+Each list page returns up to 100 detectors. Pass `next_after_id` as `after_id` with the same filters until it is `null`.
+
 Use the local connection from [installation](install.md#4-verify), then open [the local UI](http://localhost:8000/ui/) and choose **Agentic Monitoring**:
 
 - **Coverage** shows the monitored entities, saved detector configuration, and status. Expand a row to read its purpose, query, and available evidence.
