@@ -76,11 +76,13 @@ Mention the app in a channel where it has been invited. Run `@Tokonoma help` for
 
 With `mcp.slack.multiplayerEnabled: false`, use the exact commands below. Other input, including ordinary questions and incomplete commands, returns help without model interpretation or memory recall.
 
+Enable Agentic Monitoring to list, enable, or disable detectors.
+
 | Task | Command and expected behavior |
 | --- | --- |
-| Get help | `@Tokonoma help` lists available commands. |
+| Get help | `@Tokonoma help` lists available commands. `@Tokonoma detectors` shows help for detector commands. |
 | Request a monitoring summary | `@Tokonoma monitoring summary` composes a fresh summary for the last 24 hours and posts it in the investigations channel. It does not replace the scheduled daily report. Requests within 10 minutes of the last manual summary, or while one is being composed, are refused. |
-| List detectors | `@Tokonoma detectors list` replies in the thread with detector IDs and statuses from the current monitoring plan, excluding retired detectors. Use `@Tokonoma detectors list disabled` to see only explicitly disabled detectors. |
+| List detectors | `@Tokonoma detectors list` replies in the thread with detector IDs and statuses from the current monitoring plan, excluding retired detectors. Use `@Tokonoma detectors list disabled` to see only explicitly disabled detectors. If the plan is not ready, check `@Tokonoma admin status`. |
 | Change detector activity | `@Tokonoma detectors disable REPLACE_WITH_DETECTOR_ID` stops future checks. `@Tokonoma detectors enable REPLACE_WITH_DETECTOR_ID` starts or resumes them. Copy complete IDs from the list, a report, or the saved plan. Separate multiple IDs with spaces. Review the scope and query before enabling a detector. |
 | Investigate an alert | Reply `@Tokonoma investigate` in the alert's thread to send it to the runner. Add a steer, such as `@Tokonoma investigate checkout 502s for EU users`, to specify the symptom. This needs a configured runner and telemetry access. |
 | Read the saved result | Click **Full record** on a result or recalled record. Reading the body requires a valid license. |
