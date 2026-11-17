@@ -76,7 +76,7 @@ Mention the app in a channel where it has been invited. Run `@Tokonoma help` for
 
 With `mcp.slack.multiplayerEnabled: false`, use the exact commands below. Other input, including ordinary questions and incomplete commands, returns help without model interpretation or memory recall.
 
-Enable Agentic Monitoring to list, enable, or disable detectors.
+Enable Agentic Monitoring to list, enable, or disable detectors. If monitoring is off, Tokonoma replies to these commands in the thread with `Monitoring is not enabled.`
 
 | Task | Command and expected behavior |
 | --- | --- |
