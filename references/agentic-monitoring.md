@@ -50,7 +50,7 @@ Monitoring starts setup automatically when first enabled. Operators can check it
 @Tokonoma admin get plan
 ```
 
-The status response reports progress, missing access, scope questions, or failures. Confirm that the reported cluster, namespaces, and services match your chosen scope. The plan lists checks and their IDs as a saved setup or refresh snapshot. Its statuses may differ from live detector state after `enable detector` or `disable detector`; report coverage gaps rather than assuming every service is monitored. `@Tokonoma admin` lists the operator commands.
+The status response reports progress, missing access, scope questions, or failures. Confirm that the reported cluster, namespaces, and services match your chosen scope. The plan lists checks and their IDs as a saved setup or refresh snapshot. Use `@Tokonoma detectors list` to see current statuses after enabling or disabling detectors. Report any coverage gaps you find. `@Tokonoma admin` lists the operator commands.
 
 If setup stopped, correct the reported configuration or access problem. To request setup again:
 
@@ -64,7 +64,7 @@ In Slack, `@Tokonoma monitoring summary` requests a fresh report for the last 24
 
 For a brief in your coding agent, use [`list_daily_summaries`](using-tokonoma.md#review-monitoring-in-your-coding-agent) when your connected server lists it. It reads stored reports and their source investigation IDs without starting a new report or evaluation.
 
-For unwanted or unhelpful monitoring, use `@Tokonoma disable detector REPLACE_WITH_DETECTOR_ID` with an ID from the report or plan. It stops future evaluations; an evaluation already running may finish. `enable detector` reverses a disable unless the detector has since been retired. Useful or not useful feedback on a result rates that investigation and is separate from disabling a detector.
+Use `@Tokonoma detectors list disabled` to find explicitly disabled detectors. For unwanted or unhelpful monitoring, use `@Tokonoma detectors disable REPLACE_WITH_DETECTOR_ID` with an ID from the list, report, or plan. It stops future evaluations. An evaluation already running may finish. Use `detectors enable` with the same ID to resume checks. Useful or not useful feedback on a result rates that investigation and is separate from disabling a detector.
 
 When your connected MCP server lists `manage_detectors`, sign in over HTTP and use these arguments:
 
